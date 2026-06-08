@@ -7,7 +7,7 @@
 (function () {
   const APP_ID = 'iPip';
   const APP_NAME = 'iPip Media Player';
-  const APP_VERSION = '1.0.0';
+  const APP_VERSION = '1.0.1';
 
   const PAGE_SIZE = 8;
   const VISIBLE_ROWS = 10;
@@ -27,7 +27,7 @@
   const LIST_START_Y = 76;
   const WAVE_X = 244;
   const WAVE_Y = 44;
-  const WAVE_W = 220;
+  const WAVE_W = 210;
   const WAVE_H = 162;
   const INFO_Y = WAVE_Y + WAVE_H + 22;
 
@@ -73,6 +73,8 @@
   let clickWatch = null;
   let lastKnobTime = 0;
   let lastVolKnobTime = 0;
+  let lastSelectTime = 0;
+  const POST_SELECT_IGNORE_MS = 150;
 
   const VOL_MIN = 0;
   const VOL_MAX = 27;
@@ -132,7 +134,6 @@
     drawFooter();
     drawTitleBar();
     drawWaveformBorder();
-    drawNowPlayingSection();
     drawNowPlaying(playingName, false);
     drawList();
     startWaveform();
@@ -234,14 +235,17 @@
   }
 
   function drawNowPlaying(name, isError) {
-    const clearY = INFO_Y + 12;
-    h.setColor(C_BLACK).fillRect(WAVE_X, clearY, W - 8, clearY + 55);
+    const clearY = INFO_Y;
+    h.setColor(C_BLACK).fillRect(WAVE_X, clearY, W - 1, clearY + 55);
 
     if (!name) return;
 
-    const maxPx = W - WAVE_X - 12;
     const color = isError ? C_DIM : C_BRIGHT;
-    const display = isError ? name : ellipsize(name, maxPx);
+    const display = isError
+      ? name
+      : name.length > 19
+        ? name.slice(0, 16) + '...'
+        : name;
 
     h.setColor(color)
       .setFont('6x8', 2)
@@ -268,13 +272,6 @@
     Pip.lastFlip = getTime();
   }
 
-  function drawNowPlayingSection() {
-    h.setColor(C_DIM)
-      .setFont('6x8')
-      .setFontAlign(-1, -1)
-      .drawString('NOW PLAYING', WAVE_X, INFO_Y);
-  }
-
   function drawTitleBar() {
     const titleX = LIST_X + 6;
     h.setColor(C_BRIGHT)
@@ -299,10 +296,11 @@
   function drawWaveform() {
     if (!wavePoly) return;
     const ym = WAVE_Y + WAVE_H / 2;
-    h.setClipRect(WAVE_X, WAVE_Y, WAVE_X + WAVE_W - 1, WAVE_Y + WAVE_H);
-    h.clearRect(WAVE_X, WAVE_Y, WAVE_X + WAVE_W - 1, WAVE_Y + WAVE_H);
+    const waveBottom = WAVE_Y + WAVE_H - 10;
+    h.setClipRect(WAVE_X, WAVE_Y, WAVE_X + WAVE_W - 1, waveBottom);
+    h.clearRect(WAVE_X, WAVE_Y, WAVE_X + WAVE_W - 1, waveBottom);
     if (isAudioPlaying) {
-      Pip.getAudioWaveform(wavePoly, WAVE_Y, WAVE_Y + WAVE_H);
+      Pip.getAudioWaveform(wavePoly, WAVE_Y, waveBottom);
     } else {
       let t = getTime();
       for (let i = 1; i < 60; i += 2) {
@@ -317,9 +315,9 @@
     const x = WAVE_X;
     const y = WAVE_Y;
     const bw = WAVE_W + 10;
-    const bh = WAVE_H + 10;
+    const bh = WAVE_H + 15;
     let bx = x;
-    let by = y;
+    let by = y + 2;
 
     h.setColor(C_MED);
     h.fillRect(x + bw, y, x + bw + 2, y + bh);
@@ -374,6 +372,7 @@
       return;
     }
 
+    if (isAudioPlaying) suppressAudioStopped = true;
     isAudioPlaying = false;
     Pip.radioClipPlaying = false;
     try {
@@ -388,6 +387,7 @@
 
   function handleSelect() {
     if (removed) return;
+    lastSelectTime = Date.now();
     const item = listItems[selectedIdx];
     if (!item) return;
 
@@ -463,7 +463,7 @@
   function initWaveform() {
     wavePoly = new Uint16Array(60);
     for (let i = 0; i < 60; i += 2) {
-      wavePoly[i] = WAVE_X + ((i >> 1) * WAVE_W) / 30;
+      wavePoly[i] = WAVE_X + 5 + ((i >> 1) * WAVE_W) / 30;
     }
   }
 
@@ -504,6 +504,18 @@
   }
 
   function navigateToSongs(stationName) {
+    if (isAudioPlaying) suppressAudioStopped = true;
+    isAudioPlaying = false;
+    Pip.radioClipPlaying = false;
+    try {
+      Pip.audioStop();
+    } catch (e) {}
+    playingPath = null;
+    playingName = null;
+    playingStation = null;
+    isRandom = false;
+    randomQueue = [];
+
     view = 'songs';
     currentStation = stationName;
     songPage = 0;
@@ -548,6 +560,7 @@
   function onKnob1(dir) {
     const now = Date.now();
     if (now - lastKnobTime < KNOB_DEBOUNCE_MS) return;
+    if (now - lastSelectTime < POST_SELECT_IGNORE_MS) return;
     lastKnobTime = now;
 
     selectedIdx += dir > 0 ? 1 : -1;
@@ -610,6 +623,14 @@
     if (volHudTimeout) clearTimeout(volHudTimeout);
     volHudTimeout = setTimeout(function () {
       volHudTimeout = null;
+      h.setColor(C_BLACK).fillRect(
+        WAVE_X,
+        WAVE_Y,
+        WAVE_X + WAVE_W - 1,
+        WAVE_Y + WAVE_H,
+      );
+      h.flip();
+      Pip.lastFlip = getTime();
       startWaveform();
     }, VOL_HUD_MS);
   }
@@ -644,7 +665,7 @@
     const base = pathJoin(MUSIC_DIR, stationName);
     const full = pathJoin(base, songName);
 
-    suppressAudioStopped = true;
+    if (isAudioPlaying) suppressAudioStopped = true;
     isAudioPlaying = false;
     Pip.radioClipPlaying = false;
     try {
@@ -760,6 +781,7 @@
     if (typeof ENC1_PRESS !== 'undefined') {
       clickWatch = setWatch(
         function (e) {
+          lastSelectTime = Date.now();
           if (e.state) handleSelect();
         },
         ENC1_PRESS,
