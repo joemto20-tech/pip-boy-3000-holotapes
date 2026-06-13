@@ -1,5 +1,5 @@
 1.0.1
-https://github.com/CodyTolene/pip-boy-3000-holotapes/tree/main/holotapes/FlappyRoach
+https://github.com/CodyTolene/pip-boy-3000-holotapes/pull/17
 - Chained every call in Flappy Roach that I possibly could.
 - Removed the startGame function and just inlined that.
 - Cleared out the flushScreen function and all it does now is h.clearRect().
