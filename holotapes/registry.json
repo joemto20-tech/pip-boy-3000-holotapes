@@ -198,11 +198,10 @@
     "tags": "game,tool",
     "type": "game",
     "readme": "KillTeamTracker/README.md",
-    "custom": "",
     "storage": [
       {
-        "name": "HOLO/KILLTEAM/APP.js",
-        "url": "KillTeamTracker/app.js"
+        "name": "HOLO/KILLTEAM/APP.JS",
+        "url": "KillTeamTracker/app.min.js"
       }
     ]
   },
@@ -216,7 +215,6 @@
     "tags": "game,tool",
     "type": "app",
     "readme": "MTGLifeCounter/README.md",
-    "custom": "",
     "storage": [
       {
         "name": "HOLO/MTGTRACKER/APP.js",
@@ -252,7 +250,6 @@
     "tags": "tool",
     "type": "app",
     "readme": "Pip-Calc/README.md",
-    "custom": "",
     "storage": [
       {
         "name": "HOLO/PIPCALC/APP.js",
