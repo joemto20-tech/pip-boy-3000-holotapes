@@ -433,7 +433,7 @@
     "author": "@OrionMissesRust",
     "version": "1.0.0",
     "description": "Play videos using your pip-boy on your pc.",
-    "icon": "PipVideoController/assets/missing-icon.png.png",
+    "icon": "PipVideoController/assets/missing-icon.png",
     "previews": [],
     "type": "app",
     "readme": "PipVideoController/README.md",
