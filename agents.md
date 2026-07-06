@@ -401,7 +401,9 @@ function showMenu(items) {
 
 The `""` key holds options: `{ title, selected, rowHeight, wrapSelection, predraw }`. Menu items are functions (actions) or objects with `value` (booleans toggle, numbers edit inline with `min`/`max`/`step`/`onchange`). Confirmation dialogs are just a sub-menu: `{ "": { title: "Delete?", back: fn }, Yes: fn }`.
 
-**Text entry:** there is no global firmware keyboard API for holotapes to call; even the firmware's bundled holotapes ship their own. You can copy the firmware's `showTextEntry` design instead: a KEYMAP grid of 4 rows by 14 columns (lower/upper variants, with control characters `\b` backspace, `\x02` shift, `\x03` enter), where knob2 selects the column, knob1 selects the row and its press types the key, long press repeats, and a `setInterval` blinks the cursor (clear that interval on remove). The callback receives the final text on Enter.
+**Text entry:** since firmware 1.1.4 there is a global keyboard API: `Pip.createKeyboard(initialText, description, callback)`. It draws a full-screen QWERTY keyboard with the `description` string above the text box, takes exclusive control of both knobs (knob2 selects the column, knob1 selects the row and its press types the key; long press repeats, shift toggles upper/lower case), and returns an object with `draw()` and `remove()`. The callback receives the current text when the user selects Enter, but the keyboard does NOT close itself: call `.remove()` on the returned object inside the callback (or your cleanup path) before drawing the next screen, exactly like a menu. `remove()` detaches both knob listeners and clears the cursor-blink interval. Note the input line is capped at the visible width (~415 px); extra characters are silently dropped. On older firmware there is no global keyboard API (even the firmware's bundled holotapes shipped their own), so if you need to support pre-1.1.4 devices you can copy the firmware's `showTextEntry` design instead: a KEYMAP grid of 4 rows by 14 columns (lower/upper variants, with control characters `\b` backspace, `\x02` shift, `\x03` enter), same knob scheme as above, and a `setInterval` blinks the cursor (clear that interval on remove).
+
+Firmware 1.1.4 also adds a matching date/time picker: `Pip.createDateTimePicker(date, includeDate, title, callback)`. It edits the passed `Date` in place (knob2 moves between fields, knob1 turns to change a value and presses to advance; selecting SET fires `callback(date)`), and returns an object with `remove()`; like the keyboard, it does not close itself, so call `.remove()` in the callback.
 
 ### 3.17 Text Wrapping & Caching
 
@@ -477,10 +479,9 @@ ffmpeg -i "input.mp4" -vf "scale=480:-1,format=gray,format=rgb555le" \
 
 **Video playback:**
 
-- `Pip.videoStart(path, { x, y, repeat })` plays an AVI, non-blocking. For a full-screen 480×320 clip use `{ x: 0, y: 0 }` (the firmware's BOOT.avi uses `x: 40` only because that clip is narrower than the screen).
+- `Pip.videoStart(path, { x, y, repeat })` plays an AVI, non-blocking. For a full-screen 480×320 clip use `{ x: 0, y: 0 }`.
 - `Pip.on("videoStopped", cb)` fires when the clip finishes. Pair with `Pip.removeListener("videoStopped", cb)` in cleanup.
 - `Pip.videoStop()` stops playback early. When skipping, remove the `videoStopped` listener BEFORE calling `videoStop()` so a synchronous stop event cannot re-trigger your transition.
-- Audio is separate: start the matching WAV with `Pip.audioStart(path)` alongside `videoStart`, and stop both together.
 - Always provide a knob-press skip path. A clip that fails to decode may never fire `videoStopped`, so the user must be able to escape.
 - **Format gotcha:** only MS RLE AVI decodes on-device. An mpeg4/yuv420p AVI will NOT play.
 - **Size gotcha:** MS RLE is lossless run-length encoding, so detailed or noisy grayscale content produces huge files (a plain `pal8` palette can reach 256 colors and an 8 MB file for a few seconds of video). Constrain the palette to about 16 gray levels with no dithering (dithering breaks RLE runs and bloats size) to cut file size roughly 2.6x:
@@ -748,6 +749,8 @@ Pip.audioStop();                           // Stop all audio
 Pip.shadeBox(x1, y1, x2, y2);             // Shaded highlight box
 Pip.blitOptions;                           // Object for .y1/.y2 partial flips
 Pip.typeText(txt, x, y, W, H, font);       // Typewriter text, returns Promise
+Pip.createKeyboard(txt, desc, cb);         // On-screen keyboard (fw 1.1.4+); cb(text) on Enter; returns {draw,remove}; caller must .remove()
+Pip.createDateTimePicker(d, date, t, cb);  // Date/time picker (fw 1.1.4+); edits Date d in place, date=include date fields, t=title; cb(d) on SET; returns {remove}
 Pip.screenGlitch();                        // Random CRT glitch effect + sound
 Pip.errorBox(err);                          // Standard error display
 Pip.log(txt, logFile);                     // Log to console + SD card LOGS/
@@ -773,6 +776,7 @@ E.defrag();                                // Defragment memory
 Math.randInt(n);                           // Random int [0, n-1]
 Math.atan2(y, x);                          // Arc tangent
 fs.readFileSync(path);                     // Read file (fs is a global; require("fs") optional)
+fs.rename('OLD_NAME', 'NEW_NAME');         // Rename a file or folder
 fs.writeFileSync(path, data);              // Write file to storage
 fs.readdir(path);                          // List directory entries
 fs.statSync(path);                         // Stat; returns undefined if missing (does NOT throw)
@@ -784,8 +788,7 @@ JSON.stringify(value);                     // Serialize to JSON
 E.sum(array);                              // Optimized array sum
 E.variance(array);                         // Optimized array variance
 E.getSizeOf(value, depth);                 // Storage units used by object
-process.memory();                          // Free blocks and memory info
-process.memory(true);                      // Force a GC pass, then report memory
+process.memory();                          // Free blocks and memory info; Passing false retrieves memory usage without a GC pass.
 E.toFlatString(data);                      // Allocate flat contiguous string
 debug(msg);                                // Log debug message
 EMU;                                       // true if running in emulator
@@ -927,7 +930,7 @@ let mod = eval(fs.readFileSync("HOLO/MYAPP/SETTINGS.JS"))(api);
 // ... later, on close:
 mod.remove();
 mod = null;
-try { process.memory(true); } catch (e) {}  // force a GC pass to reclaim the code
+process.memory(true); // force a GC pass to reclaim the code
 ```
 
 Rules for this pattern:
