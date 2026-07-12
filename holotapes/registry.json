@@ -626,7 +626,7 @@
       {
         "label": "Startup Intro Sound",
         "name": "HOLO/RCET/INTRO.WAV",
-        "previewMp3": "assets/optional/INTRO.MP3",
+        "previewMp3": "assets/optional/INTRO.mp3",
         "sizeKB": 31,
         "url": "RobCoEntertainmentTerminal/assets/optional/INTRO.WAV"
       },
@@ -663,7 +663,7 @@
       {
         "label": "Example AVI Video",
         "name": "VIDEOS/Example Short AVI Video.AVI",
-        "previewMp4": "assets/optional/VID_EXAMPLE_SHORT.MP4",
+        "previewMp4": "assets/optional/VID_EXAMPLE_SHORT.mp4",
         "sizeKB": 616,
         "url": "RobCoEntertainmentTerminal/assets/optional/VID_EXAMPLE_SHORT.AVI"
       }
