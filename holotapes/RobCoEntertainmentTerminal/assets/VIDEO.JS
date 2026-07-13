@@ -284,10 +284,9 @@
   function remove() {
     if (removed) return;
     removed = true;
-    stopPlayback();
+    if (playing) stopPlayback(true);
     Pip.removeListener('knob1', onKnob1);
     Pip.removeListener('knob2', onKnob2);
-    Pip.audioStop();
     h.clear();
     h.flip();
   }
@@ -299,7 +298,7 @@
   }
 
   function start() {
-    Pip.audioStop();
+    if (!app.persistentMusic && app.stopMusicPlayback) app.stopMusicPlayback();
     Pip.onExclusive('knob1', onKnob1);
     Pip.onExclusive('knob2', onKnob2);
     ensureVideoDir();
@@ -310,6 +309,7 @@
 
   function startVideo(name) {
     sound('TAB');
+    if (app.stopMusicPlayback) app.stopMusicPlayback();
     playing = true;
 
     h.clear(0).flip();
@@ -325,7 +325,7 @@
     }
   }
 
-  function stopPlayback() {
+  function stopPlayback(stopAudio) {
     if (holdInterval) {
       clearInterval(holdInterval);
       holdInterval = null;
@@ -335,13 +335,13 @@
     try {
       Pip.videoStop();
     } catch (e) {}
-    Pip.audioStop();
+    if (stopAudio) Pip.audioStop();
   }
 
   function stopVideo(userPressed) {
     if (!playing) return;
     playing = false;
-    stopPlayback();
+    stopPlayback(true);
     if (userPressed) sound('TAB');
     drawAll();
   }

@@ -103,7 +103,7 @@
     } catch (e) {}
   }
 
-  Pip.audioStop();
+  if (!app.persistentMusic && app.stopMusicPlayback) app.stopMusicPlayback();
   Pip.onExclusive('knob1', onKnob1);
   Pip.onExclusive('knob2', onKnob2);
   draw();

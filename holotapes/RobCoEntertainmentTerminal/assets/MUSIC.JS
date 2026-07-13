@@ -63,7 +63,7 @@
 
   let isPlayAll = false;
   let playAllIdx = 0;
-  let sortDir = app.sortDir || global.__RCETSort || 1; // 1 = A-Z, -1 = Z-A
+  let sortDir = app.sortDir || 1; // 1 = A-Z, -1 = Z-A
 
   let suppressAudioStopped = false;
 
@@ -83,11 +83,15 @@
   let currentVol = VOL_DEFAULT;
   let volHudTimeout = null;
 
+  const state = app.musicState || (app.musicState = {});
+
   // Fixed header rows in the song list, currently:
   // - SHUFFLE
   // - PLAY ALL
   // - BACK
   const SONG_HEADER_COUNT = 3;
+
+  restoreMusicState();
 
   function buildRandomPool(stationName) {
     const base = pathJoin(MUSIC_DIR, stationName);
@@ -465,6 +469,24 @@
     }
   }
 
+  function persistMusicState() {
+    state.currentStation = currentStation;
+    state.isAudioPlaying = isAudioPlaying;
+    state.isPlayAll = isPlayAll;
+    state.isRandom = isRandom;
+    state.lastPlayedName = lastPlayedName;
+    state.playAllIdx = playAllIdx;
+    state.playingName = playingName;
+    state.playingPath = playingPath;
+    state.playingStation = playingStation;
+    state.randomQueue = randomQueue.slice();
+    state.randomQueueIdx = randomQueueIdx;
+    state.scrollOffset = scrollOffset;
+    state.selectedIdx = selectedIdx;
+    state.songPage = songPage;
+    state.view = view;
+  }
+
   function handlePlayAllSelect() {
     if (view === 'stations') return;
 
@@ -551,6 +573,7 @@
         selectedIdx = SONG_HEADER_COUNT;
         scrollOffset = 0;
         rebuildList();
+        persistMusicState();
         drawList();
         uiSound('TAB');
       }
@@ -564,6 +587,7 @@
         selectedIdx = SONG_HEADER_COUNT;
         scrollOffset = 0;
         rebuildList();
+        persistMusicState();
         drawList();
         uiSound('TAB');
       }
@@ -667,6 +691,7 @@
     scrollOffset = 0;
     loadSongs(stationName);
     rebuildList();
+    persistMusicState();
     drawAll();
     uiSound('TAB');
   }
@@ -680,6 +705,7 @@
     scrollOffset = 0;
     loadStations();
     rebuildList();
+    persistMusicState();
     drawAll();
     uiSound('TAB');
   }
@@ -693,14 +719,17 @@
     Pip.radioClipPlaying = false;
     playingPath = null;
     if (isRandom) {
+      persistMusicState();
       playNextRandom();
       return;
     }
     if (isPlayAll) {
+      persistMusicState();
       playNextPlayAll();
       return;
     }
     playingName = null;
+    persistMusicState();
     drawNowPlaying(null, false);
     drawList();
   }
@@ -720,6 +749,7 @@
     if (selectedIdx < 0) selectedIdx = 0;
     if (selectedIdx >= listItems.length) selectedIdx = listItems.length - 1;
     clampScroll();
+    persistMusicState();
     drawList();
     uiSound('HIGHLIGHT');
   }
@@ -751,12 +781,8 @@
       clearTimeout(volHudTimeout);
       volHudTimeout = null;
     }
-    suppressAudioStopped = true;
-    isAudioPlaying = false;
-    Pip.radioClipPlaying = false;
-    try {
-      Pip.audioStop();
-    } catch (e) {}
+    if (app.persistentMusic) persistMusicState();
+    else stopSong();
     uiSound('TAB');
     app.go(app.scenes.MENU || 'MENU.JS');
   }
@@ -770,8 +796,9 @@
       clearTimeout(volHudTimeout);
       volHudTimeout = null;
     }
+    if (app.persistentMusic) persistMusicState();
+    else stopSong();
     uiSound('TAB');
-    stopSong();
     app.go(app.scenes.SETTINGS || 'SETTINGS.JS');
   }
 
@@ -797,6 +824,7 @@
     if (scanned >= allSongs.length) {
       isPlayAll = false;
       playingName = null;
+      persistMusicState();
       drawNowPlaying(null, false);
       drawList();
       return;
@@ -815,6 +843,7 @@
   function playNextRandom() {
     if (!isRandom || !randomQueue.length) {
       isRandom = false;
+      persistMusicState();
       drawNowPlaying(null, false);
       drawList();
       return;
@@ -829,6 +858,7 @@
       randomQueueIdx = 0;
     }
     const next = randomQueue[randomQueueIdx++];
+    persistMusicState();
     playSong(playingStation || currentStation, next.name);
   }
 
@@ -861,6 +891,7 @@
     lastPlayedName = songName;
     isAudioPlaying = true;
     Pip.radioClipPlaying = true;
+    persistMusicState();
 
     drawNowPlaying(playingName, false);
     drawList();
@@ -917,6 +948,27 @@
     clampScroll();
   }
 
+  function restoreMusicState() {
+    view = state.view || 'stations';
+    currentStation = state.currentStation || null;
+    selectedIdx = state.selectedIdx || 0;
+    scrollOffset = state.scrollOffset || 0;
+    songPage = state.songPage || 0;
+
+    playingPath = state.playingPath || null;
+    playingName = state.playingName || null;
+    playingStation = state.playingStation || null;
+    lastPlayedName = state.lastPlayedName || null;
+    isAudioPlaying = !!state.isAudioPlaying && !!playingPath;
+
+    isRandom = !!state.isRandom;
+    randomQueue = state.randomQueue ? state.randomQueue.slice() : [];
+    randomQueueIdx = state.randomQueueIdx || 0;
+
+    isPlayAll = !!state.isPlayAll;
+    playAllIdx = state.playAllIdx || 0;
+  }
+
   function remove() {
     if (removed) return;
     removed = true;
@@ -933,9 +985,16 @@
     Pip.removeListener('knob2', onKnob2);
     Pip.removeListener('audioStopped', onAudioStopped);
 
-    isAudioPlaying = false;
-    Pip.radioClipPlaying = false;
-    Pip.audioStop();
+    if (app.persistentMusic) {
+      persistMusicState();
+      Pip.radioClipPlaying = isAudioPlaying;
+    } else if (app.stopMusicPlayback) {
+      app.stopMusicPlayback();
+    } else {
+      isAudioPlaying = false;
+      Pip.radioClipPlaying = false;
+      Pip.audioStop();
+    }
 
     h.clear();
     h.flip();
@@ -964,7 +1023,11 @@
 
   function start() {
     h.clear();
-    Pip.audioStop();
+    if (!app.persistentMusic) {
+      try {
+        Pip.audioStop();
+      } catch (e) {}
+    }
 
     currentVol = readSystemVolume();
     try {
@@ -980,7 +1043,15 @@
     initWaveform();
     ensureMusicDir();
     loadStations();
+    if (view === 'songs' && currentStation) {
+      loadSongs(currentStation);
+    } else {
+      view = 'stations';
+      currentStation = null;
+    }
     rebuildList();
+    persistMusicState();
+    Pip.radioClipPlaying = isAudioPlaying;
     drawAll();
   }
 
@@ -990,6 +1061,7 @@
     randomQueue = buildRandomPool(stationName).slice();
     if (!randomQueue.length) {
       isRandom = false;
+      persistMusicState();
       return;
     }
     shuffle(randomQueue);
@@ -1023,6 +1095,7 @@
     isRandom = false;
     isPlayAll = false;
     randomQueue = [];
+    persistMusicState();
     drawNowPlaying(null, false);
     drawList();
   }

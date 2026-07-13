@@ -1,3 +1,8 @@
+2.1.1
+- Add MUSIC MODE setting. DEFAULT keeps the original stop-on-exit behavior; PERSIST keeps the current RobCo song playing through the Pip-Boy after leaving RobCo.
+- Reset RobCo's mode back to DEFAULT during app close, and stop persistent RobCo music when switching MUSIC MODE back to DEFAULT or starting video playback.
+- Guard persistent RobCo music so Pip-Boy UI clicks can play without their audioStop call stopping the current song.
+
 2.1.0
 https://github.com/CodyTolene/pip-boy-3000-holotapes/pull/58
 - Update name of app from "iPip Media Player" to "RobCo Entertainment Terminal"

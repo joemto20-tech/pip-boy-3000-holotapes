@@ -6,7 +6,7 @@
 // =============================================================================
 
 (function (app) {
-  const ROWS = ['sort', 'brightness', 'volume', 'timeout', 'back'];
+  const ROWS = ['sort', 'musicMode', 'brightness', 'volume', 'timeout', 'back'];
   const BRIGHT_LEVELS = [0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
   // Screen timeout in ms; 0 = OFF (screen stays on). Matches firmware idleTimeout.
   const TIMEOUT_LEVELS = [60000, 120000, 300000, 600000, 900000, 1800000, 0];
@@ -17,7 +17,12 @@
     const row = ROWS[selected];
     if (row === 'sort') {
       app.sortDir = app.sortDir > 0 ? -1 : 1;
-      global.__RCETSort = app.sortDir;
+      sound('TAB');
+    } else if (row === 'musicMode') {
+      app.persistentMusic = !app.persistentMusic;
+      if (!app.persistentMusic && app.stopMusicPlayback) {
+        app.stopMusicPlayback();
+      }
       sound('TAB');
     } else if (row === 'brightness') {
       stepBright(dir > 0 ? 1 : -1);
@@ -64,7 +69,7 @@
   }
 
   function drawRow(i) {
-    const y = 88 + i * 40;
+    const y = 82 + i * 34;
     const row = ROWS[i];
     const on = i === selected;
     let val = '';
@@ -72,6 +77,7 @@
     if (on) h.setColor(1).fillRect(14, y, app.W - 14, y + 34);
 
     if (row === 'sort') val = app.sortDir > 0 ? 'A-Z' : 'Z-A';
+    else if (row === 'musicMode') val = app.persistentMusic ? 'PERSIST' : 'DEFAULT';
     else if (row === 'brightness') val = Math.round(readBright() * 100) + '%';
     else if (row === 'volume') val = '' + readVol();
     else if (row === 'timeout') {
@@ -82,13 +88,14 @@
     h.setColor(on ? 3 : 2)
       .setFontMonofonto14()
       .setFontAlign(-1, -1)
-      .drawString(label(row), 24, y + 8)
+      .drawString(label(row), 24, y + 7)
       .setFontAlign(1, -1)
-      .drawString(val, app.W - 28, y + 8);
+      .drawString(val, app.W - 28, y + 7);
   }
 
   function label(row) {
     if (row === 'sort') return 'SONG SORT ORDER';
+    if (row === 'musicMode') return 'MUSIC MODE';
     if (row === 'brightness') return 'SCREEN BRIGHTNESS';
     if (row === 'volume') return 'AUDIO VOLUME';
     if (row === 'timeout') return 'SCREEN TIMEOUT';
