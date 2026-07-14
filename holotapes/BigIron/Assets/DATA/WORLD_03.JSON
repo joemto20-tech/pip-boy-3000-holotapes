@@ -1,0 +1,103 @@
+{
+  "id": "WORLD_03",
+  "tile": 16,
+  "scale": 24,
+  "spawn": [
+    20,
+    0
+  ],
+  "rows": [
+    "BBBBBBBBBBBBBBBBBBBBPBBBBBBBBBBBBBBBBBBBBB",
+    "BGGGGGGGGGGGGGGGGGGGPGGGGGGGGGGGGGGGGGGGGB",
+    "BGGGGGGGGGGGGGGGGGGGPGGGGGGGGGGGGGGGGGGGGB",
+    "BGGGGGGGGGGGGGGGGGGGPGGGGGGGGGGGGGGGGGGGGB",
+    "BGGGGGGGGGGGGGHHHHHHHHHHHGGGGGGGGGGGGGGGGB",
+    "BGGGGGGGGGGGGGHHHHHHHHHHHGGGGGGGGGGGGGGGGB",
+    "BGGGGGGGGGGGGGHHHHHHHHHHHGGGGGGGGGGGGGGGGB",
+    "BGGGGGGGGGGGGGHHHHHDHHHHHGGGGGGGGGGGGGGGGB",
+    "BGGGGGGGGGGGGGHHHHHPHHHHHGGGGGGGGGGGGGGGGB",
+    "BGGGGGGGGGGGGGGGGGGPGGGGGGGGGGGGGGGGGGGGGB",
+    "BGGGGGGGGGGGGGGGGGGPGGGGGGGGGGGGGGGGGGGGGB",
+    "BGGGGGGGGGGGGGGGGGGSGGGGGGGGGGGGGGGGGGGGGB",
+    "BGGGGGGGGGGGGGGGGGGPGGGGGGGGGGGGGGGGGGGGGB",
+    "BGGGGGGGGGGGGGGGGGGPGGGGGGGGGGGGGGGGGGGGGB",
+    "BGGGGGGGGGGGGGGGGGGPGGGGGGGGGGGGGGGGGGGGGB",
+    "BGGGGGGGGGGGGGGGGGGPGGGGGGGGGGGGGGGGGGGGGB",
+    "BGGGGGGGGGGGGGGGGGGPGGGGGGGGGGGGGGGGGGGGGB",
+    "BGGGGGGGGGGGGGGGGGGPGGGGGGGGGGGGGGGGGGGGGB",
+    "BGGGGGGGGGGGGGGGGGGPGGGGGGGGGGGGGGGGGGGGGB",
+    "BGGGGGGGGGGGGGGGGGGPGGGGGGGGGGGGGGGGGGGGGB",
+    "BGGGGGGGGGGGGGGGGGGPGGGGGGGGGGGGGGGGGGGGGB",
+    "BGGGGGGGGGGGGGGGGGGPGGGGGGGGGGGGGGGGGGGGGB",
+    "BGGGGGGGGGGGGGGGGGGPGGGGGGGGGGGGGGGGGGGGGB",
+    "BBBBBBBBBBBBBBBBBBBBPBBBBBBBBBBBBBBBBBBBBB"
+  ],
+  "interacts": [
+    {
+      "id": "world_03_boss_19_21",
+      "x": 19,
+      "y": 21,
+      "prompt": "ENCOUNTER?",
+      "once": true,
+      "type": "battle",
+      "boss": true,
+      "enemy": "RANDOM",
+      "music": "NVTH"
+    }
+  ],
+  "exits": [
+    {
+      "id": "north_boss_trail",
+      "x": 20,
+      "y": -1,
+      "w": 1,
+      "h": 1,
+      "to": "WORLD_02",
+      "spawn": [
+        20,
+        22
+      ],
+      "facing": "up"
+    },
+    {
+      "id": "south_boss_return",
+      "x": 20,
+      "y": 24,
+      "w": 1,
+      "h": 1,
+      "to": "WORLD_02",
+      "spawn": [
+        20,
+        22
+      ],
+      "facing": "up"
+    },
+    {
+      "id": "world_03_exit_20_23",
+      "x": 20,
+      "y": 23,
+      "to": "WORLD_04",
+      "spawn": [
+        2,
+        2
+      ],
+      "facing": "down"
+    }
+  ],
+  "decor": [
+    {
+      "id": "world_03_npc_19_21",
+      "type": "npc",
+      "x": 19,
+      "y": 21,
+      "sprite": "NPC_SPRITE"
+    },
+    {
+      "id": "world_03_npc_19_22",
+      "type": "npc",
+      "x": 19,
+      "y": 22,
+      "sprite": "NPC_SPRITE"
+    }
+  ]
+}

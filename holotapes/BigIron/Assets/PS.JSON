@@ -1,0 +1,39 @@
+{
+  "source": "PS",
+  "layout": "Pause Menu Art",
+  "tag": "PAUSE_MENU",
+  "width": 480,
+  "height": 320,
+  "bpp": 1,
+  "fit": "contain",
+  "slices": [
+    {
+      "file": "PS0.IMG",
+      "x": 0,
+      "y": 0,
+      "width": 240,
+      "height": 160
+    },
+    {
+      "file": "PS1.IMG",
+      "x": 240,
+      "y": 0,
+      "width": 240,
+      "height": 160
+    },
+    {
+      "file": "PS2.IMG",
+      "x": 0,
+      "y": 160,
+      "width": 240,
+      "height": 160
+    },
+    {
+      "file": "PS3.IMG",
+      "x": 240,
+      "y": 160,
+      "width": 240,
+      "height": 160
+    }
+  ]
+}

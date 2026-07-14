@@ -1,0 +1,8 @@
+Duplicate the Granny folder for each enemy. Recommended folder names from battle.json:
+Granny
+Radroach
+FiendScout
+Radscorpion
+NightStalker
+
+Each folder uses the exact same AVI filenames listed in README.txt.
