@@ -38,6 +38,124 @@
     "storageOptional": []
   },
   {
+    "id": "bigiron",
+    "name": "Big Iron RPG",
+    "author": "@joemto20-tech",
+    "version": "0.23",
+    "description": "An RPG Experience from HAMco designed for the PB3000",
+    "icon": "BigIron/Assets/ST.IMG",
+    "previews": [],
+    "type": "game",
+    "readme": "BigIron/README.md",
+    "storage": [
+      {
+        "name": "HOLO/BIGIRON/APP.JS",
+        "url": "BigIron/APP.JS"
+      },
+      {
+        "name": "HOLO/BIGIRON/battle.json",
+        "url": "BigIron/battle.json"
+      },
+      {
+        "name": "HOLO/BIGIRON/CODE/WORLD.JS",
+        "url": "BigIron/Assets/CODE/WORLD.MIN.JS"
+      },
+      {
+        "name": "HOLO/BIGIRON/CODE/BATTLE.JS",
+        "url": "BigIron/Assets/CODE/BATTLE.MIN.JS"
+      },
+      {
+        "name": "HOLO/BIGIRON/CODE/SHOOT.JS",
+        "url": "BigIron/Assets/CODE/SHOOT.MIN.JS"
+      },
+      {
+        "name": "HOLO/BIGIRON/DATA/WORLD_01.JSON",
+        "url": "BigIron/Assets/DATA/WORLD_01.JSON"
+      },
+      {
+        "name": "HOLO/BIGIRON/DATA/WORLD_02.JSON",
+        "url": "BigIron/Assets/DATA/WORLD_02.JSON"
+      },
+      {
+        "name": "HOLO/BIGIRON/DATA/WORLD_03.JSON",
+        "url": "BigIron/Assets/DATA/WORLD_03.JSON"
+      },
+      {
+        "name": "HOLO/BIGIRON/DATA/WORLD_04.JSON",
+        "url": "BigIron/Assets/DATA/WORLD_04.JSON"
+      },
+      {
+        "name": "HOLO/BIGIRON/AUDIO/NVTH.wav",
+        "url": "BigIron/Assets/AUDIO/NVTH.wav"
+      },
+      {
+        "name": "HOLO/BIGIRON/AUDIO/HOLO_BICT.wav",
+        "url": "BigIron/Assets/HOLO_BICT.wav"
+      },
+      {
+        "name": "HOLO/BIGIRON/ST.IMG",
+        "url": "BigIron/Assets/ST.IMG"
+      },
+      {
+        "name": "HOLO/BIGIRON/VIDEO/Granny/BATTLE_IDLE.avi",
+        "url": "BigIron/Assets/VIDEO/Granny/BATTLE_IDLE.avi"
+      },
+      {
+        "name": "HOLO/BIGIRON/VIDEO/Granny/BATTLE_START.avi",
+        "url": "BigIron/Assets/VIDEO/Granny/BATTLE_START.avi"
+      },
+      {
+        "name": "HOLO/BIGIRON/VIDEO/Granny/DEFEAT.avi",
+        "url": "BigIron/Assets/VIDEO/Granny/DEFEAT.avi"
+      },
+      {
+        "name": "HOLO/BIGIRON/VIDEO/Granny/ENEMY_FAINT.avi",
+        "url": "BigIron/Assets/VIDEO/Granny/ENEMY_FAINT.avi"
+      },
+      {
+        "name": "HOLO/BIGIRON/VIDEO/Granny/E_MOVE_1.avi",
+        "url": "BigIron/Assets/VIDEO/Granny/E_MOVE_1.avi"
+      },
+      {
+        "name": "HOLO/BIGIRON/VIDEO/Granny/E_MOVE_2.avi",
+        "url": "BigIron/Assets/VIDEO/Granny/E_MOVE_2.avi"
+      },
+      {
+        "name": "HOLO/BIGIRON/VIDEO/Granny/E_MOVE_3.avi",
+        "url": "BigIron/Assets/VIDEO/Granny/E_MOVE_3.avi"
+      },
+      {
+        "name": "HOLO/BIGIRON/VIDEO/Granny/E_MOVE_4.avi",
+        "url": "BigIron/Assets/VIDEO/Granny/E_MOVE_4.avi"
+      },
+      {
+        "name": "HOLO/BIGIRON/VIDEO/Granny/PLAYER_FAINT.avi",
+        "url": "BigIron/Assets/VIDEO/Granny/PLAYER_FAINT.avi"
+      },
+      {
+        "name": "HOLO/BIGIRON/VIDEO/Granny/P_MOVE_1.avi",
+        "url": "BigIron/Assets/VIDEO/Granny/P_MOVE_1.avi"
+      },
+      {
+        "name": "HOLO/BIGIRON/VIDEO/Granny/P_MOVE_2.avi",
+        "url": "BigIron/Assets/VIDEO/Granny/P_MOVE_2.avi"
+      },
+      {
+        "name": "HOLO/BIGIRON/VIDEO/Granny/P_MOVE_3.avi",
+        "url": "BigIron/Assets/VIDEO/Granny/P_MOVE_3.avi"
+      },
+      {
+        "name": "HOLO/BIGIRON/VIDEO/Granny/P_MOVE_4.avi",
+        "url": "BigIron/Assets/VIDEO/Granny/P_MOVE_4.avi"
+      },
+      {
+        "name": "HOLO/BIGIRON/VIDEO/Granny/VICTORY.avi",
+        "url": "BigIron/Assets/VIDEO/Granny/VICTORY.avi"
+      }
+    ],
+    "storageOptional": []
+  },
+  {
     "id": "blackjack",
     "name": "Blackjack",
     "author": "@trekker87 @Theeohn",

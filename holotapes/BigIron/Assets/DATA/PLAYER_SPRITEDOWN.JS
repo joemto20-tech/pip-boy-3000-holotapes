@@ -1,0 +1,1 @@
+var PLAYER_SPRITEDOWN={width:12,height:14,bpp:2,buffer:atob("AAAAAFVAAVVQApWgAqqgAoogAKqAACoAAVlQAVVQAhUgABUAACIAABEA")};

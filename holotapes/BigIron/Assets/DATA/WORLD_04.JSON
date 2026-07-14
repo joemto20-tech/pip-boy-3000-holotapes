@@ -1,0 +1,171 @@
+{
+  "id": "WORLD_04",
+  "tile": 16,
+  "scale": 24,
+  "spawn": [
+    20,
+    1
+  ],
+  "rows": [
+    "XXXXXXGXXXXXXXXXBBPPPPPPPPBBBBBBBBBBXXXXXX",
+    "XXXXXXGXXXXXXXXXGBPPPPPPPPBGGGGGGGGBXXXXXX",
+    "GGGGGGGGGGGGGGGGGPPPPPPPPPBGGGGGGGGBXXXXXX",
+    "BBBBBBGBBBBBBGGGGPPPPPPPPPGGGGGGGGGBXXXXXX",
+    "BBBBBBGBBBBBBBBBGBPPPPPPPPGGGGGGGGGBXXXXXX",
+    "BBBBBBGBBBBBBBBBGBPPPPPPPPGGGGGGGGGBBBXXXX",
+    "HHHHBBGBHHHHBBBBGBPPPPPPPPBGGGGGGGGGGBXXGX",
+    "HHHHHBGBHHHHBBBBGBPPPPPPPPBGGGGGGGGGGBXXXX",
+    "HHHHHBGBHHHHHHHBGBPPPPPPPPBGGGGGGGGGGGBXXX",
+    "HHHDHBGBHHHDHHHBGBPPPPPPPPBGGGGGGGGGGGBXXX",
+    "GGGGGGGGGGGGGGGBGBPPPPPPPPBGGGGGGGGGGGBXXX",
+    "BGGGGGGGGGGGGGGBBBPPPPPPPPBBBBBBBBBBBBBXXX",
+    "BPGGGGGGGGGGGGGBPPPPPPPPPPPPXXXXXXXXXXXXXX",
+    "BPBBBBBBBBBBBBBBPPPBBBBBBPPPPPPPPPPPPPPPPP",
+    "PPPPPPPPPPPPPPPPPPPBHHHHBPPPPPPPPPPPPPPPPP",
+    "PPPPPPPPPPPPPPPPPPPBHHHHBPPPPPPPPPPPPPPPPP",
+    "PPPPPPPPPPPPPPPPPPPBHHHHBPPPPPPPPPPPPPPPPP",
+    "PPPPPPPPPPPPPPPPPPPBBBBBBPPPPPPPPPPPPPPPPP",
+    "BBBBBBBBBBBBBBBBPPPPPPPPPPPPPPPPPPPPPPPPPP",
+    "BGGGGGGGGGGGGGGBPPPPPPPPPPPPXXXXXXXXXXXXXX",
+    "BGGGGGGGGGGGGGGBBBBPPPPPPPBBBBBBBBBBBBBBBB",
+    "BGGGGGGGGGGGGGGGGGBPPPPPPPPGGGGGGGGGGGGGGB",
+    "BGGGGGGGGGGGGGGGGBBPPPPPPPBBGGGGGGGGGGGGGB",
+    "BBBBBBBBBBBBBBBBBBBPPPPPPPBBBBBBBBBBBBBBBB"
+  ],
+  "interacts": [
+    {
+      "id": "world_04_encounter_31_9",
+      "type": "battle",
+      "x": 31,
+      "y": 9,
+      "w": 1,
+      "h": 1,
+      "prompt": "INVESTIGATE?",
+      "enemy": "RANDOM",
+      "once": true
+    },
+    {
+      "id": "world_04_encounter_1_22",
+      "type": "battle",
+      "x": 1,
+      "y": 22,
+      "w": 1,
+      "h": 1,
+      "prompt": "INVESTIGATE?",
+      "enemy": "RANDOM",
+      "once": true
+    },
+    {
+      "id": "world_04_encounter_11_9",
+      "type": "battle",
+      "x": 11,
+      "y": 9,
+      "w": 1,
+      "h": 1,
+      "prompt": "INVESTIGATE?",
+      "enemy": "RANDOM",
+      "once": true
+    },
+    {
+      "id": "world_04_encounter_3_9",
+      "type": "battle",
+      "x": 3,
+      "y": 9,
+      "w": 1,
+      "h": 1,
+      "prompt": "INVESTIGATE?",
+      "enemy": "RANDOM",
+      "once": true
+    },
+    {
+      "id": "world_04_encounter_39_0",
+      "type": "battle",
+      "x": 39,
+      "y": 0,
+      "w": 1,
+      "h": 1,
+      "prompt": "INVESTIGATE?",
+      "enemy": "RANDOM",
+      "once": true
+    },
+    {
+      "id": "world_04_encounter_39_1",
+      "type": "battle",
+      "x": 39,
+      "y": 1,
+      "w": 1,
+      "h": 1,
+      "prompt": "INVESTIGATE?",
+      "enemy": "RANDOM",
+      "once": true
+    }
+  ],
+  "exits": [
+    {
+      "id": "world_04_exit_32_22",
+      "x": 32,
+      "y": 22,
+      "w": 1,
+      "h": 1,
+      "to": "WORLD_01",
+      "spawn": [
+        20,
+        22
+      ],
+      "facing": "down"
+    },
+    {
+      "id": "world_04_exit_20_0",
+      "x": 20,
+      "y": 0,
+      "w": 1,
+      "h": 1,
+      "to": "WORLD_01",
+      "spawn": [
+        20,
+        22
+      ],
+      "facing": "up"
+    },
+    {
+      "id": "world_04_exit_40_16",
+      "x": 40,
+      "y": 16,
+      "w": 1,
+      "h": 1,
+      "to": "WORLD_01",
+      "spawn": [
+        20,
+        22
+      ],
+      "facing": "down"
+    },
+    {
+      "id": "world_04_exit_1_16",
+      "x": 1,
+      "y": 16,
+      "w": 1,
+      "h": 1,
+      "to": "WORLD_01",
+      "spawn": [
+        20,
+        22
+      ],
+      "facing": "down"
+    },
+    {
+      "id": "world_04_exit_39_0",
+      "x": 39,
+      "y": 0,
+      "w": 1,
+      "h": 1,
+      "to": "WORLD_01",
+      "spawn": [
+        20,
+        22
+      ],
+      "facing": "up"
+    }
+  ],
+  "decor": []
+}

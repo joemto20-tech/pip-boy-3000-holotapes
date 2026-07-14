@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>B.I.R.D. - Big Iron Render Dock</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div>
+        <h1>B.I.R.D.</h1>
+        <p>Big Iron Render Dock</p>
+      </div>
+      <div class="status" id="status">Starting</div>
+    </header>
+
+    <nav class="tabs" aria-label="Dock sections">
+      <button class="tab active" data-mode="world">World Dock</button>
+      <button class="tab" data-mode="sprite">Sprite Dock</button>
+      <button class="tab" data-mode="package">Package Notes</button>
+    </nav>
+
+    <main class="workspace">
+      <section class="panel left" id="worldPanel">
+        <div class="field-row">
+          <label>World
+            <select id="worldSelect"></select>
+          </label>
+          <button id="loadWorld">Load</button>
+        </div>
+        <div class="field-row">
+          <label>World ID
+            <input id="worldId" value="WORLD_01">
+          </label>
+          <button id="newWorld">New</button>
+        </div>
+        <label>Paint Tool
+          <select id="worldTool">
+            <option value="G">Grass</option>
+            <option value="P">Path</option>
+            <option value="B">Blocker</option>
+            <option value="H">House</option>
+            <option value="D">Door</option>
+            <option value="S">Sand</option>
+            <option value="X">Wall</option>
+            <option value="spawn">Spawn</option>
+            <option value="exit">Exit</option>
+            <option value="regular">Regular Encounter</option>
+            <option value="boss">Boss Encounter</option>
+            <option value="shoot">Shoot Encounter</option>
+            <option value="tree">Tree</option>
+            <option value="npc">NPC</option>
+            <option value="camp">Camp</option>
+            <option value="sign">Sign</option>
+            <option value="rocks">Rocks</option>
+            <option value="erase">Erase Marker</option>
+          </select>
+        </label>
+        <div class="tool-grid" id="quickTools"></div>
+
+        <div class="box">
+          <h2>Encounter</h2>
+          <label>Enemy
+            <select id="encEnemy"></select>
+          </label>
+          <label>Prompt
+            <input id="encPrompt" value="ENCOUNTER?">
+          </label>
+          <div class="field-row">
+            <label>Music
+              <select id="encMusic">
+                <option value="">Map default</option>
+                <option value="NVTH">NVTH boss theme</option>
+                <option value="false">None</option>
+              </select>
+            </label>
+            <label class="check">
+              <input id="encOnce" type="checkbox" checked>
+              Once
+            </label>
+          </div>
+          <label>Shoot Target
+            <input id="shootTarget" value="RADROACH">
+          </label>
+        </div>
+
+        <div class="box">
+          <h2>Exit</h2>
+          <div class="field-row">
+            <label>To
+              <input id="exitTo" value="WORLD_02">
+            </label>
+            <label>Facing
+              <select id="exitFacing">
+                <option value="down">Down</option>
+                <option value="up">Up</option>
+                <option value="left">Left</option>
+                <option value="right">Right</option>
+              </select>
+            </label>
+          </div>
+          <div class="field-row">
+            <label>Spawn X
+              <input id="exitX" type="number" value="2">
+            </label>
+            <label>Spawn Y
+              <input id="exitY" type="number" value="2">
+            </label>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="saveWorld" class="primary">Save World JSON</button>
+          <button id="downloadWorld">Download JSON</button>
+        </div>
+      </section>
+
+      <section class="stage" id="worldStage">
+        <div class="stage-head">
+          <strong id="worldTitle">WORLD_01</strong>
+          <span id="worldReadout">42 x 24</span>
+        </div>
+        <div class="world-grid" id="worldGrid"></div>
+        <textarea id="worldJson" spellcheck="false"></textarea>
+      </section>
+
+      <section class="panel left hidden" id="spritePanel">
+        <div class="field-row">
+          <label>Existing
+            <select id="spriteSelect"></select>
+          </label>
+          <button id="loadSprite">Load</button>
+        </div>
+        <label>Name
+          <input id="spriteName" value="PLAYER_SPRITEUP">
+        </label>
+        <div class="field-row">
+          <label>Preset
+            <select id="spritePreset"></select>
+          </label>
+          <button id="loadPreset">Use</button>
+        </div>
+        <div class="field-row">
+          <label>Width
+            <input id="spriteWidth" type="number" min="8" max="32" value="12">
+          </label>
+          <label>Height
+            <input id="spriteHeight" type="number" min="8" max="32" value="14">
+          </label>
+        </div>
+        <div class="field-row">
+          <label>BPP
+            <select id="spriteBpp">
+              <option value="1">1</option>
+              <option value="2" selected>2</option>
+            </select>
+          </label>
+          <label>Brush
+            <select id="spriteBrush">
+              <option value="0">0</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+            </select>
+          </label>
+        </div>
+        <div class="actions">
+          <button id="newSprite">New</button>
+          <button id="mirrorSprite">Mirror</button>
+          <button id="invertSprite">Invert</button>
+          <button id="saveSprite" class="primary">Save Sprite JS</button>
+          <button id="downloadSprite">Download JS</button>
+        </div>
+      </section>
+
+      <section class="stage hidden" id="spriteStage">
+        <div class="stage-head">
+          <strong id="spriteTitle">PLAYER_SPRITEUP</strong>
+          <span id="spriteReadout">12 x 14</span>
+        </div>
+        <div class="sprite-grid" id="spriteGrid"></div>
+        <textarea id="spriteCode" spellcheck="false"></textarea>
+      </section>
+
+      <section class="panel wide hidden" id="packagePanel">
+        <h2>Upload Paths</h2>
+        <pre id="packageNotes"></pre>
+      </section>
+    </main>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
