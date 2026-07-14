@@ -5,7 +5,7 @@
   "version": "1.1.0",
   "description": "A two-player Checkers game for the Pip-Boy 3000, with you playing against an AI opponent. Standard rules apply including forced jumps, multi-jumps, and king promotion.",
   "icon": "previews/checkers.png",
-  "previews": ["previews/game.bmp", "previews/menu.bmp"],
+  "previews": ["previews/menu.bmp", "previews/game.bmp"],
   "type": "game",
   "readme": "README.md",
   "storage": [

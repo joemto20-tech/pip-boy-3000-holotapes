@@ -5,7 +5,7 @@
   "version": "1.0.0",
   "description": "Play videos using your pip-boy on your pc.",
   "icon": "previews/PipVideoController.png",
-  "previews": [],
+  "previews": ["previews/start.bmp"],
   "type": "app",
   "readme": "README.md",
   "storage": [

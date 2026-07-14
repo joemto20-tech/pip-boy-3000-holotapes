@@ -5,7 +5,7 @@
   "version": "1.0.1",
   "description": "A Fallout-themed take on the classic Flappy Bird. Guide a Radroach through the Wasteland, dodging every obstacle in its path.",
   "icon": "previews/flappyroach.png",
-  "previews": ["previews/game.bmp", "previews/menu.bmp"],
+  "previews": ["previews/menu.bmp", "previews/game.bmp"],
   "type": "game",
   "readme": "README.md",
   "storage": [

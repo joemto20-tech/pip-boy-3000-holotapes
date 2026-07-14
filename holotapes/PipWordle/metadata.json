@@ -5,7 +5,7 @@
   "version": "1.0.0",
   "description": "A Wordle clone for the Pip-Boy 3000.",
   "icon": "previews/wordle.png",
-  "previews": [],
+  "previews": ["previews/menu.bmp", "previews/game.bmp"],
   "type": "game",
   "readme": "README.md",
   "storage": [

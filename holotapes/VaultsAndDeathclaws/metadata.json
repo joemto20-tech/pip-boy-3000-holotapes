@@ -6,10 +6,10 @@
   "description": "A Fallout RPG Character and Dice Terminal.",
   "icon": "previews/VND.png",
   "previews": [
-    "previews/dice.bmp",
-    "previews/dice_roller.bmp",
+    "previews/list.bmp",
     "previews/edit.bmp",
-    "previews/list.bmp"
+    "previews/dice_roller.bmp",
+    "previews/dice.bmp"
   ],
   "type": "app",
   "readme": "README.md",
