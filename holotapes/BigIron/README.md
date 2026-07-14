@@ -38,8 +38,6 @@ Every enemy folder uses the same filenames:
   VICTORY.avi
   DEFEAT.avi
 
-VAULT_OPEN.avi may be placed either directly in VIDEO or inside VIDEO/Granny.
-
 ADDING AN ENEMY
 1. Duplicate the Granny folder and rename it.
 2. Replace the AVI files but keep the same filenames.
