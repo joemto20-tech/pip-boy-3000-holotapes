@@ -14,7 +14,7 @@ const state = {
 
 const quickTools = [
   ["G", "Grass"], ["P", "Path"], ["B", "Block"], ["H", "House"], ["D", "Door"], ["S", "Sand"],
-  ["spawn", "Spawn"], ["exit", "Exit"], ["regular", "Regular"], ["npcEncounter", "NPC Enc"], ["boss", "Boss"], ["shoot", "Shoot"], ["erase", "Erase"],
+  ["spawn", "Spawn"], ["exit", "Exit"], ["regular", "Regular"], ["npcEncounter", "NPC Enc"], ["boss", "Boss"], ["shoot", "Shoot"], ["duel", "Sprite Battle"], ["erase", "Erase"],
   ["tree", "Tree"], ["npc", "NPC"], ["camp", "Camp"], ["sign", "Sign"], ["rocks", "Rocks"]
 ];
 
@@ -199,6 +199,7 @@ function decorMark(type) {
 function encounterMark(item) {
   if (!item) return "";
   if (item.type === "shoot") return "SH";
+  if (item.type === "duel") return "SB";
   if (item.boss) return "B!";
   if (item.npc) return "N!";
   return "E";
@@ -238,6 +239,53 @@ function cleanId(value) {
 
 function cleanOptionalId(value) {
   return String(value || "").replace(/[^a-z0-9_]+/gi, "_").replace(/^_+|_+$/g, "").toUpperCase();
+}
+
+function cleanLabel(value, fallback, max = 14) {
+  return String(value || fallback)
+    .replace(/[^a-z0-9 ._'-]+/gi, "")
+    .trim()
+    .slice(0, max)
+    .toUpperCase() || fallback;
+}
+
+function cleanSpriteRef(value, fallback) {
+  const parts = String(value || fallback)
+    .replace(/\.(JS|IMG)$/i, "")
+    .split(/[\\/]+/)
+    .map((part) => cleanOptionalId(part))
+    .filter(Boolean);
+  return (parts.length ? parts : [fallback]).join("/");
+}
+
+function numberList(value, fallback, length) {
+  const parsed = String(value || "")
+    .split(",")
+    .map((part) => Math.round(Number(part.trim())))
+    .filter((number) => Number.isFinite(number));
+  const base = parsed.length >= length ? parsed : fallback;
+  return base.slice(0, length).map((number) => Math.max(0, Math.min(320, Math.round(Number(number) || 0))));
+}
+
+function boxList(value) {
+  const fallback = [
+    [8, 8, 154, 52],
+    [158, 111, 154, 58],
+    [178, 171, 134, 42],
+    [4, 203, 312, 33],
+    [4, 171, 174, 42]
+  ];
+  return String(value || "")
+    .split(";")
+    .map((item, index) => numberList(item, fallback[index] || [0, 0, 10, 10], 4))
+    .slice(0, 5);
+}
+
+function messageList(value) {
+  const fallback = ["ATTACK!", "POWER!", "DEFEND!", "FLEE!"];
+  const parts = String(value || "").split(";").map((part, index) => cleanLabel(part, fallback[index] || "ACTION", 18));
+  while (parts.length < 4) parts.push(fallback[parts.length]);
+  return parts.slice(0, 4);
 }
 
 function artIndex(art, x, y) {
@@ -534,7 +582,7 @@ function paintArtPoint(point, fillRect) {
 function placeEncounter(tool, x, y) {
   const world = state.world;
   const enemy = $("encEnemy").value || "RANDOM";
-  const prompt = $("encPrompt").value || (tool === "finalBoss" ? "FINAL BOSS?" : tool === "miniboss" ? "MINIBOSS?" : tool === "forge" ? "FORGE FINAL ROUND?" : tool === "boss" ? "BOSS?" : tool === "shoot" ? "TAKE SHOT?" : tool === "npcEncounter" ? "TALK?" : "ENCOUNTER?");
+  const prompt = $("encPrompt").value || (tool === "duel" ? "SPRITE BATTLE?" : tool === "finalBoss" ? "FINAL BOSS?" : tool === "miniboss" ? "MINIBOSS?" : tool === "forge" ? "FORGE FINAL ROUND?" : tool === "boss" ? "BOSS?" : tool === "shoot" ? "TAKE SHOT?" : tool === "npcEncounter" ? "TALK?" : "ENCOUNTER?");
   const once = $("encOnce").checked;
   const pickedSprite = $("decorSprite").value;
   const minRegular = Math.max(0, Math.min(20, Number($("minRegular").value) || 0));
@@ -551,7 +599,33 @@ function placeEncounter(tool, x, y) {
     prompt,
     once
   };
-  if (tool === "shoot") {
+  if (tool === "duel") {
+    const boxes = boxList($("duelBoxes").value);
+    world.interacts.push({
+      ...base,
+      type: "duel",
+      enemy,
+      en: cleanLabel($("duelEnemyName").value, "RADSCORP"),
+      el: Math.max(1, Math.min(99, Number($("duelEnemyLevel").value) || 16)),
+      pn: cleanLabel($("duelPlayerName").value, "GUNSLNGR"),
+      pl: Math.max(1, Math.min(99, Number($("duelPlayerLevel").value) || 18)),
+      es: cleanSpriteRef($("duelEnemySprite").value, "RADSCORP_SPRITE"),
+      ps: cleanSpriteRef($("duelPlayerSprite").value, "PLAYER_BATTLE_SPRITE"),
+      pr: cleanSpriteRef($("duelProjectileSprite").value, "BULLET_SPRITE"),
+      fx: cleanSpriteRef($("duelEffectSprite").value, "HIT_SPRITE"),
+      lay: {
+        e: numberList($("duelEnemyPos").value, [210, 18], 2),
+        p: numberList($("duelPlayerPos").value, [30, 86], 2),
+        shot: numberList($("duelShotPath").value, [128, 122, 220, 70], 4),
+        eb: boxes[0],
+        pb: boxes[1],
+        cb: boxes[2],
+        lb: boxes[3],
+        xb: boxes[4]
+      },
+      msg: messageList($("duelMessages").value)
+    });
+  } else if (tool === "shoot") {
     world.interacts.push({ ...base, type: "shoot", target: $("shootTarget").value || "RADROACH", enemy: $("shootTarget").value || "RADROACH" });
   } else if (tool === "forge") {
     world.interacts.push({ ...base, type: "forge", once: false });
@@ -630,7 +704,7 @@ function applyWorldTool(x, y) {
     if (requiredRound) exit.requiresRound = requiredRound;
     world.exits = (world.exits || []).filter((item) => !(item.x === x && item.y === y));
     world.exits.push(exit);
-  } else if (tool === "regular" || tool === "boss" || tool === "shoot" || tool === "npcEncounter" || tool === "miniboss" || tool === "forge" || tool === "finalBoss") {
+  } else if (tool === "regular" || tool === "boss" || tool === "shoot" || tool === "duel" || tool === "npcEncounter" || tool === "miniboss" || tool === "forge" || tool === "finalBoss") {
     placeEncounter(tool, x, y);
   } else if (["tree", "npc", "camp", "sign", "rocks"].includes(tool)) {
     world.decor = (world.decor || []).filter((item) => !(item.x === x && item.y === y));
@@ -959,6 +1033,13 @@ async function loadInfo() {
   $("decorSprite").innerHTML = ['<option value="">Auto</option>']
     .concat(decorSprites.map((name) => `<option value="${name.replace(/\.(JS|IMG)$/i, "")}">${name}</option>`))
     .join("");
+  const spriteOptions = (placeholder) => [`<option value="">${placeholder}</option>`]
+    .concat(state.info.sprites.map((name) => `<option value="${name.replace(/\.(JS|IMG)$/i, "")}">${name}</option>`))
+    .join("");
+  $("duelEnemySprite").innerHTML = spriteOptions("Enemy sprite");
+  $("duelPlayerSprite").innerHTML = spriteOptions("Player battle sprite");
+  $("duelProjectileSprite").innerHTML = spriteOptions("Projectile sprite");
+  $("duelEffectSprite").innerHTML = spriteOptions("Effect sprite");
   const enemyOptions = ['<option value="RANDOM">RANDOM</option>'].concat(state.info.enemies.map((enemy) => `<option value="${enemy.id}">${enemy.name} LV${enemy.level}</option>`));
   $("encEnemy").innerHTML = enemyOptions.join("");
   $("packageNotes").textContent = [
@@ -1002,6 +1083,10 @@ async function loadInfo() {
     "Assets/DATA/*SPRITE*.JS -> HOLO/BIGIRON/DATA/*SPRITE*.JS",
     "Assets/DATA/WORLD_XX/*SPRITE*.JS -> HOLO/BIGIRON/DATA/WORLD_XX/*SPRITE*.JS",
     "",
+    "Sprite battle assets:",
+    "Enemy/player battle/projectile/effect sprites should be saved as *SPRITE*.JS or WORLD_XX/*SPRITE*.JS",
+    "The Sprite Battle encounter stores these as es, ps, pr, and fx in the world JSON.",
+    "",
     "Local sprite copies saved by the Sprite Creator:",
     state.info.spriteExportRoot || "tools/bird/exports/sprites",
     "",
@@ -1014,6 +1099,7 @@ async function loadInfo() {
     'round-locked exit -> { requiresRound:"SCORCHED" }',
     'boss -> { type:"battle", boss:true, enemy:"...", music:"NVTH" }',
     'shoot -> { type:"shoot", target:"RADROACH" }',
+    'sprite battle -> { type:"duel", es:"ENEMY_SPRITE", ps:"PLAYER_BATTLE_SPRITE", pr:"BULLET_SPRITE", fx:"HIT_SPRITE" }',
     "",
     "Other DATA snippets:",
     "Assets/DATA/EYEBOT.JS and similar visual snippets go in HOLO/BIGIRON/DATA/"

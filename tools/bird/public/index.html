@@ -74,6 +74,7 @@
             <option value="finalBoss">Final Boss Encounter</option>
             <option value="boss">Boss Encounter</option>
             <option value="shoot">Shoot Encounter</option>
+            <option value="duel">Sprite Battle Encounter</option>
             <option value="tree">Tree</option>
             <option value="npc">NPC</option>
             <option value="camp">Camp</option>
@@ -138,6 +139,57 @@
           </label>
           <label>Map Sprite
             <select id="decorSprite"></select>
+          </label>
+        </div>
+
+        <div class="box">
+          <h2>Sprite Battle</h2>
+          <div class="field-row">
+            <label>Enemy Name
+              <input id="duelEnemyName" value="RADSCORP">
+            </label>
+            <label>Enemy Level
+              <input id="duelEnemyLevel" type="number" value="16" min="1" max="99">
+            </label>
+          </div>
+          <label>Enemy Sprite
+            <select id="duelEnemySprite"></select>
+          </label>
+          <div class="field-row">
+            <label>Player Name
+              <input id="duelPlayerName" value="GUNSLNGR">
+            </label>
+            <label>Player Level
+              <input id="duelPlayerLevel" type="number" value="18" min="1" max="99">
+            </label>
+          </div>
+          <label>Player Sprite
+            <select id="duelPlayerSprite"></select>
+          </label>
+          <div class="field-row">
+            <label>Projectile
+              <select id="duelProjectileSprite"></select>
+            </label>
+            <label>Effect
+              <select id="duelEffectSprite"></select>
+            </label>
+          </div>
+          <div class="field-row">
+            <label>Enemy Sprite XY
+              <input id="duelEnemyPos" value="210,18">
+            </label>
+            <label>Player Sprite XY
+              <input id="duelPlayerPos" value="30,86">
+            </label>
+          </div>
+          <label>Projectile Path
+            <input id="duelShotPath" value="128,122,220,70">
+          </label>
+          <label>Boxes: enemy; player; command; text; spare
+            <input id="duelBoxes" value="8,8,154,52;158,111,154,58;178,171,134,42;4,203,312,33;4,171,174,42">
+          </label>
+          <label>Action Text: attack; power; defend; run
+            <input id="duelMessages" value="ATTACK!;POWER!;DEFEND!;FLEE!">
           </label>
         </div>
 

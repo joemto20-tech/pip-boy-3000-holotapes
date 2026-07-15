@@ -35,9 +35,11 @@ The app is split into tabs:
 
 Use `New World + Art` in World Builder to start a new map build with matching art, then use `Edit Art Tools` to jump into the full art editor.
 
-B.I.R.D. can place the Big Iron story pieces directly in World Builder: regular encounters, NPC encounters, miniboss encounters with Judgment Round data, the Courier Round forge press, final boss encounters, and exits locked behind a required round.
+B.I.R.D. can place the Big Iron story pieces directly in World Builder: regular encounters, NPC encounters, miniboss encounters with Judgment Round data, the Courier Round forge press, final boss encounters, sprite battle encounters, and exits locked behind a required round.
 
 World-specific NPC/scenery sprites are stored as `Assets/DATA/WORLD_XX/SPRITE_NAME.JS` and can be assigned to map decor as `WORLD_XX/SPRITE_NAME`.
+
+Sprite battle encounters use the `Sprite Battle` box in World Builder. Pick or type the enemy sprite, player battle sprite, projectile sprite, and impact/effect sprite, then place the encounter with the `Sprite Battle Encounter` paint tool. The saved world entry uses the compact `type:"duel"` format so the runtime JSON stays small.
 
 The four player movement files should stay as:
 
