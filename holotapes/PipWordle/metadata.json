@@ -4,8 +4,8 @@
   "author": "@amogus-67",
   "version": "1.0.0",
   "description": "A Wordle clone for the Pip-Boy 3000.",
-  "icon": "assets/wordle.png",
-  "previews": [],
+  "icon": "previews/wordle.png",
+  "previews": ["previews/menu.bmp", "previews/game.bmp"],
   "type": "game",
   "readme": "README.md",
   "storage": [

@@ -5,7 +5,13 @@
   "version": "2.1.1",
   "description": "A Vault-Tec approved RobCo holotape for playing WAVs from `MUSIC/`, AVI reels from `VIDEOS/`, and images from `IMAGES/`.",
   "icon": "RCET.PNG",
-  "previews": [],
+  "previews": [
+    "previews/menu.bmp",
+    "previews/music.bmp",
+    "previews/music-menu.bmp",
+    "previews/images.bmp",
+    "previews/videos.bmp"
+  ],
   "type": "app",
   "readme": "README.md",
   "previousId": "iPip",
