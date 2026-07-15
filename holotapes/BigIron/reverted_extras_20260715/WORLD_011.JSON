@@ -1,0 +1,192 @@
+{
+  "id": "WORLD_05",
+  "tile": 16,
+  "scale": 40,
+  "spawn": [
+    11,
+    20
+  ],
+  "rows": [
+    "BBBBBBBBBBBBBBBBBBBBBBBB",
+    "BGGGGGGGGGGPPGGGGGGGGGGB",
+    "BGGGGGGGGGGPPGGGGGGGGGGB",
+    "BGGGGGGGGGGPPGGGGGGGGGGB",
+    "BGGGHGGGGGGHPGGGGGHGGGGB",
+    "BGGGPGGGGGGPPGGGGGPGGGGB",
+    "BGGPPPPPPPPPPPPPPPPPPGGB",
+    "BGGGGGGGGGGPPGGGGGGGGGGB",
+    "BGGGGGGGGGGPPGGGGGGGGGGB",
+    "BGGGGGGGGGGPPGGGGGGGGGGB",
+    "BGGGGHGGGGGPPGGGGGHGGGGB",
+    "BGGGGPGGGGGPPGGGGGPGGGGB",
+    "BGGPPPPPPPPPPPPPPPPPPGGB",
+    "BGGGGGGGGGGPPGGGGGGGGGGB",
+    "BGGGGGGGGGGPPGGGGGGGGGGB",
+    "BGGGGGGGGGGPPGGGGGGGGGGB",
+    "BGGGGGGHGGGPPGGGHGGGGGGB",
+    "BGGGGGGPGGGPPGGGPGGGGGGB",
+    "BGGPPPPPPPPPPPPPPPPPPGGB",
+    "BGGGGGGGGGGPPGGGGGGGGGGB",
+    "BGGGGGGGGGGPPGGGGGGGGGGB",
+    "BBBBBBBBBBBBBBBBBBBBBBBB"
+  ],
+  "interacts": [
+    {
+      "id": "world_05_home_04_05",
+      "type": "battle",
+      "x": 4,
+      "y": 5,
+      "prompt": "ENTER HOME?",
+      "enemy": "RANDOM",
+      "once": true
+    },
+    {
+      "id": "world_05_home_11_05",
+      "type": "battle",
+      "x": 11,
+      "y": 5,
+      "prompt": "ENTER HOME?",
+      "enemy": "RANDOM",
+      "once": true
+    },
+    {
+      "id": "world_05_home_18_05",
+      "type": "battle",
+      "x": 18,
+      "y": 5,
+      "prompt": "ENTER HOME?",
+      "enemy": "RANDOM",
+      "once": true
+    },
+    {
+      "id": "world_05_home_05_11",
+      "type": "battle",
+      "x": 5,
+      "y": 11,
+      "prompt": "ENTER HOME?",
+      "enemy": "RANDOM",
+      "once": true
+    },
+    {
+      "id": "world_05_home_18_11",
+      "type": "battle",
+      "x": 18,
+      "y": 11,
+      "prompt": "ENTER HOME?",
+      "enemy": "RANDOM",
+      "once": true
+    },
+    {
+      "id": "world_05_home_07_17",
+      "type": "battle",
+      "x": 7,
+      "y": 17,
+      "prompt": "ENTER HOME?",
+      "enemy": "RANDOM",
+      "once": true
+    },
+    {
+      "id": "world_05_home_16_17",
+      "type": "battle",
+      "x": 16,
+      "y": 17,
+      "prompt": "ENTER HOME?",
+      "enemy": "RANDOM",
+      "once": true
+    },
+    {
+      "id": "world_05_village_save",
+      "type": "save",
+      "x": 12,
+      "y": 12,
+      "prompt": "SAVE HERE?"
+    },
+    {
+      "id": "world_05_npcEncounter_3_12",
+      "x": 3,
+      "y": 12,
+      "prompt": "ENCOUNTER?",
+      "once": true,
+      "type": "battle",
+      "npc": true,
+      "enemy": "RANDOM",
+      "decorId": "world_05_npc_3_12",
+      "patrol": "horizontal",
+      "dir": "right",
+      "range": 3,
+      "sight": 6
+    }
+  ],
+  "exits": [
+    {
+      "id": "world_05_back_to_world_04",
+      "x": 11,
+      "y": 21,
+      "to": "WORLD_04",
+      "spawn": [
+        39,
+        16
+      ],
+      "facing": "left"
+    }
+  ],
+  "decor": [
+    {
+      "id": "world_05_home_tree_04_04",
+      "type": "tree",
+      "x": 4,
+      "y": 4
+    },
+    {
+      "id": "world_05_home_tree_11_04",
+      "type": "tree",
+      "x": 11,
+      "y": 4
+    },
+    {
+      "id": "world_05_home_tree_18_04",
+      "type": "tree",
+      "x": 18,
+      "y": 4
+    },
+    {
+      "id": "world_05_home_tree_05_10",
+      "type": "tree",
+      "x": 5,
+      "y": 10
+    },
+    {
+      "id": "world_05_home_tree_18_10",
+      "type": "tree",
+      "x": 18,
+      "y": 10
+    },
+    {
+      "id": "world_05_home_tree_07_16",
+      "type": "tree",
+      "x": 7,
+      "y": 16
+    },
+    {
+      "id": "world_05_home_tree_16_16",
+      "type": "tree",
+      "x": 16,
+      "y": 16
+    },
+    {
+      "id": "world_05_save_sign",
+      "type": "sign",
+      "x": 12,
+      "y": 12,
+      "sprite": "SIGN_SPRITE"
+    },
+    {
+      "id": "world_05_npc_3_12",
+      "type": "npc",
+      "x": 3,
+      "y": 12,
+      "sprite": "NPC_SPRITE",
+      "facing": "right"
+    }
+  ]
+}

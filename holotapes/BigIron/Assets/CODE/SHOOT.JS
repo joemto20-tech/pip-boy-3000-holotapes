@@ -17,6 +17,7 @@
   var pause=-1;
   var tickTimer=null;
   var clickTimer=null;
+  var returnTimer=null;
   var roachName=(arg.target||"RADROACH").toString();
 
   function clamp(v,min,max){
@@ -85,7 +86,8 @@
         x:s.x,
         y:s.y,
         facing:s.facing,
-        cleared:s.cleared||{}
+        cleared:s.cleared||{},
+        story:s.story||{}
       };
     }
     return true;
@@ -93,14 +95,25 @@
 
   function saveWorld(clear){
     var s=readState();
+    var first=false;
     if(!s)s={};
     if(!s.cleared)s.cleared={};
+    if(!s.story)s.story={};
+    if(!s.story.rounds)s.story.rounds={};
     s.map=arg.map;
     s.mode=arg.mode||"tile";
     s.x=arg.x;
     s.y=arg.y;
     s.facing=arg.facing;
-    if(clear&&arg.once&&arg.interact)s.cleared[arg.interact]=1;
+    if(clear&&arg.once&&arg.interact&&!s.cleared[arg.interact]){
+      first=true;
+      s.cleared[arg.interact]=1;
+    }
+    if(first){
+      s.story.encounters=(s.story.encounters||0)+1;
+      s.story.deadLead=s.story.encounters;
+      if(s.story.encounters>=20)s.story.forgeReady=1;
+    }
     writeState(s);
   }
 
@@ -199,7 +212,9 @@
     font(1);
     h.drawString("RETURNING TO MAP",W/2,205);
     h.flip();
-    setTimeout(function(){
+    if(returnTimer)clearTimeout(returnTimer);
+    returnTimer=setTimeout(function(){
+      returnTimer=null;
       A.world({map:arg.map,x:arg.x,y:arg.y,facing:arg.facing,msg:win?"RADROACH CLEARED":"NEED MORE PRACTICE"});
     },1500);
   }
@@ -331,8 +346,10 @@
     dead=true;
     if(tickTimer)clearInterval(tickTimer);
     if(clickTimer)clearTimeout(clickTimer);
+    if(returnTimer)clearTimeout(returnTimer);
     tickTimer=null;
     clickTimer=null;
+    returnTimer=null;
     A.gc();
   }
 

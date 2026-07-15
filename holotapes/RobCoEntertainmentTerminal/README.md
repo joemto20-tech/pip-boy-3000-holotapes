@@ -142,8 +142,11 @@ Convert audio, video, and images into the supported formats at
 1. Open the music player, then hold / long press the left wheel button.
 2. Select a setting to adjust using the left knob.
 3. Adjust sorting from A-Z or Z-A.
-4. Adjust screen brightness with the right knob.
-5. Adjust volume with the right knob.
+4. Set **MUSIC MODE** to **PERSIST** to keep the current song playing through
+   the Pip-Boy after leaving RobCo. Set it to **DEFAULT** to use the original
+   stop-on-exit behavior.
+5. Adjust screen brightness with the right knob.
+6. Adjust volume with the right knob.
 
 ### License(s)
 

@@ -2,7 +2,9 @@ const fs = require("fs");
 const path = require("path");
 
 const root = path.resolve(__dirname, "..");
-const targets = ["WORLD", "BATTLE", "SHOOT"];
+const requestedTargets = process.argv.slice(2).map((value) => String(value || "").toUpperCase()).filter(Boolean);
+const targets = requestedTargets.length ? requestedTargets : ["WORLD", "BATTLE", "SHOOT"];
+const allowedTargets = { APP: true, WORLD: true, BATTLE: true, SHOOT: true };
 
 function stripComments(src) {
   let out = "";
@@ -86,8 +88,15 @@ function compactWhitespace(src) {
 }
 
 for (const name of targets) {
-  const input = path.join(root, "holotapes", "BigIron", "Assets", "CODE", `${name}.JS`);
-  const output = path.join(root, "holotapes", "BigIron", "Assets", "CODE", `${name}.MIN.JS`);
+  if (!allowedTargets[name]) throw new Error(`Unknown BigIron code target: ${name}`);
+  const input =
+    name === "APP"
+      ? path.join(root, "holotapes", "BigIron", "APP.JS")
+      : path.join(root, "holotapes", "BigIron", "Assets", "CODE", `${name}.JS`);
+  const output =
+    name === "APP"
+      ? path.join(root, "holotapes", "BigIron", "APP.MIN.JS")
+      : path.join(root, "holotapes", "BigIron", "Assets", "CODE", `${name}.MIN.JS`);
   const source = fs.readFileSync(input, "utf8");
   const minified = compactWhitespace(stripComments(source)).trim();
   fs.writeFileSync(output, minified + "\n", "ascii");

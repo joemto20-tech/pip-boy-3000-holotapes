@@ -63,9 +63,10 @@
 
   let isPlayAll = false;
   let playAllIdx = 0;
-  let sortDir = app.sortDir || global.__RCETSort || 1; // 1 = A-Z, -1 = Z-A
+  let sortDir = app.sortDir || 1; // 1 = A-Z, -1 = Z-A
 
   let suppressAudioStopped = false;
+  const musicState = app.musicState || (app.musicState = {});
 
   let waveInterval = null;
   let wavePoly = null;
@@ -488,6 +489,7 @@
     isPlayAll = true;
     playAllIdx = songPage * PAGE_SIZE;
     if (playAllIdx >= allSongs.length) playAllIdx = 0;
+    saveState();
     playNextPlayAll();
     drawList();
     uiSound('SELECT');
@@ -510,6 +512,7 @@
     playingPath = null;
 
     startRandom(currentStation);
+    saveState();
     drawList();
     uiSound('SELECT');
   }
@@ -659,6 +662,7 @@
     isRandom = false;
     isPlayAll = false;
     randomQueue = [];
+    saveState();
 
     view = 'songs';
     currentStation = stationName;
@@ -667,6 +671,7 @@
     scrollOffset = 0;
     loadSongs(stationName);
     rebuildList();
+    saveState();
     drawAll();
     uiSound('TAB');
   }
@@ -680,6 +685,7 @@
     scrollOffset = 0;
     loadStations();
     rebuildList();
+    saveState();
     drawAll();
     uiSound('TAB');
   }
@@ -692,6 +698,7 @@
     isAudioPlaying = false;
     Pip.radioClipPlaying = false;
     playingPath = null;
+    saveState();
     if (isRandom) {
       playNextRandom();
       return;
@@ -701,6 +708,7 @@
       return;
     }
     playingName = null;
+    saveState();
     drawNowPlaying(null, false);
     drawList();
   }
@@ -751,12 +759,11 @@
       clearTimeout(volHudTimeout);
       volHudTimeout = null;
     }
-    suppressAudioStopped = true;
-    isAudioPlaying = false;
-    Pip.radioClipPlaying = false;
-    try {
-      Pip.audioStop();
-    } catch (e) {}
+    if (app.persistentMusic) {
+      saveState();
+    } else if (app.stopMusicPlayback) {
+      app.stopMusicPlayback();
+    }
     uiSound('TAB');
     app.go(app.scenes.MENU || 'MENU.JS');
   }
@@ -771,7 +778,11 @@
       volHudTimeout = null;
     }
     uiSound('TAB');
-    stopSong();
+    if (app.persistentMusic) {
+      saveState();
+    } else {
+      stopSong();
+    }
     app.go(app.scenes.SETTINGS || 'SETTINGS.JS');
   }
 
@@ -797,6 +808,7 @@
     if (scanned >= allSongs.length) {
       isPlayAll = false;
       playingName = null;
+      saveState();
       drawNowPlaying(null, false);
       drawList();
       return;
@@ -815,6 +827,7 @@
   function playNextRandom() {
     if (!isRandom || !randomQueue.length) {
       isRandom = false;
+      saveState();
       drawNowPlaying(null, false);
       drawList();
       return;
@@ -861,6 +874,7 @@
     lastPlayedName = songName;
     isAudioPlaying = true;
     Pip.radioClipPlaying = true;
+    saveState();
 
     drawNowPlaying(playingName, false);
     drawList();
@@ -933,9 +947,16 @@
     Pip.removeListener('knob2', onKnob2);
     Pip.removeListener('audioStopped', onAudioStopped);
 
-    isAudioPlaying = false;
-    Pip.radioClipPlaying = false;
-    Pip.audioStop();
+    if (app.persistentMusic) {
+      saveState();
+      Pip.radioClipPlaying = isAudioPlaying;
+    } else if (app.stopMusicPlayback) {
+      app.stopMusicPlayback();
+    } else {
+      isAudioPlaying = false;
+      Pip.radioClipPlaying = false;
+      Pip.audioStop();
+    }
 
     h.clear();
     h.flip();
@@ -962,9 +983,50 @@
     });
   }
 
+  function restoreState() {
+    view = musicState.view || 'stations';
+    currentStation = musicState.currentStation || null;
+    selectedIdx = musicState.selectedIdx || 0;
+    scrollOffset = musicState.scrollOffset || 0;
+    songPage = musicState.songPage || 0;
+    playingPath = musicState.playingPath || null;
+    playingName = musicState.playingName || null;
+    playingStation = musicState.playingStation || null;
+    lastPlayedName = musicState.lastPlayedName || null;
+    isAudioPlaying = !!musicState.isAudioPlaying && !!playingPath;
+    isRandom = !!musicState.isRandom;
+    randomQueue = musicState.randomQueue ? musicState.randomQueue.slice() : [];
+    randomQueueIdx = musicState.randomQueueIdx || 0;
+    isPlayAll = !!musicState.isPlayAll;
+    playAllIdx = musicState.playAllIdx || 0;
+  }
+
+  function saveState() {
+    musicState.currentStation = currentStation;
+    musicState.isAudioPlaying = isAudioPlaying;
+    musicState.isPlayAll = isPlayAll;
+    musicState.isRandom = isRandom;
+    musicState.lastPlayedName = lastPlayedName;
+    musicState.playAllIdx = playAllIdx;
+    musicState.playingName = playingName;
+    musicState.playingPath = playingPath;
+    musicState.playingStation = playingStation;
+    musicState.randomQueue = randomQueue.slice();
+    musicState.randomQueueIdx = randomQueueIdx;
+    musicState.scrollOffset = scrollOffset;
+    musicState.selectedIdx = selectedIdx;
+    musicState.songPage = songPage;
+    musicState.view = view;
+  }
+
   function start() {
     h.clear();
-    Pip.audioStop();
+    if (!app.persistentMusic && app.stopMusicPlayback) {
+      app.stopMusicPlayback();
+    } else if (!app.persistentMusic) {
+      Pip.audioStop();
+    }
+    restoreState();
 
     currentVol = readSystemVolume();
     try {
@@ -980,7 +1042,15 @@
     initWaveform();
     ensureMusicDir();
     loadStations();
+    if (view === 'songs' && currentStation) {
+      loadSongs(currentStation);
+    } else {
+      view = 'stations';
+      currentStation = null;
+    }
     rebuildList();
+    saveState();
+    Pip.radioClipPlaying = isAudioPlaying;
     drawAll();
   }
 
@@ -1003,6 +1073,7 @@
       randomQueue[1] = t;
     }
     randomQueueIdx = 0;
+    saveState();
     playSong(stationName, randomQueue[randomQueueIdx++].name);
   }
 
@@ -1023,13 +1094,15 @@
     isRandom = false;
     isPlayAll = false;
     randomQueue = [];
+    saveState();
     drawNowPlaying(null, false);
     drawList();
   }
 
   function uiSound(name) {
     try {
-      if (Pip.playSound) Pip.playSound(name);
+      if (app.playUiSound) app.playUiSound(name);
+      else if (Pip.playSound) Pip.playSound(name);
     } catch (e) {}
   }
 

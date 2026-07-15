@@ -9,10 +9,38 @@ const PORT = Number(process.env.BIRD_PORT || 7331);
 const HOST = "127.0.0.1";
 const appRoot = __dirname;
 const publicRoot = path.join(appRoot, "public");
+
+function findBigIronRoot(start) {
+  let current = path.resolve(start);
+  while (true) {
+    const candidates = [
+      path.join(current, "holotapes", "BigIron"),
+      path.join(current, "BigIron"),
+      current
+    ];
+    for (const candidate of candidates) {
+      if (
+        fs.existsSync(path.join(candidate, "Assets", "DATA")) ||
+        fs.existsSync(path.join(candidate, "battle.json")) ||
+        fs.existsSync(path.join(candidate, "metadata.json"))
+      ) {
+        return candidate;
+      }
+    }
+    const parent = path.dirname(current);
+    if (parent === current) break;
+    current = parent;
+  }
+  return path.resolve(start, "..", "..", "holotapes", "BigIron");
+}
+
 const repoRoot = path.resolve(appRoot, "..", "..");
-const bigIronRoot = path.join(repoRoot, "holotapes", "BigIron");
+const bigIronRoot = findBigIronRoot(appRoot);
 const assetsRoot = path.join(bigIronRoot, "Assets");
 const dataRoot = path.join(assetsRoot, "DATA");
+const worldArtRoot = path.join(assetsRoot, "WORLD");
+const exportRoot = path.join(appRoot, "exports");
+const spriteExportRoot = path.join(exportRoot, "sprites");
 const metadataPath = path.join(bigIronRoot, "metadata.json");
 const battlePath = path.join(bigIronRoot, "battle.json");
 
@@ -78,10 +106,41 @@ function cleanBase(value, fallback) {
     .toUpperCase() || fallback;
 }
 
+function cleanSpriteRef(value, fallback) {
+  const parts = String(value || fallback)
+    .replace(/\.(JS|IMG)$/i, "")
+    .split(/[\\/]+/)
+    .map((part) => cleanBase(part, ""))
+    .filter(Boolean);
+  return (parts.length ? parts : [fallback]).join("/");
+}
+
 function dataPath(name, fallback, ext) {
   const fileName = cleanBase(name, fallback) + ext;
   const target = path.resolve(dataRoot, fileName);
   if (!target.startsWith(path.resolve(dataRoot))) throw new Error("Unsafe file path.");
+  return target;
+}
+
+function spritePath(name, fallback) {
+  const ref = cleanSpriteRef(name, fallback);
+  const isPlayer = /^PLAYER_SPRITE/i.test(path.basename(ref));
+  const target = path.resolve(dataRoot, ...ref.split("/")) + (isPlayer ? ".IMG" : ".JS");
+  if (!target.startsWith(path.resolve(dataRoot))) throw new Error("Unsafe sprite path.");
+  return { ref, target, ext: isPlayer ? ".IMG" : ".JS" };
+}
+
+function spriteExportPath(name, fallback) {
+  const ref = cleanSpriteRef(name, fallback);
+  const target = path.resolve(spriteExportRoot, ...ref.split("/")) + ".JS";
+  if (!target.startsWith(path.resolve(spriteExportRoot))) throw new Error("Unsafe sprite export path.");
+  return { ref, target };
+}
+
+function worldArtPath(name, fallback, ext) {
+  const fileName = cleanBase(name, fallback) + ext;
+  const target = path.resolve(worldArtRoot, fileName);
+  if (!target.startsWith(path.resolve(worldArtRoot))) throw new Error("Unsafe world art path.");
   return target;
 }
 
@@ -95,6 +154,47 @@ function listData(ext, pattern) {
   }
 }
 
+function listSprites() {
+  const found = [];
+  function walk(folder) {
+    if (!fs.existsSync(folder)) return;
+    for (const item of fs.readdirSync(folder, { withFileTypes: true })) {
+      const full = path.join(folder, item.name);
+      if (item.isDirectory()) walk(full);
+      else if (/\.(JS|IMG)$/i.test(item.name) && /SPRITE/i.test(item.name)) {
+        found.push(path.relative(dataRoot, full).replace(/\\/g, "/"));
+      }
+    }
+  }
+  walk(dataRoot);
+  const imgPlayers = new Set(found.filter((name) => /^PLAYER_SPRITE/i.test(path.basename(name)) && /\.IMG$/i.test(name)).map((name) => name.replace(/\.IMG$/i, "").toUpperCase()));
+  return found
+    .filter((name) => !( /^PLAYER_SPRITE/i.test(path.basename(name)) && /\.JS$/i.test(name) && imgPlayers.has(name.replace(/\.JS$/i, "").toUpperCase()) ))
+    .sort((a, b) => a.localeCompare(b));
+}
+
+function listWorldArt(ext) {
+  try {
+    if (!fs.existsSync(worldArtRoot)) fs.mkdirSync(worldArtRoot, { recursive: true });
+    return fs.readdirSync(worldArtRoot)
+      .filter((name) => name.toUpperCase().endsWith(ext))
+      .sort((a, b) => a.localeCompare(b));
+  } catch (error) {
+    return [];
+  }
+}
+
+function listWorldDetails() {
+  return listData(".JSON", /^WORLD_/i).map((file) => {
+    const world = readJson(path.join(dataRoot, file), {});
+    return {
+      file,
+      id: cleanBase(world.id || file, file.replace(/\.JSON$/i, "")),
+      image: world.image || ""
+    };
+  });
+}
+
 function normalizeWorld(input) {
   if (!input || typeof input !== "object") throw new Error("World must be a JSON object.");
   const rows = Array.isArray(input.rows) ? input.rows : [];
@@ -103,7 +203,7 @@ function normalizeWorld(input) {
   const cleanRows = rows.map((row) =>
     (String(row || "").toUpperCase().replace(/[^GPBHDSXRFS]/g, "G") + "G".repeat(width)).slice(0, width)
   );
-  return {
+  const world = {
     id: cleanBase(input.id, "WORLD_01"),
     tile: Number(input.tile) || 16,
     scale: Number(input.scale) || 24,
@@ -112,6 +212,59 @@ function normalizeWorld(input) {
     interacts: Array.isArray(input.interacts) ? input.interacts : [],
     exits: Array.isArray(input.exits) ? input.exits : [],
     decor: Array.isArray(input.decor) ? input.decor : []
+  };
+  if (input.name) world.name = String(input.name);
+  for (const key of ["image", "imageDraw", "drawMode"]) {
+    if (input[key]) world[key] = String(input[key]);
+  }
+  for (const key of ["imgScale", "step", "w", "h", "lightRadius", "lightBand", "npcPace"]) {
+    if (input[key] !== undefined) world[key] = Number(input[key]) || input[key];
+  }
+  for (const key of ["spawnPx", "imageInteracts", "imageExits", "imageDecor", "imageBlocks", "blocks"]) {
+    if (input[key] !== undefined) world[key] = input[key];
+  }
+  return world;
+}
+
+function compactRuntimeWorld(world) {
+  const copy = JSON.parse(JSON.stringify(world));
+  const clean = (item) => {
+    if (!item || typeof item !== "object") return item;
+    delete item.storyCity;
+    delete item.storyType;
+    delete item.lockedMsg;
+    delete item.bulletName;
+    delete item.miniboss;
+    delete item.finalBoss;
+    delete item.bullet;
+    delete item.requiresRound;
+    delete item.music;
+    if (item.w === 1) delete item.w;
+    if (item.h === 1) delete item.h;
+    if (item.minRegular === 2) delete item.minRegular;
+    return item;
+  };
+  delete copy.tile;
+  if (Array.isArray(copy.interacts)) copy.interacts.forEach(clean);
+  if (Array.isArray(copy.exits)) copy.exits.forEach(clean);
+  if (Array.isArray(copy.decor)) copy.decor.forEach(clean);
+  return JSON.stringify(copy) + "\n";
+}
+
+function normalizeArt(input) {
+  if (!input || typeof input !== "object") throw new Error("World art must be a JSON object.");
+  const width = Math.max(8, Math.min(255, Number(input.width) || 240));
+  const height = Math.max(8, Math.min(255, Number(input.height) || 148));
+  const bpp = Number(input.bpp) === 1 ? 1 : 2;
+  const max = (1 << bpp) - 1;
+  const pixels = Array.isArray(input.pixels) ? input.pixels.slice(0, width * height) : [];
+  while (pixels.length < width * height) pixels.push(0);
+  return {
+    name: cleanBase(input.name, "WORLD_ART"),
+    width,
+    height,
+    bpp,
+    pixels: pixels.map((value) => Math.max(0, Math.min(max, Number(value) || 0)))
   };
 }
 
@@ -167,31 +320,96 @@ function parseSprite(source, fallback) {
   return { name, width, height, bpp, pixels: unpackPixels(Buffer.from(base64, "base64"), width, height, bpp) };
 }
 
+function parseSpriteImage(buffer, fallback) {
+  const bytes = Buffer.from(buffer);
+  const width = bytes[0];
+  const height = bytes[1];
+  const bpp = bytes[2] & 15;
+  if (!width || !height || !bpp) throw new Error("Sprite IMG is incomplete.");
+  return {
+    name: cleanBase(fallback, "PLAYER_SPRITE"),
+    width,
+    height,
+    bpp,
+    pixels: unpackPixels(bytes.slice(4), width, height, bpp)
+  };
+}
+
 function makeSpriteSnippet(input) {
   const width = Math.max(1, Math.min(64, Number(input.width) || 12));
   const height = Math.max(1, Math.min(64, Number(input.height) || 14));
-  const bpp = Number(input.bpp) === 1 ? 1 : 2;
+  const requestedBpp = Number(input.bpp);
+  const bpp = requestedBpp === 1 || requestedBpp === 2 || requestedBpp === 4 ? requestedBpp : 2;
   const pixels = Array.isArray(input.pixels) ? input.pixels : [];
   if (pixels.length !== width * height) throw new Error("Sprite pixel count does not match dimensions.");
   const name = cleanBase(input.name, "PLAYER_SPRITE");
   const base64 = packPixels(pixels, width, height, bpp).toString("base64");
   return {
+    name,
     fileName: name + ".JS",
     source: `var ${name}={width:${width},height:${height},bpp:${bpp},transparent:0,buffer:atob("${base64}")};\n`
   };
+}
+
+function makeSpriteImage(input) {
+  const width = Math.max(1, Math.min(64, Number(input.width) || 12));
+  const height = Math.max(1, Math.min(64, Number(input.height) || 14));
+  const requestedBpp = Number(input.bpp);
+  const bpp = requestedBpp === 1 || requestedBpp === 2 || requestedBpp === 4 ? requestedBpp : 2;
+  const pixels = Array.isArray(input.pixels) ? input.pixels : [];
+  if (pixels.length !== width * height) throw new Error("Sprite pixel count does not match dimensions.");
+  const name = cleanBase(input.name, "PLAYER_SPRITE");
+  return {
+    name,
+    fileName: name + ".IMG",
+    buffer: Buffer.concat([Buffer.from([width, height, 128 | bpp, 0]), packPixels(pixels, width, height, bpp)])
+  };
+}
+
+function makeImageBuffer(input) {
+  const art = normalizeArt(input);
+  return {
+    art,
+    buffer: Buffer.concat([Buffer.from([art.width, art.height, art.bpp]), packPixels(art.pixels, art.width, art.height, art.bpp)])
+  };
+}
+
+function addMetadataStorage(name, urlPath) {
+  const metadata = readJson(metadataPath, {});
+  metadata.storage = Array.isArray(metadata.storage) ? metadata.storage : [];
+  if (!metadata.storage.some((item) => item && item.name === name)) {
+    metadata.storage.push({ name, url: urlPath });
+    fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2) + "\n", "utf8");
+  }
+}
+
+function addInfoFile(name) {
+  const info = readJson(path.join(bigIronRoot, "BIGIRON.info"), null);
+  if (!info) return;
+  const files = String(info.files || "").split(",").map((item) => item.trim()).filter(Boolean);
+  if (!files.includes(name)) {
+    files.push(name);
+    info.files = files.join(",");
+    fs.writeFileSync(path.join(bigIronRoot, "BIGIRON.info"), JSON.stringify(info, null, 2) + "\n", "utf8");
+  }
 }
 
 async function api(req, res, url) {
   if (url.pathname === "/api/info") {
     const metadata = readJson(metadataPath, {});
     const battle = readJson(battlePath, {});
+    const worldDetails = listWorldDetails();
     json(res, 200, {
       ok: true,
       version: metadata.version || "",
       bigIronRoot,
       dataRoot,
-      worlds: listData(".JSON", /^WORLD_/i),
-      sprites: listData(".JS", /SPRITE/i),
+      worldArtRoot,
+      spriteExportRoot,
+      worlds: worldDetails.map((world) => world.file),
+      worldDetails,
+      worldArt: listWorldArt(".JSON"),
+      sprites: listSprites(),
       enemies: (battle.enemies || []).map((enemy) => ({
         id: enemy.id || enemy.name || enemy.folder,
         name: enemy.name || enemy.id || enemy.folder,
@@ -212,22 +430,95 @@ async function api(req, res, url) {
     const body = await bodyJson(req);
     const world = normalizeWorld(body.world || body);
     const target = dataPath(body.name || world.id, world.id, ".JSON");
-    fs.writeFileSync(target, JSON.stringify(world, null, 2) + "\n", "utf8");
+    fs.writeFileSync(target, compactRuntimeWorld(world), "utf8");
     json(res, 200, { ok: true, name: path.basename(target), world });
     return;
   }
 
+  if (url.pathname === "/api/art" && req.method === "GET") {
+    const name = url.searchParams.get("name") || "WORLD_ART";
+    const target = worldArtPath(name, "WORLD_ART", ".JSON");
+    if (fs.existsSync(target)) {
+      json(res, 200, { ok: true, name: path.basename(target), art: JSON.parse(fs.readFileSync(target, "utf8")) });
+      return;
+    }
+    json(res, 200, { ok: true, name: path.basename(target), art: normalizeArt({ name: cleanBase(name, "WORLD_ART"), width: 240, height: 148, bpp: 2 }) });
+    return;
+  }
+
+  if (url.pathname === "/api/art" && req.method === "POST") {
+    const body = await bodyJson(req);
+    const made = makeImageBuffer(body.art || body);
+    const jsonTarget = worldArtPath(body.name || made.art.name, made.art.name, ".JSON");
+    const imgTarget = worldArtPath(body.name || made.art.name, made.art.name, ".IMG");
+    const imageName = path.basename(imgTarget);
+    fs.mkdirSync(worldArtRoot, { recursive: true });
+    fs.writeFileSync(jsonTarget, JSON.stringify(made.art, null, 2) + "\n", "utf8");
+    fs.writeFileSync(imgTarget, made.buffer);
+    addMetadataStorage(`HOLO/BIGIRON/WORLD/${imageName}`, `Assets/WORLD/${imageName}`);
+    addInfoFile(`HOLO/BIGIRON/WORLD/${imageName}`);
+    if (body.world) {
+      const worldTarget = dataPath(body.world, body.world, ".JSON");
+      const world = normalizeWorld(readJson(worldTarget, null));
+      world.image = imageName;
+      world.imageDraw = body.imageDraw || "patch";
+      world.imgScale = Number(body.imgScale) || 2;
+      world.w = made.art.width;
+      world.h = made.art.height;
+      world.spawnPx = Array.isArray(world.spawnPx) ? world.spawnPx : world.spawn;
+      fs.writeFileSync(worldTarget, compactRuntimeWorld(world), "utf8");
+    }
+    json(res, 200, { ok: true, name: imageName, json: path.basename(jsonTarget), art: made.art });
+    return;
+  }
+
   if (url.pathname === "/api/sprite" && req.method === "GET") {
-    const target = dataPath(url.searchParams.get("name") || "PLAYER_SPRITEDOWN", "PLAYER_SPRITEDOWN", ".JS");
-    json(res, 200, { ok: true, name: path.basename(target), sprite: parseSprite(fs.readFileSync(target, "utf8"), path.basename(target)) });
+    const found = spritePath(url.searchParams.get("name") || "PLAYER_SPRITEDOWN", "PLAYER_SPRITEDOWN");
+    const sprite = found.ext === ".IMG"
+      ? parseSpriteImage(fs.readFileSync(found.target), path.basename(found.target))
+      : parseSprite(fs.readFileSync(found.target, "utf8"), path.basename(found.target));
+    json(res, 200, { ok: true, name: found.ref + found.ext, sprite, runtime: found.ext });
     return;
   }
 
   if (url.pathname === "/api/sprite" && req.method === "POST") {
-    const snippet = makeSpriteSnippet(await bodyJson(req));
-    const target = dataPath(snippet.fileName, "PLAYER_SPRITE", ".JS");
-    fs.writeFileSync(target, snippet.source, "utf8");
-    json(res, 200, { ok: true, name: path.basename(target), snippet: snippet.source });
+    const body = await bodyJson(req);
+    const playerSprite = /^PLAYER_SPRITE/i.test(cleanBase(body.name, "PLAYER_SPRITE"));
+    const output = playerSprite ? makeSpriteImage(body) : makeSpriteSnippet(body);
+    const scope = playerSprite ? "global" : String(body.scope || "global").toLowerCase();
+    const world = cleanBase(body.world || body.worldId || "", "");
+    const ref = scope === "world" && world ? `${world}/${output.name}` : output.name;
+    const found = spritePath(ref, "PLAYER_SPRITE");
+    fs.mkdirSync(path.dirname(found.target), { recursive: true });
+    if (playerSprite) fs.writeFileSync(found.target, output.buffer);
+    else fs.writeFileSync(found.target, output.source, "utf8");
+    addMetadataStorage(`HOLO/BIGIRON/DATA/${found.ref}${found.ext}`, `Assets/DATA/${found.ref}${found.ext}`);
+    addInfoFile(`HOLO/BIGIRON/DATA/${found.ref}${found.ext}`);
+    json(res, 200, {
+      ok: true,
+      name: found.ref + found.ext,
+      ref: found.ref,
+      global: playerSprite || scope !== "world",
+      runtime: found.ext,
+      snippet: playerSprite ? `Saved ${found.ref}.IMG for the low-memory Big Iron runtime.` : output.source
+    });
+    return;
+  }
+
+  if (url.pathname === "/api/sprite-local" && req.method === "POST") {
+    const body = await bodyJson(req);
+    const playerSprite = /^PLAYER_SPRITE/i.test(cleanBase(body.name, "PLAYER_SPRITE"));
+    const output = playerSprite ? makeSpriteImage(body) : makeSpriteSnippet(body);
+    const scope = playerSprite ? "global" : String(body.scope || "global").toLowerCase();
+    const world = cleanBase(body.world || body.worldId || "", "");
+    const ref = scope === "world" && world ? `${world}/${output.name}` : output.name;
+    const found = spriteExportPath(ref, "PLAYER_SPRITE");
+    const target = playerSprite ? found.target.replace(/\.JS$/i, ".IMG") : found.target;
+    const name = found.ref + (playerSprite ? ".IMG" : ".JS");
+    fs.mkdirSync(path.dirname(found.target), { recursive: true });
+    if (playerSprite) fs.writeFileSync(target, output.buffer);
+    else fs.writeFileSync(target, output.source, "utf8");
+    json(res, 200, { ok: true, name, ref: found.ref, path: target, snippet: playerSprite ? `Saved ${name} locally.` : output.source });
     return;
   }
 
@@ -253,6 +544,32 @@ function makeServer() {
   });
 }
 
+function assertPaths() {
+  if (!fs.existsSync(assetsRoot)) fs.mkdirSync(assetsRoot, { recursive: true });
+  if (!fs.existsSync(dataRoot)) fs.mkdirSync(dataRoot, { recursive: true });
+  if (!fs.existsSync(worldArtRoot)) fs.mkdirSync(worldArtRoot, { recursive: true });
+  if (!fs.existsSync(spriteExportRoot)) fs.mkdirSync(spriteExportRoot, { recursive: true });
+  for (const item of [publicRoot, bigIronRoot, assetsRoot, dataRoot, worldArtRoot, spriteExportRoot]) {
+    if (!fs.existsSync(item)) throw new Error(`Missing required path: ${item}`);
+  }
+}
+
+function selfTest() {
+  assertPaths();
+  const worlds = listData(".JSON", /^WORLD_/i);
+  const sprites = listSprites();
+  if (worlds.length) normalizeWorld(readJson(path.join(dataRoot, worlds[0]), null));
+  if (sprites.length) {
+    const first = path.join(dataRoot, ...sprites[0].split("/"));
+    const sprite = /\.IMG$/i.test(sprites[0])
+      ? parseSpriteImage(fs.readFileSync(first), sprites[0])
+      : parseSprite(fs.readFileSync(first, "utf8"), sprites[0]);
+    if (/^PLAYER_SPRITE/i.test(sprite.name)) makeSpriteImage(sprite);
+    else makeSpriteSnippet(sprite);
+  }
+  console.log(`B.I.R.D. self-test ok: ${worlds.length} worlds, ${sprites.length} sprites, root ${bigIronRoot}`);
+}
+
 function openBrowser(url) {
   if (process.argv.includes("--no-open") || process.argv.includes("--check")) return;
   if (process.platform === "win32") childProcess.exec(`start "" "${url}"`);
@@ -261,12 +578,15 @@ function openBrowser(url) {
 }
 
 if (process.argv.includes("--check")) {
-  for (const item of [publicRoot, bigIronRoot, assetsRoot, dataRoot, metadataPath, battlePath]) {
-    if (!fs.existsSync(item)) throw new Error(`Missing required path: ${item}`);
-  }
-  console.log("B.I.R.D. paths ok");
+  assertPaths();
+  selfTest();
 } else {
-  makeServer().listen(PORT, HOST, () => {
+  const server = makeServer();
+  server.on("error", (error) => {
+    console.error(`B.I.R.D. failed to start on ${HOST}:${PORT}: ${error.message}`);
+    process.exitCode = 1;
+  });
+  server.listen(PORT, HOST, () => {
     const url = `http://${HOST}:${PORT}/`;
     console.log(`B.I.R.D. running at ${url}`);
     openBrowser(url);

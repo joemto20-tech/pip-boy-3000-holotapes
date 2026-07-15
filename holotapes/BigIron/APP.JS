@@ -1,268 +1,279 @@
 (function(){
-  var WIDTH=h.getWidth?h.getWidth():480;
-  var HEIGHT=h.getHeight?h.getHeight():320;
-  var module=null;
-  var loading=false;
-  var loadTimer=null;
-  var exiting=false;
-  var homeMode=typeof Pip.MODE=="number"?Pip.MODE:1;
-  var musicWanted=false;
-  var musicPlaying=false;
-  var musicTrack="";
-  var musicPath="";
-  var musicTimer=null;
-  var startMode="art";
-  var oldBlitDisable=Pip.blitOptions&&Pip.blitOptions.disable;
+  var W=h.getWidth?h.getWidth():480,H=h.getHeight?h.getHeight():320;
+  var mod=null,loading=false,exiting=false,loadTimer=0,startTimer=0,exitTimer=0;
+  var home=typeof Pip.MODE=="number"?Pip.MODE:1,mode="splash",sel=0;
+  var cursor=null,musicOn=false,musicTrack="",musicPath="";
+  var battleEquip=null;
+  var shellQuiet=false;
 
-  function exists(path){
-    try{return !!fs.statSync(path);}catch(e){return false;}
-  }
-
-  function findBase(){
-    var roots=[
-      "HOLO/BIGIRON/",
-      "BIGIRON/",
-      ""
-    ];
-    var i;
-    for(i=0;i<roots.length;i++){
-      if(exists(roots[i]+"battle.json")&&exists(roots[i]+"CODE/WORLD.JS"))return roots[i];
-      if(exists(roots[i]+"Assets/battle.json")&&exists(roots[i]+"Assets/CODE/WORLD.JS"))return roots[i]+"Assets/";
+  function exists(p){try{return !!fs.statSync(p);}catch(e){return false;}}
+  function base(){
+    var r=["HOLO/BIGIRON/","BIGIRON/",""],i;
+    for(i=0;i<r.length;i++){
+      if(exists(r[i]+"battle.json")&&exists(r[i]+"CODE/WORLD.JS"))return r[i];
+      if(exists(r[i]+"Assets/battle.json")&&exists(r[i]+"Assets/CODE/WORLD.JS"))return r[i]+"Assets/";
     }
     return "HOLO/BIGIRON/";
   }
-
-  var BASE=findBase();
+  var B=base();
 
   function gc(){
-    try{if(typeof E!="undefined"&&E.gc)E.gc();}catch(e){}
-    try{if(typeof E!="undefined"&&E.defrag)E.defrag();}catch(e2){}
+    try{if(E&&E.gc)E.gc();}catch(e){}
+    try{if(E&&E.defrag)E.defrag();}catch(e2){}
   }
+  function font(s){try{h.setFont("6x8",s||1);}catch(e){}}
+  function sound(n){try{if(Pip.playSound)Pip.playSound(n);}catch(e){}}
+  function txt(p){try{return fs.readFileSync(p);}catch(e){}try{return fs.readFile(p);}catch(e2){}return null;}
+  function img(p){try{return fs.readFile(p);}catch(e){}try{return fs.readFileSync(p);}catch(e2){}return null;}
+  function wr(p,d){try{if(fs.writeFileSync){fs.writeFileSync(p,d);return true;}}catch(e){}try{if(fs.writeFile){fs.writeFile(p,d);return true;}}catch(e2){}return false;}
 
-  function font(size){
-    try{h.setFont("6x8",size||1);}catch(e){}
-  }
-
-  function sound(name){
-    try{if(Pip.playSound)Pip.playSound(name);}catch(e){}
-  }
-
-  function readImage(path){
-    try{return fs.readFile(path);}catch(e){}
-    try{return fs.readFileSync(path);}catch(e2){}
-    return null;
-  }
-
-  function readText(path){
-    try{return fs.readFileSync(path);}catch(e){}
-    try{return fs.readFile(path);}catch(e2){}
-    return null;
-  }
-
-  function savedMap(){
-    var data,map;
+  function playerData(){try{return typeof player!="undefined"&&player&&player.player?player.player:{};}catch(e){return {};}}
+  function weaponName(o,d){var v=o&&o.NAME!==undefined?o.NAME:d;v=v==null?"":v.toString();return v.length>20?v.substr(0,19)+"~":v;}
+  function weaponDmg(o,d){var v=parseFloat(o&&o.DMG);return isNaN(v)?d:v;}
+  function datPath(c){return"DATA/"+(NV?"NV":"F3")+"/"+c+".DAT";}
+  function datGet(c,id){var d=0,o=0;try{if(!id)return 0;d=new DataFile(datPath(c));o=d.getId(parseInt(id,10)||id);}catch(e){}finally{try{if(d)d.close();}catch(e2){}}return o||0;}
+  function prefetchEquipment(force){
+    var p=playerData(),wid,w,base;
+    if(battleEquip&&!force)return battleEquip;
     try{
-      data=JSON.parse(readText(BASE+"SAVE/STATE.JSON")||readText(BASE+"STATE.JSON")||"{}");
-      map=data&&data.map?data.map:"";
-      return map&&exists(BASE+"DATA/"+map+".JSON")?map:"";
-    }catch(e){}
-    return "";
-  }
-
-  function drawArt(name){
-    var img,w,hgt;
-    try{
-      img=readImage(BASE+name);
-      if(!img)img=readImage(BASE+"Assets/"+name);
-      if(!img)return false;
-      w=img.charCodeAt?img.charCodeAt(0):WIDTH;
-      hgt=img.charCodeAt?img.charCodeAt(1):HEIGHT;
-      h.setClipRect(0,0,WIDTH-1,HEIGHT-1);
-      h.setColor(0).fillRect(0,0,WIDTH-1,HEIGHT-1);
-      h.setColor(3);
-      h.drawImage(img,Math.round((WIDTH-w)/2),Math.round((HEIGHT-hgt)/2));
-      img=null;
-      gc();
-      return true;
-    }catch(e3){}
-    return false;
+      wid=parseInt(p.equippedweap,10)||0;
+      w=wid?datGet("WEAPONS",wid):0;
+      base=weaponDmg(w,0);
+      if(!base)base=wid?12:6;
+      battleEquip={weapon:weaponName(w,wid?("WEAPON "+wid):"FISTS"),armor:"NO ARMOR",dt:0,dmg:Math.max(1,Math.floor(base)),type:wid?"GUN":"MELEE"};
+    }catch(e){
+      battleEquip={weapon:"FISTS",armor:"NO ARMOR",dt:0,dmg:6,type:"MELEE"};
+    }
+    return battleEquip;
   }
 
   function flip(y1,y2){
-    var options,k;
+    var o,k;
     try{
       if(Pip.blitScreen){
-        options={};
-        try{for(k in Pip.blitOptions)options[k]=Pip.blitOptions[k];}catch(e){}
-        options.y1=y1;
-        options.y2=y2;
-        Pip.blitScreen(h,options);
-      }else{
-        h.flip();
-      }
+        o={};
+        try{for(k in Pip.blitOptions)o[k]=Pip.blitOptions[k];}catch(e){}
+        o.y1=y1;o.y2=y2;Pip.blitScreen(h,o);
+      }else h.flip();
       try{Pip.lastFlip=getTime();}catch(e2){}
-    }catch(e3){
-      try{h.flip();}catch(e4){}
-    }
+    }catch(e3){try{h.flip();}catch(e4){}}
   }
 
-  function screen(title,subtitle){
-    var y;
+  function rawFlip(){
     try{
-      h.setClipRect(0,0,WIDTH-1,HEIGHT-1);
-      h.setColor(0).fillRect(0,0,WIDTH-1,HEIGHT-1);
-      h.setColor(1);
-      for(y=0;y<HEIGHT;y+=16)h.drawLine(0,y,WIDTH-1,y);
-      h.setFontAlign(0,0);
-      font(3);
-      h.setColor(3).drawString(title,WIDTH/2,125);
-      font(1);
-      h.setColor(2).drawString(subtitle||"",WIDTH/2,172);
-      flip(0,HEIGHT-1);
-    }catch(e){}
-  }
-
-  function startArtScreen(){
-    try{
-      if(drawArt("ST.IMG")){
-        flip(0,HEIGHT-1);
-        gc();
-        return true;
-      }
-    }catch(e){}
-    return false;
-  }
-
-  function startMenuScreen(){
-    var y,hasSave=savedMap();
-    try{
-      h.setClipRect(0,0,WIDTH-1,HEIGHT-1);
-      h.setColor(0).fillRect(0,0,WIDTH-1,HEIGHT-1);
-      h.setColor(1);
-      for(y=0;y<HEIGHT;y+=16)h.drawLine(0,y,WIDTH-1,y);
-      h.setColor(2).drawRect(22,18,WIDTH-23,HEIGHT-19);
-      h.drawRect(28,24,WIDTH-29,HEIGHT-25);
-      h.setFontAlign(0,0);
-      font(4);
-      h.setColor(3).drawString("BIG IRON",WIDTH/2,78);
-      font(2);
-      h.setColor(2).drawString("WASTELAND RPG",WIDTH/2,117);
-      h.setColor(1).drawLine(88,146,WIDTH-89,146);
-      font(1);
-      h.setColor(2).drawString("MOVE WITH BOTH WHEELS",WIDTH/2,204);
-      h.drawString("DOUBLE PRESS: PAUSE",WIDTH/2,226);
-      h.setColor(0).fillRect(112,276,WIDTH-113,306);
-      h.setColor(2).drawRect(112,276,WIDTH-113,306);
-      h.setColor(3).drawString("LEFT WHEEL: START",WIDTH/2,284);
-      h.setColor(2).drawString(hasSave?"SAVE DETECTED":"NEW TRAIL READY",WIDTH/2,298);
-      flip(0,HEIGHT-1);
-      gc();
+      h.flip();
+      try{Pip.lastFlip=getTime();}catch(e){}
     }catch(e2){}
   }
 
-  function startScreen(){
-    startMode="art";
-    if(!startArtScreen()){
-      startMode="menu";
-      startMenuScreen();
+  function quietShell(on){
+    if(on){
+      if(shellQuiet)return;
+      shellQuiet=true;
+      try{if(Pip.stopTimers)Pip.stopTimers();}catch(e){}
+      try{
+        if(Pip.timers){
+          if(Pip.timers.timeHeader){clearInterval(Pip.timers.timeHeader);Pip.timers.timeHeader=0;}
+          if(Pip.timers.flip){clearInterval(Pip.timers.flip);Pip.timers.flip=0;}
+        }
+      }catch(e2){}
+    }else{
+      if(!shellQuiet)return;
+      shellQuiet=false;
+      try{if(Pip.stopTimers)Pip.stopTimers();}catch(e3){}
+      try{if(Pip.startTimers)Pip.startTimers();}catch(e4){}
+      try{if(Pip.setWatches)Pip.setWatches();}catch(e5){}
     }
+  }
+
+  function screen(a,b){
+    var y;
+    h.setClipRect(0,0,W-1,H-1);
+    h.setColor(0).fillRect(0,0,W-1,H-1);
+    h.setColor(1);
+    for(y=0;y<H;y+=16)h.drawLine(0,y,W-1,y);
+    h.setFontAlign(0,0);
+    font(3);h.setColor(3).drawString(a,W/2,125);
+    font(1);h.setColor(2).drawString(b||"",W/2,172);
+    flip(0,H-1);
+  }
+
+  function openFile(n){
+    var p=[B+n,n,B+"Assets/"+n],i,f=0;
+    if(typeof E=="undefined"||!E.openFile)return 0;
+    for(i=0;i<p.length&&!f;i++)try{f=E.openFile(p[i],"r");}catch(e){}
+    return f;
+  }
+
+  function drawBin(n){
+    var f,t,o,c;
+    try{
+      f=openFile(n);
+      if(!f)return false;
+      t=new Uint8Array(h.buffer);
+      o=t.length;
+      c=f.read(256);
+      while(c){
+        o-=c.length;
+        if(o<0)break;
+        t.set(c,o);
+        c=f.read(256);
+      }
+      try{f.close();}catch(e){}
+      t=null;
+      return true;
+    }catch(e2){try{if(f)f.close();}catch(e3){}}
+    return false;
+  }
+
+  function drawFallback(){
+    h.setClipRect(0,0,W-1,H-1);
+    h.setColor(0).fillRect(0,0,W-1,H-1);
+    h.setFontAlign(0,0);
+    font(4);h.setColor(3).drawString("BIG IRON",W/2,90);
+    font(2);h.drawString("START NEW",W/2,178);
+    h.drawString("LOAD",W/2,223);
+  }
+
+  function getCursor(){
+    if(cursor)return cursor;
+    cursor=img(B+"SELECTER.IMG")||img(B+"CODE/SELECTER.IMG")||img(B+"Assets/CODE/SELECTER.IMG")||img("Assets/CODE/SELECTER.IMG");
+    return cursor;
+  }
+
+  function drawMenu(){
+    var c=getCursor();
+    if(!drawBin("MENU.BIN"))drawFallback();
+    if(c)h.setColor(3).drawImage(c,96,sel?191:146);
+    else h.setColor(3).fillRect(124,sel?219:174,134,sel?229:184);
+    flip(0,H-1);
+    gc();
+  }
+
+  function showMenu(){
+    if(loading||mod)return;
+    mode="menu";
+    sel=0;
+    drawMenu();
+  }
+
+  function fadeToMenu(step){
+    var y;
+    if(loading||mod)return;
+    try{
+      h.setColor(0);
+      if(step<2){
+        for(y=step;y<H;y+=2)h.drawLine(0,y,W-1,y);
+      }else{
+        h.fillRect(0,0,W-1,H-1);
+      }
+      flip(0,H-1);
+    }catch(e){}
+    if(step<2)startTimer=setTimeout(function(){fadeToMenu(step+1);},70);
+    else{startTimer=0;showMenu();}
+  }
+
+  function clearSave(){
+    var d='{"cleared":{}}',p;
+    wr(B+"SAVE/STATE.JSON",d);
+    wr(B+"STATE.JSON",d);
+    try{
+      if(typeof player!="undefined"&&player&&player.player){
+        p=player.player;
+        p.wb={};
+        player.modified=true;
+        if(player.sync)player.sync();
+      }
+    }catch(e){}
+    gc();
+  }
+
+  function clearStartMedia(){
+    if(startTimer)clearTimeout(startTimer);
+    startTimer=0;
+    cursor=null;
+    music(false);
+    try{if(Pip.videoStop)Pip.videoStop();}catch(e){}
+    h.setClipRect(0,0,W-1,H-1);
+    h.setColor(0).fillRect(0,0,W-1,H-1);
+    flip(0,H-1);
+    gc();
+  }
+
+  function start(){
+    mode="splash";
+    sel=0;
+    if(startTimer)clearTimeout(startTimer);
+    if(!drawBin("IMAGE.BIN"))drawFallback();
+    flip(0,H-1);
+    startTimer=setTimeout(function(){fadeToMenu(0);},4300);
     music("HOLO_BICT");
   }
 
-  function findMusic(track){
-    track=(track||"NVTH").toString();
-    var paths=[
-      BASE+"AUDIO/"+track+".wav",
-      BASE+"CODE/"+track+".wav",
-      BASE+track+".wav"
-    ];
-    var i;
-    for(i=0;i<paths.length;i++){
-      if(exists(paths[i])){
-        musicPath=paths[i];
-        musicTrack=track;
-        return musicPath;
-      }
-    }
+  function musicPathFor(t){
+    var p=[B+"AUDIO/"+t+".wav",B+"CODE/"+t+".wav",B+t+".wav"],i;
+    for(i=0;i<p.length;i++)if(exists(p[i]))return p[i];
     return "";
   }
 
-  function music(on){
-    var path;
-    if(!on){
-      musicWanted=false;
-      if(musicTimer){
-        clearTimeout(musicTimer);
-        musicTimer=null;
-      }
-      try{if(musicPlaying&&Pip.audioStop)Pip.audioStop();}catch(e){}
-      musicPlaying=false;
+  function music(t){
+    var p;
+    if(!t){
+      musicOn=false;
+      try{if(Pip.audioStop)Pip.audioStop();}catch(e){}
       try{Pip.radioClipPlaying=0;}catch(e2){}
       return;
     }
-    on=on===true?"NVTH":on.toString();
     if(exiting)return;
-    musicWanted=true;
-    if(musicPlaying&&musicTrack!=on){
-      try{if(Pip.audioStop)Pip.audioStop();}catch(e6){}
-      musicPlaying=false;
-    }
-    path=findMusic(on);
-    if(!path||!Pip.audioStart)return;
-    try{
-      if(musicPlaying&&Pip.audioIsPlaying&&Pip.audioIsPlaying())return;
-    }catch(e3){}
+    t=t===true?"NVTH":(""+t);
+    p=musicPathFor(t);
+    if(!p||!Pip.audioStart)return;
+    if(musicOn&&musicTrack==t)return;
+    try{if(musicOn&&Pip.audioStop)Pip.audioStop();}catch(e3){}
     try{Pip.radioClipPlaying=1;}catch(e4){}
-    try{
-      Pip.audioStart(path);
-      musicPlaying=true;
-    }catch(e5){musicPlaying=false;}
-  }
-
-  function musicEnded(){
-    musicPlaying=false;
-    if(!musicWanted||exiting)return;
-    if(musicTimer)clearTimeout(musicTimer);
-    musicTimer=setTimeout(function(){
-      musicTimer=null;
-      music(musicTrack||"NVTH");
-    },80);
+    try{Pip.audioStart(p);musicOn=true;musicTrack=t;musicPath=p;}catch(e5){musicOn=false;}
   }
 
   function unload(){
-    if(module){
-      try{if(module.remove)module.remove();}catch(e){}
-      module=null;
+    if(mod){
+      try{if(mod.remove)mod.remove();}catch(e){}
+      mod=null;
     }
     gc();
   }
 
-  function loadModule(name,args){
+  function loadModule(n,a){
     if(loading)return;
     loading=true;
-    gc();
-    if(name=="BATTLE")music(false);
-    screen("LOADING",name);
     if(loadTimer)clearTimeout(loadTimer);
+    unload();
+    if(api)api.flip=n=="BATTLE"?rawFlip:flip;
+    quietShell(n=="BATTLE");
+    if(n=="BATTLE"){
+      music(false);
+      screen("CHECKING","WEAPON");
+      battleEquip=null;
+      prefetchEquipment(true);
+    }
+    screen("LOADING",n);
     loadTimer=setTimeout(function(){
-      var source,factory;
-      loadTimer=null;
-      unload();
+      var s,f;
+      loadTimer=0;
       try{
-        h.setColor(0).fillRect(0,0,WIDTH-1,HEIGHT-1);
-        h.flip();
+        h.setColor(0).fillRect(0,0,W-1,H-1);
+        flip(0,H-1);
         gc();
-        source=readText(BASE+"CODE/"+name+".JS");
-        if(!source)throw "MISSING "+name+".JS";
-        factory=eval(source);
-        source=null;
+        s=txt(B+"CODE/"+n+".JS");
+        if(!s)throw "MISSING "+n+".JS";
+        f=eval(s);
+        s=null;
         gc();
-        module=factory(api,args||{});
+        mod=f(api,a||{});
         loading=false;
         gc();
       }catch(e){
         loading=false;
-        screen("LOAD FAILED",((""+e)||"UNKNOWN").substr(0,42));
+        screen("LOAD FAILED",(""+e).substr(0,42));
       }
     },20);
   }
@@ -271,85 +282,67 @@
     if(exiting)return;
     exiting=true;
     music(false);
-    try{if(module&&module.save)module.save(true);}catch(e){}
+    quietShell(false);
+    try{if(mod&&mod.save)mod.save(true);}catch(e){}
     try{Pip.CURRENT.fullscreen=false;}catch(e2){}
-    try{Pip.emit("mode",homeMode,true);}catch(e3){
-      try{Pip.changeMenu();}catch(e4){remove();}
-    }
-    setTimeout(function(){
-      if(!loading&&exiting){
-        try{Pip.changeMenu();}catch(e){}
-      }
-    },180);
+    try{Pip.emit("mode",home,true);}catch(e3){try{Pip.changeMenu();}catch(e4){remove();}}
+    if(exitTimer)clearTimeout(exitTimer);
+    exitTimer=setTimeout(function(){exitTimer=0;if(!loading&&exiting)try{Pip.changeMenu();}catch(e){}},180);
   }
 
   function remove(){
-    if(loading)return;
     loading=true;
-    if(loadTimer){
-      clearTimeout(loadTimer);
-      loadTimer=null;
-    }
+    if(loadTimer)clearTimeout(loadTimer);
+    if(startTimer)clearTimeout(startTimer);
+    if(exitTimer)clearTimeout(exitTimer);
+    loadTimer=startTimer=exitTimer=0;
     unload();
     music(false);
-    try{Pip.removeListener("audioStopped",musicEnded);}catch(e0){}
-    try{Pip.removeListener("knob1",onKnob1);}catch(e){}
-    try{Pip.removeListener("knob2",onKnob2);}catch(e2){}
+    quietShell(false);
+    try{Pip.removeListener("knob1",k1);}catch(e){}
+    try{Pip.removeListener("knob2",k2);}catch(e2){}
     try{Pip.CURRENT.fullscreen=false;}catch(e3){}
-    try{if(Pip.blitOptions)Pip.blitOptions.disable=oldBlitDisable;}catch(e8){}
-    try{
-      if(Pip.stopTimers)Pip.stopTimers();
-      if(Pip.startTimers)Pip.startTimers();
-    }catch(e4){}
-    try{if(Pip.setWatches)Pip.setWatches();}catch(e5){}
+    try{if(Pip.setWatches)Pip.setWatches();}catch(e4){}
+    cursor=null;
     gc();
   }
 
-  function onKnob1(value,longPress){
+  function k1(v,l){
     if(loading)return;
-    if(module&&module.k1)module.k1(value,longPress);
-    else if(value===0&&!longPress){
-      sound("SELECT");
-      gc();
-      if(startMode=="art"){
-        startMode="menu";
-        startMenuScreen();
+    if(mod&&mod.k1){mod.k1(v,l);return;}
+    if(mode=="splash")return;
+    if(mode=="menu"){
+      if(v!==0){
+        sel=sel?0:1;
+        drawMenu();
         return;
       }
-      startMode="loading";
-      loadModule("WORLD",{});
+      if(l)return;
+      sound("SELECT");
+      mode="loading";
+      clearStartMedia();
+      if(sel)loadModule("WORLD",{});
+      else{
+        clearSave();
+        loadModule("WORLD",{newGame:true});
+      }
     }
   }
 
-  function onKnob2(value){
-    if(!loading&&module&&module.k2)module.k2(value);
-  }
+  function k2(v){if(!loading&&mod&&mod.k2)mod.k2(v);}
 
   var api={
-    base:BASE,
-    w:WIDTH,
-    h:HEIGHT,
-    flip:flip,
-    world:function(args){loadModule("WORLD",args);},
-    battle:function(args){loadModule("BATTLE",args);},
-    shoot:function(args){loadModule("SHOOT",args);},
-    music:music,
-    exit:exitApp,
-    gc:gc
+    base:B,w:W,h:H,flip:flip,
+    equip:function(){return prefetchEquipment();},
+    world:function(a){loadModule("WORLD",a);},
+    battle:function(a){loadModule("BATTLE",a);},
+    shoot:function(a){loadModule("SHOOT",a);},
+    music:music,exit:exitApp,gc:gc
   };
 
   try{Pip.CURRENT.fullscreen=true;}catch(e){}
-  try{if(Pip.blitOptions)Pip.blitOptions.disable=false;}catch(e1){}
-  try{if(Pip.stopTimers)Pip.stopTimers();}catch(e2){}
-  try{Pip.onExclusive("knob1",onKnob1);}catch(e3){
-    try{Pip.on("knob1",onKnob1);}catch(e4){}
-  }
-  try{Pip.onExclusive("knob2",onKnob2);}catch(e5){
-    try{Pip.on("knob2",onKnob2);}catch(e6){}
-  }
-  try{Pip.on("audioStopped",musicEnded);}catch(e7){}
-
-  startScreen();
-
+  try{Pip.onExclusive("knob1",k1);}catch(e2){try{Pip.on("knob1",k1);}catch(e3){}}
+  try{Pip.onExclusive("knob2",k2);}catch(e4){try{Pip.on("knob2",k2);}catch(e5){}}
+  start();
   return {id:"BIGIRON",notDefault:true,fullscreen:true,remove:remove};
 });

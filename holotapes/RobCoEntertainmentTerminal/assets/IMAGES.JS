@@ -396,12 +396,17 @@
 
   function sound(name) {
     try {
-      if (Pip.playSound) Pip.playSound(name);
+      if (app.playUiSound) app.playUiSound(name);
+      else if (Pip.playSound) Pip.playSound(name);
     } catch (e) {}
   }
 
   function start() {
-    Pip.audioStop();
+    if (!app.persistentMusic && app.stopMusicPlayback) {
+      app.stopMusicPlayback();
+    } else if (!app.persistentMusic) {
+      Pip.audioStop();
+    }
     Pip.onExclusive('knob1', onKnob1);
     Pip.onExclusive('knob2', onKnob2);
     ensureImageDir();

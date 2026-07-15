@@ -77,13 +77,18 @@
 
   function removeScene() {
     removeInputs();
+    try {
+      Pip.videoStop();
+    } catch (e) {}
     Pip.audioStop();
   }
 
   Pip.audioStop();
   Pip.onExclusive('knob1', onKnob1);
   Pip.onExclusive('knob2', onKnob2);
-  drawIntro();
+  try {
+    Pip.videoStart('HOLO/BIGIRON/VIDEO/Granny/BATTLE_START.avi', { x: 0, y: 0 });
+  } catch (e) {}
   try {
     Pip.audioStart(INTRO_SOUND);
   } catch (e) {

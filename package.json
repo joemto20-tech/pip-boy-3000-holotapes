@@ -4,6 +4,9 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
+    "start": "npm --prefix tools/bird run start --",
+    "bird": "npm --prefix tools/bird run start --",
+    "bird:check": "npm --prefix tools/bird run check",
     "build": "node --experimental-strip-types .scripts/build.ts",
     "format": "prettier --write .",
     "prepare": "husky"

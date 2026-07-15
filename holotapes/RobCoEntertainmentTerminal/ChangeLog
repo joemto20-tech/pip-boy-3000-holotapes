@@ -1,3 +1,8 @@
+2.1.1
+- Add MUSIC MODE setting. DEFAULT keeps the original stop-on-exit behavior; PERSIST keeps the current RobCo song playing through the Pip-Boy after leaving RobCo.
+- Protect persistent RobCo music from Pip-Boy UI click audioStop calls while still allowing the click sounds to play.
+- Use a shared CFW audio guard so the Pip audio wrappers are installed once and restored cleanly.
+
 2.1.0
 https://github.com/CodyTolene/pip-boy-3000-holotapes/pull/58
 - Update name of app from "iPip Media Player" to "RobCo Entertainment Terminal"

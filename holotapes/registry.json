@@ -43,14 +43,14 @@
     "author": "@joemto20-tech",
     "version": "0.23",
     "description": "An RPG Experience from HAMco designed for the PB3000",
-    "icon": "BigIron/Assets/ST.IMG",
+    "icon": "BigIron/BIGIRON.IMG",
     "previews": [],
     "type": "game",
     "readme": "BigIron/README.md",
     "storage": [
       {
         "name": "HOLO/BIGIRON/APP.JS",
-        "url": "BigIron/APP.JS"
+        "url": "BigIron/APP.MIN.JS"
       },
       {
         "name": "HOLO/BIGIRON/battle.json",
@@ -85,6 +85,50 @@
         "url": "BigIron/Assets/DATA/WORLD_04.JSON"
       },
       {
+        "name": "HOLO/BIGIRON/DATA/WORLD_05.JSON",
+        "url": "BigIron/Assets/DATA/WORLD_05.JSON"
+      },
+      {
+        "name": "HOLO/BIGIRON/DATA/WORLD_06.JSON",
+        "url": "BigIron/Assets/DATA/WORLD_06.JSON"
+      },
+      {
+        "name": "HOLO/BIGIRON/DATA/EYEBOT.JS",
+        "url": "BigIron/Assets/DATA/EYEBOT.JS"
+      },
+      {
+        "name": "HOLO/BIGIRON/DATA/EYEBOTHIT.JS",
+        "url": "BigIron/Assets/DATA/EYEBOTHIT.JS"
+      },
+      {
+        "name": "HOLO/BIGIRON/DATA/NPC_SPRITE.JS",
+        "url": "BigIron/Assets/DATA/NPC_SPRITE.JS"
+      },
+      {
+        "name": "HOLO/BIGIRON/DATA/PLAYER_SPRITEDOWN.IMG",
+        "url": "BigIron/Assets/DATA/PLAYER_SPRITEDOWN.IMG"
+      },
+      {
+        "name": "HOLO/BIGIRON/DATA/PLAYER_SPRITEL.IMG",
+        "url": "BigIron/Assets/DATA/PLAYER_SPRITEL.IMG"
+      },
+      {
+        "name": "HOLO/BIGIRON/DATA/PLAYER_SPRITER.IMG",
+        "url": "BigIron/Assets/DATA/PLAYER_SPRITER.IMG"
+      },
+      {
+        "name": "HOLO/BIGIRON/DATA/PLAYER_SPRITEUP.IMG",
+        "url": "BigIron/Assets/DATA/PLAYER_SPRITEUP.IMG"
+      },
+      {
+        "name": "HOLO/BIGIRON/DATA/SIGN_SPRITE.JS",
+        "url": "BigIron/Assets/DATA/SIGN_SPRITE.JS"
+      },
+      {
+        "name": "HOLO/BIGIRON/DATA/TREE_SPRITE.JS",
+        "url": "BigIron/Assets/DATA/TREE_SPRITE.JS"
+      },
+      {
         "name": "HOLO/BIGIRON/AUDIO/NVTH.wav",
         "url": "BigIron/Assets/AUDIO/NVTH.wav"
       },
@@ -95,6 +139,22 @@
       {
         "name": "HOLO/BIGIRON/ST.IMG",
         "url": "BigIron/Assets/ST.IMG"
+      },
+      {
+        "name": "HOLO/BIGIRON/BIGIRON.IMG",
+        "url": "BigIron/BIGIRON.IMG"
+      },
+      {
+        "name": "HOLO/BIGIRON/IMAGE.BIN",
+        "url": "BigIron/IMAGE.BIN"
+      },
+      {
+        "name": "HOLO/BIGIRON/MENU.BIN",
+        "url": "BigIron/MENU.BIN"
+      },
+      {
+        "name": "HOLO/BIGIRON/SELECTER.IMG",
+        "url": "BigIron/Assets/CODE/SELECTER.IMG"
       },
       {
         "name": "HOLO/BIGIRON/VIDEO/Granny/BATTLE_IDLE.avi",
@@ -180,7 +240,9 @@
     "version": "2.0.0",
     "description": "Scavenge mutfruit, grow longer, and keep your bloodworm alive by avoiding walls, your own tail, and your opponent (vs mode).",
     "icon": "Bloodworm/assets/bloodworm.png",
-    "previews": ["Bloodworm/assets/bloodworm.mp4"],
+    "previews": [
+      "Bloodworm/assets/bloodworm.mp4"
+    ],
     "type": "game",
     "readme": "Bloodworm/README.md",
     "storage": [
@@ -539,7 +601,9 @@
     "version": "4.0.0",
     "description": "Stack, rotate, and clear falling blocks in this Tetris inspired mini-game. Simple, addictive, and perfect for idle moments between scavenging runs or stimpak breaks.",
     "icon": "Piptris/assets/piptris.png",
-    "previews": ["Piptris/assets/piptris.mp4"],
+    "previews": [
+      "Piptris/assets/piptris.mp4"
+    ],
     "type": "game",
     "readme": "Piptris/README.md",
     "storage": [
@@ -794,7 +858,7 @@
     "id": "rcet",
     "name": "RobCo Entertainment Terminal",
     "author": "@CodyTolene",
-    "version": "2.1.0",
+    "version": "2.1.1",
     "description": "A Vault-Tec approved RobCo holotape for playing WAVs from `MUSIC/`, AVI reels from `VIDEOS/`, and images from `IMAGES/`.",
     "icon": "RobCoEntertainmentTerminal/RCET.PNG",
     "previews": [],

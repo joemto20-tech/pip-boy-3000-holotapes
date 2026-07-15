@@ -11,19 +11,20 @@
     <header class="topbar">
       <div>
         <h1>B.I.R.D.</h1>
-        <p>Big Iron Render Dock</p>
+        <p>Big Iron Render Dock - worlds, art, encounters, and runtime sprites</p>
       </div>
       <div class="status" id="status">Starting</div>
     </header>
 
-    <nav class="tabs" aria-label="Dock sections">
-      <button class="tab active" data-mode="world">World Dock</button>
-      <button class="tab" data-mode="sprite">Sprite Dock</button>
-      <button class="tab" data-mode="package">Package Notes</button>
+    <nav class="tabs" aria-label="B.I.R.D. sections">
+      <button class="tab active" data-view="world">World Builder</button>
+      <button class="tab" data-view="art">World Art</button>
+      <button class="tab" data-view="sprite">Sprite Creator</button>
+      <button class="tab" data-view="package">Upload Checklist</button>
     </nav>
 
     <main class="workspace">
-      <section class="panel left" id="worldPanel">
+      <section class="panel left" id="worldPanel" data-view-panel="world">
         <div class="field-row">
           <label>World
             <select id="worldSelect"></select>
@@ -35,6 +36,25 @@
             <input id="worldId" value="WORLD_01">
           </label>
           <button id="newWorld">New</button>
+        </div>
+        <div class="field-row">
+          <label>Map Width
+            <input id="worldCols" type="number" min="8" max="96" value="42">
+          </label>
+          <label>Map Height
+            <input id="worldRows" type="number" min="8" max="64" value="24">
+          </label>
+        </div>
+        <div class="box">
+          <h2>World Art</h2>
+          <label>Preset
+            <select id="worldArtPreset"></select>
+          </label>
+          <div class="actions">
+            <button id="newWorldBuild">New World + Art</button>
+            <button id="presetWorldArt">Apply Preset Art</button>
+            <button id="editWorldArt">Edit Art Tools</button>
+          </div>
         </div>
         <label>Paint Tool
           <select id="worldTool">
@@ -48,6 +68,10 @@
             <option value="spawn">Spawn</option>
             <option value="exit">Exit</option>
             <option value="regular">Regular Encounter</option>
+            <option value="npcEncounter">NPC Encounter</option>
+            <option value="miniboss">Miniboss Encounter</option>
+            <option value="forge">Forge Press</option>
+            <option value="finalBoss">Final Boss Encounter</option>
             <option value="boss">Boss Encounter</option>
             <option value="shoot">Shoot Encounter</option>
             <option value="tree">Tree</option>
@@ -84,6 +108,37 @@
           <label>Shoot Target
             <input id="shootTarget" value="RADROACH">
           </label>
+          <div class="field-row">
+            <label>Min Regular
+              <input id="minRegular" type="number" value="2" min="0" max="20">
+            </label>
+            <label>Bullet ID
+              <input id="bulletId" value="SCORCHED">
+            </label>
+          </div>
+          <div class="field-row">
+            <label>NPC Patrol
+              <select id="npcPatrol">
+                <option value="horizontal">Horizontal</option>
+                <option value="vertical">Vertical</option>
+                <option value="still">Still</option>
+              </select>
+            </label>
+            <label>NPC Facing
+              <select id="npcFacing">
+                <option value="right">Right</option>
+                <option value="left">Left</option>
+                <option value="down">Down</option>
+                <option value="up">Up</option>
+              </select>
+            </label>
+          </div>
+          <label>NPC Range
+            <input id="npcRange" type="number" value="3" min="0" max="12">
+          </label>
+          <label>Map Sprite
+            <select id="decorSprite"></select>
+          </label>
         </div>
 
         <div class="box">
@@ -109,6 +164,9 @@
               <input id="exitY" type="number" value="2">
             </label>
           </div>
+          <label>Required Round
+            <input id="exitRequiredRound" placeholder="SCORCHED">
+          </label>
         </div>
 
         <div class="actions">
@@ -117,7 +175,7 @@
         </div>
       </section>
 
-      <section class="stage" id="worldStage">
+      <section class="stage" id="worldStage" data-view-panel="world">
         <div class="stage-head">
           <strong id="worldTitle">WORLD_01</strong>
           <span id="worldReadout">42 x 24</span>
@@ -126,15 +184,105 @@
         <textarea id="worldJson" spellcheck="false"></textarea>
       </section>
 
-      <section class="panel left hidden" id="spritePanel">
+      <section class="panel left hidden" id="artPanel" data-view-panel="art">
         <div class="field-row">
-          <label>Existing
+          <label>Existing World/Art
+            <select id="artSelect"></select>
+          </label>
+          <button id="loadArt">Load</button>
+        </div>
+        <label>Name
+          <input id="artName" value="WORLD_01_ART">
+        </label>
+        <div class="field-row">
+          <label>Preset
+            <select id="artPreset"></select>
+          </label>
+          <button id="loadArtPreset">Use</button>
+        </div>
+        <div class="field-row">
+          <label>Width
+            <input id="artWidth" type="number" min="32" max="255" value="240">
+          </label>
+          <label>Height
+            <input id="artHeight" type="number" min="32" max="255" value="148">
+          </label>
+        </div>
+        <div class="box">
+          <h2>Image To JSON</h2>
+          <label>Image
+            <input id="imageImport" type="file" accept="image/*">
+          </label>
+          <div class="field-row">
+            <label>Fit
+              <select id="imageImportMode">
+                <option value="fit">Fit</option>
+                <option value="crop">Crop</option>
+                <option value="stretch">Stretch</option>
+              </select>
+            </label>
+            <button id="convertImage">Convert</button>
+          </div>
+        </div>
+        <div class="field-row">
+          <label>Brush
+            <select id="artBrush">
+              <option value="0">Black</option>
+              <option value="1">Dim</option>
+              <option value="2">Green</option>
+              <option value="3">Bright</option>
+            </select>
+          </label>
+          <label>Size
+            <input id="artBrushSize" type="number" min="1" max="16" value="3">
+          </label>
+        </div>
+        <div class="field-row">
+          <label>Tool
+            <select id="artTool">
+              <option value="brush">Brush</option>
+              <option value="line">Line</option>
+              <option value="rect">Rectangle</option>
+              <option value="fill">Fill</option>
+            </select>
+          </label>
+          <label>Apply To
+            <select id="artWorld"></select>
+          </label>
+        </div>
+        <div class="actions">
+          <button id="newArt">New Art</button>
+          <button id="clearArt">Clear</button>
+          <button id="saveArt" class="primary">Save IMG + Link World</button>
+          <button id="downloadArtJson">Download Art JSON</button>
+        </div>
+      </section>
+
+      <section class="stage hidden" id="artStage" data-view-panel="art">
+        <div class="stage-head">
+          <strong id="artTitle">WORLD_01_ART</strong>
+          <span id="artReadout">240 x 148</span>
+        </div>
+        <canvas id="artCanvas" width="480" height="296"></canvas>
+        <textarea id="artJson" spellcheck="false"></textarea>
+      </section>
+
+      <section class="panel left hidden" id="spritePanel" data-view-panel="sprite">
+        <div class="field-row">
+          <label>Existing Sprite
             <select id="spriteSelect"></select>
           </label>
           <button id="loadSprite">Load</button>
         </div>
+        <p class="hint">Player direction sprites use 34x34 IMG files for the current low-memory build.</p>
         <label>Name
           <input id="spriteName" value="PLAYER_SPRITEUP">
+        </label>
+        <label>Save Scope
+          <select id="spriteScope">
+            <option value="global">Global</option>
+            <option value="world">Current World</option>
+          </select>
         </label>
         <div class="field-row">
           <label>Preset
@@ -142,12 +290,35 @@
           </label>
           <button id="loadPreset">Use</button>
         </div>
+        <div class="box">
+          <h2>Import Sprite</h2>
+          <label>Sprite IMG
+            <input id="spriteImgImport" type="file" accept=".img,application/octet-stream">
+          </label>
+          <button id="importSpriteImg">Import IMG</button>
+        </div>
+        <div class="box">
+          <h2>Image To Sprite</h2>
+          <label>Image
+            <input id="spriteImageImport" type="file" accept="image/*">
+          </label>
+          <div class="field-row">
+            <label>Fit
+              <select id="spriteImageMode">
+                <option value="fit">Fit</option>
+                <option value="crop">Crop</option>
+                <option value="stretch">Stretch</option>
+              </select>
+            </label>
+            <button id="convertSpriteImage">Convert</button>
+          </div>
+        </div>
         <div class="field-row">
           <label>Width
-            <input id="spriteWidth" type="number" min="8" max="32" value="12">
+            <input id="spriteWidth" type="number" min="8" max="64" value="34">
           </label>
           <label>Height
-            <input id="spriteHeight" type="number" min="8" max="32" value="14">
+            <input id="spriteHeight" type="number" min="8" max="64" value="34">
           </label>
         </div>
         <div class="field-row">
@@ -155,6 +326,7 @@
             <select id="spriteBpp">
               <option value="1">1</option>
               <option value="2" selected>2</option>
+              <option value="4">4</option>
             </select>
           </label>
           <label>Brush
@@ -170,12 +342,13 @@
           <button id="newSprite">New</button>
           <button id="mirrorSprite">Mirror</button>
           <button id="invertSprite">Invert</button>
-          <button id="saveSprite" class="primary">Save Sprite JS</button>
-          <button id="downloadSprite">Download JS</button>
+          <button id="saveSprite" class="primary">Save Runtime Sprite</button>
+          <button id="saveSpriteLocal">Save Local Copy</button>
+          <button id="downloadSprite">Download IMG</button>
         </div>
       </section>
 
-      <section class="stage hidden" id="spriteStage">
+      <section class="stage hidden" id="spriteStage" data-view-panel="sprite">
         <div class="stage-head">
           <strong id="spriteTitle">PLAYER_SPRITEUP</strong>
           <span id="spriteReadout">12 x 14</span>
@@ -184,8 +357,9 @@
         <textarea id="spriteCode" spellcheck="false"></textarea>
       </section>
 
-      <section class="panel wide hidden" id="packagePanel">
-        <h2>Upload Paths</h2>
+      <section class="panel wide hidden" id="packagePanel" data-view-panel="package">
+        <h2>Current Big Iron Upload Checklist</h2>
+        <p class="hint">This list follows the working build: compact APP, BIN start/menu screens, IMG player sprites, and minified runtime modules.</p>
         <pre id="packageNotes"></pre>
       </section>
     </main>

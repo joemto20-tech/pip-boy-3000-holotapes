@@ -284,22 +284,32 @@
   function remove() {
     if (removed) return;
     removed = true;
-    stopPlayback();
+    if (playing) {
+      stopPlayback();
+    } else if (!app.persistentMusic && app.stopMusicPlayback) {
+      app.stopMusicPlayback();
+    } else if (!app.persistentMusic) {
+      Pip.audioStop();
+    }
     Pip.removeListener('knob1', onKnob1);
     Pip.removeListener('knob2', onKnob2);
-    Pip.audioStop();
     h.clear();
     h.flip();
   }
 
   function sound(name) {
     try {
-      if (Pip.playSound) Pip.playSound(name);
+      if (app.playUiSound) app.playUiSound(name);
+      else if (Pip.playSound) Pip.playSound(name);
     } catch (e) {}
   }
 
   function start() {
-    Pip.audioStop();
+    if (!app.persistentMusic && app.stopMusicPlayback) {
+      app.stopMusicPlayback();
+    } else if (!app.persistentMusic) {
+      Pip.audioStop();
+    }
     Pip.onExclusive('knob1', onKnob1);
     Pip.onExclusive('knob2', onKnob2);
     ensureVideoDir();
@@ -310,6 +320,7 @@
 
   function startVideo(name) {
     sound('TAB');
+    if (app.stopMusicPlayback) app.stopMusicPlayback();
     playing = true;
 
     h.clear(0).flip();

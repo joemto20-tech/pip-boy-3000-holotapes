@@ -29,20 +29,8 @@
   var tileRows=0;
   var tileDrawn=false;
   var playerSprite=null;
-  var playerSprites=null;
-
-  try{
-    playerSprites={
-      up:{width:12,height:14,bpp:1,transparent:0,buffer:atob("H4A/wH/g//A/wDnAP8AfgC9Af+BvYD/AKUBgYA==")},
-      down:{width:12,height:14,bpp:2,transparent:0,buffer:atob("AAAAAFVAAVVQApWgAqqgAoogAKqAACoAAVlQAVVQAhUgABUAACIAABEA")},
-      left:{width:12,height:14,bpp:2,transparent:0,buffer:atob("AAAAAFVQBVVQAqqgAgggAqqgAKKAACoAAVlQAVVQAhUgABUAAIIAAkGA")},
-      right:{width:12,height:14,bpp:2,transparent:0,buffer:atob("AAAABVUABVVQCqqACCCACqqAAooAAKgABWVABVVACFSAAFQAAIIAAkGA")}
-    };
-    playerSprite=playerSprites.up;
-  }catch(e){
-    playerSprite=null;
-    playerSprites=null;
-  }
+  var playerSpriteFacing="";
+  var selectorIcon=null;
 
   function clamp(v,min,max){
     return v<min?min:(v>max?max:v);
@@ -96,7 +84,8 @@
         x:data.x,
         y:data.y,
         facing:data.facing,
-        cleared:data.cleared||{}
+        cleared:data.cleared||{},
+        story:data.story||{}
       };
       return true;
     }catch(e){}
@@ -107,6 +96,21 @@
     try{return fs.readFile(path);}catch(e){}
     try{return fs.readFileSync(path);}catch(e2){}
     return null;
+  }
+
+  function loadPlayerSprite(){
+    var file=facing=="down"?"PLAYER_SPRITEDOWN":facing=="left"?"PLAYER_SPRITEL":facing=="right"?"PLAYER_SPRITER":"PLAYER_SPRITEUP";
+    if(playerSprite&&playerSpriteFacing==facing)return playerSprite;
+    playerSprite=null;
+    playerSpriteFacing=facing;
+    playerSprite=readImage(BASE+"DATA/"+file+".IMG");
+    return playerSprite||null;
+  }
+
+  function loadSelectorIcon(){
+    if(selectorIcon)return selectorIcon;
+    selectorIcon=readImage(BASE+"SELECTER.IMG")||readImage(BASE+"CODE/SELECTER.IMG")||readImage(BASE+"Assets/CODE/SELECTER.IMG");
+    return selectorIcon;
   }
 
   function writeText(path,data){
@@ -149,12 +153,12 @@
 
   function writeState(data,syncNow){
     var body;
+    try{writeProfileState(data,false);}catch(e0){}
     try{
       body=JSON.stringify(data);
       if(writeText(BASE+"SAVE/STATE.JSON",body))return true;
       if(writeText(BASE+"STATE.JSON",body))return true;
     }catch(e){}
-    try{writeProfileState(data,false);}catch(e2){}
     return true;
   }
 
@@ -162,6 +166,104 @@
     saveState=readState();
     if(!saveState)saveState={};
     if(!saveState.cleared)saveState.cleared={};
+    if(!saveState.story)saveState.story={};
+    if(!saveState.story.rounds)saveState.story.rounds={};
+  }
+
+  function storyState(){
+    if(!saveState)saveState={};
+    if(!saveState.story)saveState.story={};
+    if(!saveState.story.rounds)saveState.story.rounds={};
+    if(!saveState.story.encounters)saveState.story.encounters=0;
+    if(!saveState.story.deadLead)saveState.story.deadLead=0;
+    return saveState.story;
+  }
+
+  function roundLoaded(roundId){
+    var st=storyState();
+    return !!(roundId&&st.rounds&&st.rounds[roundId]);
+  }
+
+  function roundCount(){
+    var st=storyState();
+    var k,n=0;
+    for(k in st.rounds)if(st.rounds[k])n++;
+    return n;
+  }
+
+  function regularCount(worldId){
+    var list=world&&world.interacts?world.interacts:[];
+    var i,z,n=0,city,kind;
+    if(!saveState||!saveState.cleared)return 0;
+    for(i=0;i<list.length;i++){
+      z=list[i];
+      city=z&&(z.storyCity||id);
+      kind=z&&(z.storyType||((isMiniboss(z)||isFinalBoss(z))?"":"regular"));
+      if(z&&city==worldId&&kind=="regular"&&saveState.cleared[z.id])n++;
+    }
+    return n;
+  }
+
+  function storyMessage(){
+    var st=storyState();
+    if(st.rounds.COURIER)return "WEAPON STATUS READY";
+    if(st.forgeReady&&roundCount()>=5)return "FORGE FINAL ROUND";
+    return "BIG IRON "+roundCount()+"/6";
+  }
+
+  function forgeCourierRound(){
+    var st=storyState();
+    if(roundLoaded("COURIER")){
+      msg="COURIER ROUND LOADED";
+      return true;
+    }
+    if(roundCount()<5){
+      msg="FIVE ROUNDS REQUIRED";
+      return false;
+    }
+    if((st.encounters||0)<20){
+      msg="DEAD LEAD "+(st.encounters||0)+"/20";
+      return false;
+    }
+    st.rounds.COURIER=1;
+    st.forgeReady=1;
+    save(false,true);
+    msg="CHAMBER 6 LOADED";
+    return true;
+  }
+
+  function enemyKey(target){
+    var e=target&&(target.enemyPool||target.enemy||target.target);
+    return e instanceof Array?e[0]:e;
+  }
+
+  function bulletFor(target){
+    var e=enemyKey(target);
+    if(e=="SOLOMON_RAY")return "SCORCHED";
+    if(e=="DANNER_COLE")return "HOUND";
+    if(e=="ODESSA_CROWN")return "CROWN";
+    if(e=="MORDECAI_FLINT")return "RIVER";
+    if(e=="ELIAS_BLACK")return "BLACK";
+    return "";
+  }
+
+  function isMiniboss(target){
+    return !!bulletFor(target);
+  }
+
+  function isFinalBoss(target){
+    return enemyKey(target)=="HARLAN_VALE";
+  }
+
+  function routeRound(exit){
+    if(exit&&exit.requiresRound)return exit.requiresRound;
+    if(!exit)return "";
+    if(id=="WORLD_01"&&exit.to=="WORLD_02")return "SCORCHED";
+    if(id=="WORLD_02"&&exit.to=="WORLD_03")return "HOUND";
+    if(id=="WORLD_03"&&exit.to=="WORLD_04")return "CROWN";
+    if(id=="WORLD_04"&&exit.to=="WORLD_05")return "RIVER";
+    if(id=="WORLD_05"&&exit.to=="WORLD_06")return "COURIER";
+    return "";
   }
 
   function save(silent,refresh){
@@ -369,7 +471,7 @@
   function drawPlayer(px,py){
     var x=px+2;
     var y=py+1;
-    var sprite=playerSprites&&(playerSprites[facing]||playerSprites.up)||playerSprite;
+    var sprite=loadPlayerSprite();
     if(sprite){
       try{
         h.setColor(3).drawImage(sprite,x,y);
@@ -385,13 +487,23 @@
   }
 
   function drawFooter(){
+    var icon=loadSelectorIcon();
+    var bullets=roundCount()+"/6";
     active=findInteract();
     h.setColor(0).fillRect(0,FOOTER_Y,W-1,H-1);
     h.setColor(2).drawLine(0,FOOTER_Y-1,W-1,FOOTER_Y-1);
+    if(icon){
+      try{h.setColor(3).drawImage(icon,4,FOOTER_Y-12);}catch(e){}
+    }else{
+      h.setColor(3).fillRect(6,FOOTER_Y+3,14,FOOTER_Y+11);
+    }
+    font(1);
+    h.setFontAlign(-1,-1);
+    h.setColor(3).drawString(bullets,24,FOOTER_Y+6);
     font(2);
     h.setFontAlign(0,-1);
     if(active)h.setColor(3).drawString(active.prompt||"ENTER?",W/2,FOOTER_Y+4);
-    else h.setColor(2).drawString(text(msg||"HOLD WHEEL TO SAVE",36),W/2,FOOTER_Y+4);
+    else h.setColor(2).drawString(text(msg||storyMessage()||"HOLD WHEEL TO SAVE",34),W/2,FOOTER_Y+4);
   }
 
   function drawImageBackground(){
@@ -407,7 +519,7 @@
     var scale=world.imgScale||2;
     var px=x*scale;
     var py=y*scale;
-    h.setClipRect(px-18,py-22,px+18,py+18);
+    h.setClipRect(clamp(px-20,0,W-1),clamp(py-24,0,FOOTER_Y-1),clamp(px+40,0,W-1),clamp(py+36,0,FOOTER_Y-1));
     drawImageBackground();
   }
 
@@ -548,6 +660,11 @@
     if(px>-size&&py>-size&&px<W&&py<FOOTER_Y)drawSceneTile(x,y,px,py,size);
   }
 
+  function drawPlayerFootprint(x,y){
+    var ix,iy;
+    for(iy=y-1;iy<=y+3;iy++)for(ix=x-1;ix<=x+3;ix++)drawOneTile(ix,iy);
+  }
+
   function drawTileWorld(full,oldX,oldY){
     var size=world.scale||world.tile||16;
     var movedCamera=updateCamera();
@@ -563,12 +680,12 @@
         A.flip(0,H-1);
         return;
       }
-      drawOneTile(oldX,oldY);
-      if(oldX!=playerX||oldY!=playerY)drawOneTile(playerX,playerY);
+      drawPlayerFootprint(oldX,oldY);
+      if(oldX!=playerX||oldY!=playerY)drawPlayerFootprint(playerX,playerY);
       drawPlayer((playerX-tileOx)*size+Math.floor((size-16)/2),(playerY-tileOy)*size+Math.floor((size-16)/2));
       drawFooter();
-      top=Math.max(0,Math.min((oldY-tileOy)*size,(playerY-tileOy)*size));
-      bottom=Math.min(FOOTER_Y-1,Math.max((oldY-tileOy)*size,(playerY-tileOy)*size)+size-1);
+      top=Math.max(0,(Math.min(oldY,playerY)-tileOy-1)*size);
+      bottom=Math.min(FOOTER_Y-1,(Math.max(oldY,playerY)-tileOy+4)*size-1);
       if(bottom>=top)A.flip(top,bottom);
       A.flip(FOOTER_Y-1,H-1);
     }catch(e){}
@@ -578,6 +695,39 @@
     if(removed||!world)return;
     if(imageMode)drawImage(full,oldX,oldY);
     else drawTileWorld(full,oldX,oldY);
+  }
+
+  function canUseExit(exit){
+    var need=routeRound(exit);
+    if(need&&!roundLoaded(need)){
+      msg=exit.lockedMsg||(need+" ROUND REQUIRED");
+      return false;
+    }
+    if(exit&&exit.requiresReady&&roundCount()<6){
+      msg="BIG IRON NOT READY";
+      return false;
+    }
+    return true;
+  }
+
+  function canStartEncounter(target){
+    var need,bullet=bulletFor(target);
+    if(isMiniboss(target)){
+      need=target.minRegular||2;
+      if(regularCount(target.storyCity||id)<need){
+        msg="COMPLETE "+need+" ENCOUNTERS";
+        return false;
+      }
+      if(bullet&&roundLoaded(bullet)){
+        msg="ROUND ALREADY LOADED";
+        return false;
+      }
+    }
+    if(isFinalBoss(target)&&roundCount()<6){
+      msg="BIG IRON NOT READY";
+      return false;
+    }
+    return true;
   }
 
   function transition(exit){
@@ -621,6 +771,10 @@
     ny=playerY+dy*amount;
     exit=findExit(nx,ny);
     if(exit){
+      if(!canUseExit(exit)){
+        draw(false,oldX,oldY);
+        return;
+      }
       transition(exit);
       return;
     }
@@ -674,6 +828,10 @@
       return;
     }
     if(target.type=="battle"||target.type=="shoot"){
+      if(!canStartEncounter(target)){
+        draw(false,playerX,playerY);
+        return;
+      }
       save(true);
       busy=true;
       h.setColor(0).fillRect(0,0,W-1,H-1);
@@ -684,10 +842,13 @@
       if(target.type=="shoot"){
         A.shoot({target:target.target||target.enemy||"RADROACH",map:id,mode:imageMode?"image":"tile",x:playerX,y:playerY,facing:facing,interact:target.id,once:target.once});
       }else{
-        A.battle({enemy:target.enemyPool||target.enemy,map:id,mode:imageMode?"image":"tile",x:playerX,y:playerY,facing:facing,interact:target.id,once:target.once,music:target.music!==undefined?target.music:(id=="WORLD_03"?"NVTH":false),boss:target.boss});
+        A.battle({enemy:target.enemyPool||target.enemy,map:id,mode:imageMode?"image":"tile",x:playerX,y:playerY,facing:facing,interact:target.id,once:target.once,music:target.music!==undefined?target.music:((id=="WORLD_03"||id=="WORLD_06")?"NVTH":false),boss:target.boss,miniboss:isMiniboss(target),finalBoss:isFinalBoss(target),bullet:bulletFor(target)});
       }
     }else if(target.type=="save"){
       save(false,true);
+      draw(false,playerX,playerY);
+    }else if(target.type=="forge"){
+      forgeCourierRound();
       draw(false,playerX,playerY);
     }
   }
@@ -811,10 +972,20 @@
     worldImage=null;
     saveState=null;
     active=null;
+    playerSprite=null;
+    playerSpriteFacing="";
+    selectorIcon=null;
     A.gc();
   }
 
   loadSave();
+  if(arg.newGame){
+    saveState.map="";
+    saveState.x=undefined;
+    saveState.y=undefined;
+    saveState.facing="up";
+    saveState.story={rounds:{},encounters:0,deadLead:0};
+  }
   if(!arg.map&&saveState.map&&!exists(BASE+"DATA/"+saveState.map+".JSON"))saveState.map="";
   loadWorld(arg.map||saveState.map||"WORLD_01",arg.x!==undefined?arg:null);
   if(arg.msg)msg=arg.msg;
