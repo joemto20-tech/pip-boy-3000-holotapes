@@ -488,18 +488,21 @@
 
   function drawFooter(){
     var icon=loadSelectorIcon();
-    var bullets=roundCount()+"/6";
+    var rounds=roundCount();
+    var bx=6;
+    var by=FOOTER_Y-36;
     active=findInteract();
     h.setColor(0).fillRect(0,FOOTER_Y,W-1,H-1);
     h.setColor(2).drawLine(0,FOOTER_Y-1,W-1,FOOTER_Y-1);
     if(icon){
-      try{h.setColor(3).drawImage(icon,4,FOOTER_Y-12);}catch(e){}
+      try{h.setColor(3).drawImage(icon,bx,by);}catch(e){}
     }else{
-      h.setColor(3).fillRect(6,FOOTER_Y+3,14,FOOTER_Y+11);
+      h.setColor(3).fillRect(bx,by,bx+24,by+24);
     }
     font(1);
-    h.setFontAlign(-1,-1);
-    h.setColor(3).drawString(bullets,24,FOOTER_Y+6);
+    h.setFontAlign(0,0);
+    h.setColor(3).fillRect(bx+9,by+9,bx+21,by+21);
+    h.setColor(0).drawString(rounds,bx+15,by+15);
     font(2);
     h.setFontAlign(0,-1);
     if(active)h.setColor(3).drawString(active.prompt||"ENTER?",W/2,FOOTER_Y+4);
@@ -628,13 +631,11 @@
     var size=world.scale||world.tile||16;
     var mapW=world.rows&&world.rows[0]?world.rows[0].length:0;
     var mapH=world.rows?world.rows.length:0;
-    var maxX,maxY,sx,sy,leadX,leadY,oldX=tileOx,oldY=tileOy;
+    var maxX,maxY,sx,sy,oldX=tileOx,oldY=tileOy;
     tileCols=Math.ceil(W/size);
     tileRows=Math.max(1,Math.floor(FOOTER_Y/size));
     maxX=Math.max(0,mapW-tileCols);
     maxY=Math.max(0,mapH-tileRows);
-    leadX=clamp(Math.floor(tileCols/5),2,4);
-    leadY=clamp(Math.floor(tileRows/4),2,3);
     if(tileOx<0){
       tileOx=clamp(playerX-Math.floor(tileCols/2),0,maxX);
       tileOy=clamp(playerY-Math.floor(tileRows/2),0,maxY);
@@ -642,14 +643,10 @@
     }
     sx=playerX-tileOx;
     sy=playerY-tileOy;
-    if(facing=="right"&&sx>=tileCols-leadX-1)tileOx=clamp(playerX-leadX,0,maxX);
-    else if(facing=="left"&&sx<=leadX)tileOx=clamp(playerX-tileCols+leadX+1,0,maxX);
-    else if(sx<1)tileOx=clamp(playerX-tileCols+leadX+1,0,maxX);
-    else if(sx>tileCols-2)tileOx=clamp(playerX-leadX,0,maxX);
-    if(facing=="down"&&sy>=tileRows-leadY-1)tileOy=clamp(playerY-leadY,0,maxY);
-    else if(facing=="up"&&sy<=leadY)tileOy=clamp(playerY-tileRows+leadY+1,0,maxY);
-    else if(sy<1)tileOy=clamp(playerY-tileRows+leadY+1,0,maxY);
-    else if(sy>tileRows-2)tileOy=clamp(playerY-leadY,0,maxY);
+    if(sx<0)tileOx=clamp(playerX,0,maxX);
+    else if(sx>=tileCols)tileOx=clamp(playerX-tileCols+1,0,maxX);
+    if(sy<0)tileOy=clamp(playerY,0,maxY);
+    else if(sy>=tileRows)tileOy=clamp(playerY-tileRows+1,0,maxY);
     return tileOx!=oldX||tileOy!=oldY;
   }
 

@@ -28,7 +28,7 @@
   function wr(p,d){try{if(fs.writeFileSync){fs.writeFileSync(p,d);return true;}}catch(e){}try{if(fs.writeFile){fs.writeFile(p,d);return true;}}catch(e2){}return false;}
 
   function playerData(){try{return typeof player!="undefined"&&player&&player.player?player.player:{};}catch(e){return {};}}
-  function weaponName(o,d){var v=o&&o.NAME!==undefined?o.NAME:d;v=v==null?"":v.toString();return v.length>20?v.substr(0,19)+"~":v;}
+  function weaponName(o,d){var v=o&&o.txt!==undefined?o.txt:d;v=v==null?"":v.toString();return v.length>20?v.substr(0,19)+"~":v;}
   function weaponDmg(o,d){var v=parseFloat(o&&o.DMG);return isNaN(v)?d:v;}
   function datPath(c){return"DATA/"+(NV?"NV":"F3")+"/"+c+".DAT";}
   function datGet(c,id){var d=0,o=0;try{if(!id)return 0;d=new DataFile(datPath(c));o=d.getId(parseInt(id,10)||id);}catch(e){}finally{try{if(d)d.close();}catch(e2){}}return o||0;}
