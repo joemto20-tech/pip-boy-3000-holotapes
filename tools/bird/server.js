@@ -161,7 +161,7 @@ function listSprites() {
     for (const item of fs.readdirSync(folder, { withFileTypes: true })) {
       const full = path.join(folder, item.name);
       if (item.isDirectory()) walk(full);
-      else if (/\.(JS|IMG)$/i.test(item.name) && /SPRITE/i.test(item.name)) {
+      else if (/\.(JS|IMG)$/i.test(item.name) && /(SPRITE|PROJECTILE|BULLET|HIT|EFFECT)/i.test(item.name)) {
         found.push(path.relative(dataRoot, full).replace(/\\/g, "/"));
       }
     }

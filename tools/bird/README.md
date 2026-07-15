@@ -39,7 +39,7 @@ B.I.R.D. can place the Big Iron story pieces directly in World Builder: regular 
 
 World-specific NPC/scenery sprites are stored as `Assets/DATA/WORLD_XX/SPRITE_NAME.JS` and can be assigned to map decor as `WORLD_XX/SPRITE_NAME`.
 
-Sprite battle encounters use the `Sprite Battle` box in World Builder. Pick or type the enemy sprite, player battle sprite, projectile sprite, and impact/effect sprite, then place the encounter with the `Sprite Battle Encounter` paint tool. The saved world entry uses the compact `type:"duel"` format so the runtime JSON stays small.
+Sprite battle encounters use the `Battle Scene` tab. Pick or create the enemy sprite, player battle sprite, projectile sprite, and impact/effect sprite, drag their placement in the preview, then place the encounter with the `Sprite Battle Encounter` paint tool in World Builder. The saved world entry uses the compact `type:"duel"` format so the runtime JSON stays small.
 
 The four player movement files should stay as:
 

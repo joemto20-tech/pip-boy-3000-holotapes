@@ -219,11 +219,26 @@ p { margin: 3px 0 0; color: var(--green-2); }
   touch-action: none;
   overflow: hidden;
 }
+.scene-sprite-grid {
+  display: grid;
+  width: max-content;
+  max-width: 100%;
+  border: 1px solid var(--green);
+  border-radius: 6px;
+  background: #010301;
+  box-shadow: 0 0 24px rgba(120, 255, 109, .14);
+  touch-action: none;
+  overflow: auto;
+}
 .pixel {
   width: 22px;
   height: 22px;
   border-right: 1px solid rgba(120, 255, 109, .10);
   border-bottom: 1px solid rgba(120, 255, 109, .10);
+}
+.pixel.small {
+  width: 14px;
+  height: 14px;
 }
 .v0 { background: #031003; }
 .v1 { background: #315e2b; }
@@ -264,6 +279,18 @@ p { margin: 3px 0 0; color: var(--green-2); }
   border: 1px solid var(--green);
   border-radius: 6px;
   background: #010301;
+  image-rendering: pixelated;
+  box-shadow: 0 0 24px rgba(120, 255, 109, .14);
+  touch-action: none;
+}
+
+#battleSceneCanvas {
+  display: block;
+  width: min(100%, 640px);
+  height: auto;
+  border: 1px solid var(--green);
+  border-radius: 6px;
+  background: #e9eee7;
   image-rendering: pixelated;
   box-shadow: 0 0 24px rgba(120, 255, 109, .14);
   touch-action: none;

@@ -20,6 +20,7 @@
       <button class="tab active" data-view="world">World Builder</button>
       <button class="tab" data-view="art">World Art</button>
       <button class="tab" data-view="sprite">Sprite Creator</button>
+      <button class="tab" data-view="battleScene">Battle Scene</button>
       <button class="tab" data-view="package">Upload Checklist</button>
     </nav>
 
@@ -139,57 +140,6 @@
           </label>
           <label>Map Sprite
             <select id="decorSprite"></select>
-          </label>
-        </div>
-
-        <div class="box">
-          <h2>Sprite Battle</h2>
-          <div class="field-row">
-            <label>Enemy Name
-              <input id="duelEnemyName" value="RADSCORP">
-            </label>
-            <label>Enemy Level
-              <input id="duelEnemyLevel" type="number" value="16" min="1" max="99">
-            </label>
-          </div>
-          <label>Enemy Sprite
-            <select id="duelEnemySprite"></select>
-          </label>
-          <div class="field-row">
-            <label>Player Name
-              <input id="duelPlayerName" value="GUNSLNGR">
-            </label>
-            <label>Player Level
-              <input id="duelPlayerLevel" type="number" value="18" min="1" max="99">
-            </label>
-          </div>
-          <label>Player Sprite
-            <select id="duelPlayerSprite"></select>
-          </label>
-          <div class="field-row">
-            <label>Projectile
-              <select id="duelProjectileSprite"></select>
-            </label>
-            <label>Effect
-              <select id="duelEffectSprite"></select>
-            </label>
-          </div>
-          <div class="field-row">
-            <label>Enemy Sprite XY
-              <input id="duelEnemyPos" value="210,18">
-            </label>
-            <label>Player Sprite XY
-              <input id="duelPlayerPos" value="30,86">
-            </label>
-          </div>
-          <label>Projectile Path
-            <input id="duelShotPath" value="128,122,220,70">
-          </label>
-          <label>Boxes: enemy; player; command; text; spare
-            <input id="duelBoxes" value="8,8,154,52;158,111,154,58;178,171,134,42;4,203,312,33;4,171,174,42">
-          </label>
-          <label>Action Text: attack; power; defend; run
-            <input id="duelMessages" value="ATTACK!;POWER!;DEFEND!;FLEE!">
           </label>
         </div>
 
@@ -407,6 +357,121 @@
         </div>
         <div class="sprite-grid" id="spriteGrid"></div>
         <textarea id="spriteCode" spellcheck="false"></textarea>
+      </section>
+
+      <section class="panel left hidden" id="battleScenePanel" data-view-panel="battleScene">
+        <div class="box">
+          <h2>Battle Template</h2>
+          <div class="field-row">
+            <label>Enemy Name
+              <input id="duelEnemyName" value="RADSCORP">
+            </label>
+            <label>Enemy Level
+              <input id="duelEnemyLevel" type="number" value="16" min="1" max="99">
+            </label>
+          </div>
+          <label>Enemy Sprite
+            <select id="duelEnemySprite"></select>
+          </label>
+          <div class="field-row">
+            <label>Player Name
+              <input id="duelPlayerName" value="GUNSLNGR">
+            </label>
+            <label>Player Level
+              <input id="duelPlayerLevel" type="number" value="18" min="1" max="99">
+            </label>
+          </div>
+          <label>Player Sprite
+            <select id="duelPlayerSprite"></select>
+          </label>
+          <div class="field-row">
+            <label>Projectile
+              <select id="duelProjectileSprite"></select>
+            </label>
+            <label>Effect
+              <select id="duelEffectSprite"></select>
+            </label>
+          </div>
+          <div class="field-row">
+            <label>Enemy Sprite XY
+              <input id="duelEnemyPos" value="210,18">
+            </label>
+            <label>Player Sprite XY
+              <input id="duelPlayerPos" value="30,86">
+            </label>
+          </div>
+          <label>Projectile Path
+            <input id="duelShotPath" value="128,122,220,70">
+          </label>
+          <label>Boxes: enemy; player; command; text; spare
+            <input id="duelBoxes" value="8,8,154,52;158,111,154,58;178,171,134,42;4,203,312,33;4,171,174,42">
+          </label>
+          <label>Action Text: attack; power; defend; run
+            <input id="duelMessages" value="ATTACK!;POWER!;DEFEND!;FLEE!">
+          </label>
+          <div class="actions">
+            <button id="duelUseWorldTool" class="primary">Use On World Map</button>
+            <button id="duelRefreshPreview">Refresh Preview</button>
+          </div>
+        </div>
+
+        <div class="box">
+          <h2>Scene Sprite Maker</h2>
+          <label>Slot
+            <select id="sceneSpriteSlot">
+              <option value="enemy">Enemy</option>
+              <option value="player">Player</option>
+              <option value="projectile">Projectile</option>
+              <option value="effect">Effect</option>
+            </select>
+          </label>
+          <label>Name
+            <input id="sceneSpriteName" value="RADSCORP_SPRITE">
+          </label>
+          <div class="field-row">
+            <label>Width
+              <input id="sceneSpriteWidth" type="number" min="4" max="96" value="64">
+            </label>
+            <label>Height
+              <input id="sceneSpriteHeight" type="number" min="4" max="96" value="48">
+            </label>
+          </div>
+          <div class="field-row">
+            <label>BPP
+              <select id="sceneSpriteBpp">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="4" selected>4</option>
+              </select>
+            </label>
+            <label>Brush
+              <select id="sceneSpriteBrush"></select>
+            </label>
+          </div>
+          <label>Image To Slot Sprite
+            <input id="sceneSpriteImageImport" type="file" accept="image/*">
+          </label>
+          <div class="actions">
+            <button id="sceneNewSprite">New Slot Sprite</button>
+            <button id="sceneLoadSprite">Load Slot Sprite</button>
+            <button id="sceneConvertImage">Convert Image</button>
+            <button id="sceneSaveSprite" class="primary">Save Slot Sprite</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="stage hidden" id="battleSceneStage" data-view-panel="battleScene">
+        <div class="stage-head">
+          <strong>Sprite Battle Preview</strong>
+          <span id="duelPreviewReadout">320 x 236</span>
+        </div>
+        <canvas id="battleSceneCanvas" width="640" height="472"></canvas>
+        <div class="stage-head">
+          <strong id="sceneSpriteTitle">RADSCORP_SPRITE</strong>
+          <span id="sceneSpriteReadout">64 x 48</span>
+        </div>
+        <div class="scene-sprite-grid" id="sceneSpriteGrid"></div>
+        <textarea id="duelJson" spellcheck="false"></textarea>
       </section>
 
       <section class="panel wide hidden" id="packagePanel" data-view-panel="package">
