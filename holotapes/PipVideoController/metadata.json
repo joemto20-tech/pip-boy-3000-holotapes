@@ -4,8 +4,8 @@
   "author": "@OrionMissesRust",
   "version": "1.0.0",
   "description": "Play videos using your pip-boy on your pc.",
-  "icon": "assets/PipVideoController.png",
-  "previews": [],
+  "icon": "previews/PipVideoController.png",
+  "previews": ["previews/start.bmp"],
   "type": "app",
   "readme": "README.md",
   "storage": [
