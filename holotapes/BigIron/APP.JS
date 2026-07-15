@@ -48,15 +48,10 @@
   }
 
   function flip(y1,y2){
-    var o,k;
     try{
-      if(Pip.blitScreen){
-        o={};
-        try{for(k in Pip.blitOptions)o[k]=Pip.blitOptions[k];}catch(e){}
-        o.y1=y1;o.y2=y2;Pip.blitScreen(h,o);
-      }else h.flip();
+      h.flip();
       try{Pip.lastFlip=getTime();}catch(e2){}
-    }catch(e3){try{h.flip();}catch(e4){}}
+    }catch(e3){}
   }
 
   function rawFlip(){
@@ -247,8 +242,8 @@
     loading=true;
     if(loadTimer)clearTimeout(loadTimer);
     unload();
-    if(api)api.flip=n=="BATTLE"?rawFlip:flip;
-    quietShell(n=="BATTLE");
+    if(api)api.flip=flip;
+    quietShell(true);
     if(n=="BATTLE"){
       music(false);
       screen("CHECKING","WEAPON");
@@ -341,6 +336,7 @@
   };
 
   try{Pip.CURRENT.fullscreen=true;}catch(e){}
+  quietShell(true);
   try{Pip.onExclusive("knob1",k1);}catch(e2){try{Pip.on("knob1",k1);}catch(e3){}}
   try{Pip.onExclusive("knob2",k2);}catch(e4){try{Pip.on("knob2",k2);}catch(e5){}}
   start();
