@@ -245,6 +245,9 @@ function compactRuntimeWorld(world) {
     return item;
   };
   delete copy.tile;
+  delete copy.name;
+  delete copy.scale;
+  if (Array.isArray(copy.interacts)) copy.interacts = copy.interacts.filter((item) => !item || item.type !== "duel");
   if (Array.isArray(copy.interacts)) copy.interacts.forEach(clean);
   if (Array.isArray(copy.exits)) copy.exits.forEach(clean);
   if (Array.isArray(copy.decor)) copy.decor.forEach(clean);
