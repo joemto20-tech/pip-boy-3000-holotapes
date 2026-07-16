@@ -11,6 +11,9 @@ const state = {
   sceneSpritePainting: false,
   duelSprites: {},
   duelDrag: null,
+  items: {},
+  itemIconData: "",
+  itemIconName: "",
   art: null,
   artPainting: false,
   artStart: null
@@ -247,6 +250,123 @@ function renderWorld() {
 
 function cleanId(value) {
   return String(value || "WORLD_01").replace(/[^a-z0-9_]+/gi, "_").replace(/^_+|_+$/g, "").toUpperCase() || "WORLD_01";
+}
+
+function itemKey(value) {
+  return cleanId(value || "ITEM");
+}
+
+function itemCat(kind, effect, selected) {
+  if (selected) return selected;
+  if (kind === "weapon") return "WEAPONS";
+  if (kind === "ammo" || effect === "key") return "AMMO";
+  if (kind === "aid" || effect === "heal") return "AID";
+  return "MISC";
+}
+
+function currentItemForm() {
+  const name = ($("itemName").value || "Item").trim();
+  const kind = $("itemKind").value || "misc";
+  const effect = $("itemEffect").value || (kind === "weapon" ? "damage" : "none");
+  const count = Math.max(1, Number($("itemCount").value) || 1);
+  const damage = Math.max(0, Number($("itemDamage").value) || 0);
+  const chance = Math.max(0, Math.min(1, Number($("itemChance").value || 1)));
+  const key = itemKey(name);
+  const item = {
+    key,
+    id: `BIGIRON_${key}`,
+    name,
+    kind,
+    effect,
+    cat: itemCat(kind, effect, $("itemCat").value),
+    realId: $("itemRealId").value.trim(),
+    cnt: count,
+    min: count,
+    max: count,
+    chance
+  };
+  if (kind === "weapon" || damage > 0) item.damage = damage;
+  return item;
+}
+
+function renderItem() {
+  if (!$("itemJson")) return;
+  const item = currentItemForm();
+  const preview = { ...item };
+  if (!preview.realId) preview.realId = "auto";
+  $("itemTitle").textContent = item.key;
+  $("itemReadout").textContent = `${item.kind.toUpperCase()} / ${item.effect.toUpperCase()}`;
+  $("itemPreviewText").textContent = item.kind === "weapon"
+    ? `${item.name} writes as ${item.cat} and deals ${item.damage || 0} damage.`
+    : `${item.name} writes as ${item.cat} with ${item.effect} effect.`;
+  $("itemRewardSnippet").value = JSON.stringify({ item: item.key, chance: item.chance }, null, 2);
+  $("itemJson").value = JSON.stringify(preview, null, 2);
+  const icon = $("itemIconPreview");
+  if (state.itemIconData && state.itemIconData.startsWith("data:image/")) {
+    icon.innerHTML = `<img alt="" src="${state.itemIconData}">`;
+  } else if (state.items[item.key] && state.items[item.key].icon) {
+    icon.textContent = state.items[item.key].icon;
+  } else {
+    icon.textContent = "ICON";
+  }
+}
+
+function fillItemForm(key) {
+  const clean = itemKey(key || $("itemSelect").value || "STIMPAK");
+  const item = state.items[clean] || {};
+  $("itemName").value = item.name || clean.replace(/_/g, " ");
+  $("itemKind").value = item.kind || item.type || "misc";
+  $("itemEffect").value = item.effect || ($("itemKind").value === "weapon" ? "damage" : "none");
+  $("itemDamage").value = item.dmg || item.damage || 0;
+  $("itemCount").value = item.cnt || item.min || 1;
+  $("itemChance").value = item.chance === undefined ? 1 : item.chance;
+  $("itemCat").value = item.cat || item.realCat || "";
+  $("itemRealId").value = item.realId || item.formId || item.itemId || "";
+  state.itemIconData = "";
+  state.itemIconName = "";
+  if ($("itemIcon")) $("itemIcon").value = "";
+  renderItem();
+}
+
+function newItem() {
+  $("itemName").value = "New Item";
+  $("itemKind").value = "misc";
+  $("itemEffect").value = "none";
+  $("itemDamage").value = 0;
+  $("itemCount").value = 1;
+  $("itemChance").value = 1;
+  $("itemCat").value = "";
+  $("itemRealId").value = "";
+  state.itemIconData = "";
+  state.itemIconName = "";
+  if ($("itemIcon")) $("itemIcon").value = "";
+  renderItem();
+}
+
+function readDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    if (!file) return resolve("");
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result || "");
+    reader.onerror = () => reject(new Error("That icon file could not be read."));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function saveItem() {
+  const item = currentItemForm();
+  const icon = state.itemIconData ? { name: state.itemIconName || `${item.key}.IMG`, data: state.itemIconData } : null;
+  const body = await api("/api/items", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ item, icon })
+  });
+  state.items = body.items || state.items;
+  setStatus(`Saved item ${body.key}`);
+  await loadInfo();
+  ensureOption($("itemSelect"), body.key, body.item.name || body.key);
+  $("itemSelect").value = body.key;
+  fillItemForm(body.key);
 }
 
 function cleanOptionalId(value) {
@@ -1048,10 +1168,11 @@ function downloadSpriteRuntime() {
 
 async function loadInfo() {
   const keep = {};
-  ["duelEnemySprite", "duelPlayerSprite", "duelProjectileSprite", "duelEffectSprite", "decorSprite", "encEnemy"].forEach((id) => {
+  ["duelEnemySprite", "duelPlayerSprite", "duelProjectileSprite", "duelEffectSprite", "decorSprite", "encEnemy", "itemSelect"].forEach((id) => {
     if ($(id)) keep[id] = $(id).value;
   });
   state.info = await api("/api/info");
+  state.items = state.info.itemMap || {};
   const worldDetails = state.info.worldDetails && state.info.worldDetails.length
     ? state.info.worldDetails
     : state.info.worlds.map((file) => ({ file, id: file.replace(/\.JSON$/i, ""), image: "" }));
@@ -1086,6 +1207,12 @@ async function loadInfo() {
   $("duelEffectSprite").innerHTML = spriteOptions("Effect sprite");
   const enemyOptions = ['<option value="RANDOM">RANDOM</option>'].concat(state.info.enemies.map((enemy) => `<option value="${enemy.id}">${enemy.name} LV${enemy.level}</option>`));
   $("encEnemy").innerHTML = enemyOptions.join("");
+  if ($("itemSelect")) {
+    const itemKeys = Object.keys(state.items).sort((a, b) => a.localeCompare(b));
+    $("itemSelect").innerHTML = itemKeys.length
+      ? itemKeys.map((key) => `<option value="${key}">${state.items[key].name || key}</option>`).join("")
+      : '<option value="ITEM">No items saved yet</option>';
+  }
   Object.entries(keep).forEach(([id, value]) => {
     if (value && $(id)) ensureOption($(id), value, value);
     if (value && $(id)) $(id).value = value;
@@ -1108,6 +1235,8 @@ async function loadInfo() {
     "Battle data:",
     "battle.json -> HOLO/BIGIRON/battle.json",
     "Assets/battle.json -> HOLO/BIGIRON/Assets/battle.json if that folder is mirrored",
+    "Assets/DATA/ITEMS.JSON -> HOLO/BIGIRON/DATA/ITEMS.JSON",
+    "Assets/ITEMS/*.IMG or *.BMP -> HOLO/BIGIRON/ITEMS/ when item icons are added",
     "",
     "World JSON files:",
     "Assets/DATA/WORLD_01.JSON -> HOLO/BIGIRON/DATA/WORLD_01.JSON",
@@ -1148,12 +1277,14 @@ async function loadInfo() {
     'boss -> { type:"battle", boss:true, enemy:"...", music:"NVTH" }',
     'shoot -> { type:"shoot", target:"RADROACH" }',
     'sprite battle -> { type:"duel", es:"ENEMY_SPRITE", ps:"PLAYER_BATTLE_SPRITE", pr:"BULLET_SPRITE", fx:"HIT_SPRITE" }',
+    'item reward -> { item:"STIMPAK", chance:1 }',
     'custom launch screen -> encounter lt:"TITLE", ls:"SUBTITLE"',
     'custom travel screen -> exit tt:"TITLE", ts:"SUBTITLE"',
     "",
     "Other DATA snippets:",
     "Assets/DATA/EYEBOT.JS and similar visual snippets go in HOLO/BIGIRON/DATA/"
   ].join("\n");
+  if ($("itemSelect") && Object.keys(state.items).length) fillItemForm($("itemSelect").value || Object.keys(state.items)[0]);
 }
 
 async function loadWorld(name) {
@@ -1679,6 +1810,22 @@ function wireEvents() {
     if (state.sceneSprite) renderSceneSprite();
   };
   $("sceneSpriteName").oninput = () => { if (state.sceneSprite) renderSceneSprite(); };
+
+  $("loadItem").onclick = () => fillItemForm();
+  $("newItem").onclick = () => newItem();
+  $("saveItem").onclick = () => saveItem().catch((error) => setStatus(error.message, true));
+  $("downloadItems").onclick = () => download("ITEMS.JSON", JSON.stringify(state.items || {}, null, 2) + "\n", "application/json");
+  $("itemSelect").onchange = () => fillItemForm();
+  ["itemName", "itemKind", "itemEffect", "itemDamage", "itemCount", "itemChance", "itemCat", "itemRealId"].forEach((id) => {
+    $(id).addEventListener("input", renderItem);
+    $(id).addEventListener("change", renderItem);
+  });
+  $("itemIcon").onchange = async () => {
+    const file = $("itemIcon").files && $("itemIcon").files[0];
+    state.itemIconName = file ? file.name : "";
+    state.itemIconData = await readDataUrl(file);
+    renderItem();
+  };
 
   $("loadWorld").onclick = () => loadWorld();
   $("newWorld").onclick = () => newWorld(cleanId($("worldId").value || "WORLD_NEW"), Number($("worldCols").value) || 42, Number($("worldRows").value) || 24);

@@ -38,11 +38,13 @@ const repoRoot = path.resolve(appRoot, "..", "..");
 const bigIronRoot = findBigIronRoot(appRoot);
 const assetsRoot = path.join(bigIronRoot, "Assets");
 const dataRoot = path.join(assetsRoot, "DATA");
+const itemIconRoot = path.join(assetsRoot, "ITEMS");
 const worldArtRoot = path.join(assetsRoot, "WORLD");
 const exportRoot = path.join(appRoot, "exports");
 const spriteExportRoot = path.join(exportRoot, "sprites");
 const metadataPath = path.join(bigIronRoot, "metadata.json");
 const battlePath = path.join(bigIronRoot, "battle.json");
+const itemsPath = path.join(dataRoot, "ITEMS.JSON");
 
 const mime = {
   ".html": "text/html; charset=utf-8",
@@ -193,6 +195,88 @@ function listWorldDetails() {
       image: world.image || ""
     };
   });
+}
+
+function itemIconPath(key, fileName) {
+  const ext = (path.extname(fileName || "") || ".IMG").toUpperCase();
+  const safeExt = [".IMG", ".BMP", ".PNG"].includes(ext) ? ext : ".IMG";
+  const target = path.resolve(itemIconRoot, cleanBase(key, "ITEM") + safeExt);
+  if (!target.startsWith(path.resolve(itemIconRoot))) throw new Error("Unsafe item icon path.");
+  return target;
+}
+
+function readItems() {
+  const items = readJson(itemsPath, {});
+  return items && typeof items === "object" && !Array.isArray(items) ? items : {};
+}
+
+function nextItemId(items) {
+  const used = new Set();
+  Object.keys(items || {}).forEach((key) => {
+    const item = items[key];
+    const id = item && (item.realId !== undefined ? item.realId : item.formId !== undefined ? item.formId : item.itemId);
+    const parsed = Number(id);
+    if (Number.isFinite(parsed)) used.add(parsed);
+  });
+  let id = 900001;
+  while (used.has(id)) id += 1;
+  return id;
+}
+
+function itemCat(kind, effect, cat) {
+  const explicit = cleanBase(cat || "", "");
+  if (explicit) return explicit;
+  const type = String(kind || "").toLowerCase();
+  const fx = String(effect || "").toLowerCase();
+  if (type === "weapon") return "WEAPONS";
+  if (type === "ammo" || fx === "ammo") return "AMMO";
+  if (type === "aid" || fx === "heal" || fx === "stimpak") return "AID";
+  return "MISC";
+}
+
+function normalizeItem(input, currentItems) {
+  if (!input || typeof input !== "object") throw new Error("Item needs a name.");
+  const name = String(input.name || input.txt || "").trim();
+  if (!name) throw new Error("Item name is required.");
+  const key = cleanBase(input.key || input.ref || name, "ITEM");
+  const kind = String(input.kind || input.type || "misc").toLowerCase();
+  const effect = String(input.effect || (kind === "weapon" ? "damage" : "none")).toLowerCase();
+  const damage = Math.max(0, Math.floor(Number(input.damage || input.dmg || 0)));
+  const count = Math.max(1, Math.floor(Number(input.count || input.cnt || input.min || 1)));
+  const chance = Math.max(0, Math.min(1, Number(input.chance === undefined || input.chance === "" ? 1 : input.chance)));
+  const realId = input.realId === "" || input.realId === undefined || input.realId === null
+    ? nextItemId(currentItems)
+    : (Number.isFinite(Number(input.realId)) ? Number(input.realId) : cleanBase(input.realId, key));
+  const item = {
+    id: cleanBase(input.id || `BIGIRON_${key}`, `BIGIRON_${key}`),
+    name,
+    kind,
+    effect,
+    cat: itemCat(kind, effect, input.cat || input.realCat),
+    realId,
+    cnt: count,
+    min: count,
+    max: count,
+    chance
+  };
+  if (kind === "weapon" || damage > 0) item.dmg = damage;
+  if (input.icon) item.icon = String(input.icon);
+  if (input.condition !== undefined && input.condition !== "") item.condition = Number(input.condition) || input.condition;
+  return { key, item };
+}
+
+function saveItemIcon(key, icon) {
+  if (!icon || !icon.data) return "";
+  const raw = String(icon.data);
+  const match = raw.match(/^data:[^;]+;base64,(.+)$/);
+  const payload = match ? match[1] : raw;
+  const target = itemIconPath(key, icon.name || `${key}.IMG`);
+  fs.mkdirSync(itemIconRoot, { recursive: true });
+  fs.writeFileSync(target, Buffer.from(payload, "base64"));
+  const fileName = path.basename(target);
+  addMetadataStorage(`HOLO/BIGIRON/ITEMS/${fileName}`, `Assets/ITEMS/${fileName}`);
+  addInfoFile(`HOLO/BIGIRON/ITEMS/${fileName}`);
+  return `ITEMS/${fileName}`;
 }
 
 function normalizeWorld(input) {
@@ -407,12 +491,15 @@ async function api(req, res, url) {
       version: metadata.version || "",
       bigIronRoot,
       dataRoot,
+      itemIconRoot,
       worldArtRoot,
       spriteExportRoot,
       worlds: worldDetails.map((world) => world.file),
       worldDetails,
       worldArt: listWorldArt(".JSON"),
       sprites: listSprites(),
+      items: Object.keys(readItems()).sort((a, b) => a.localeCompare(b)),
+      itemMap: readItems(),
       enemies: (battle.enemies || []).map((enemy) => ({
         id: enemy.id || enemy.name || enemy.folder,
         name: enemy.name || enemy.id || enemy.folder,
@@ -426,6 +513,26 @@ async function api(req, res, url) {
   if (url.pathname === "/api/world" && req.method === "GET") {
     const target = dataPath(url.searchParams.get("name") || "WORLD_01", "WORLD_01", ".JSON");
     json(res, 200, { ok: true, name: path.basename(target), world: JSON.parse(fs.readFileSync(target, "utf8")) });
+    return;
+  }
+
+  if (url.pathname === "/api/items" && req.method === "GET") {
+    json(res, 200, { ok: true, items: readItems() });
+    return;
+  }
+
+  if (url.pathname === "/api/items" && req.method === "POST") {
+    const body = await bodyJson(req);
+    const items = readItems();
+    const made = normalizeItem(body.item || body, items);
+    const icon = saveItemIcon(made.key, body.icon || (body.item && body.item.iconUpload));
+    if (icon) made.item.icon = icon;
+    items[made.key] = made.item;
+    fs.mkdirSync(dataRoot, { recursive: true });
+    fs.writeFileSync(itemsPath, JSON.stringify(items, null, 2) + "\n", "utf8");
+    addMetadataStorage("HOLO/BIGIRON/DATA/ITEMS.JSON", "Assets/DATA/ITEMS.JSON");
+    addInfoFile("HOLO/BIGIRON/DATA/ITEMS.JSON");
+    json(res, 200, { ok: true, key: made.key, item: made.item, items });
     return;
   }
 
@@ -550,9 +657,10 @@ function makeServer() {
 function assertPaths() {
   if (!fs.existsSync(assetsRoot)) fs.mkdirSync(assetsRoot, { recursive: true });
   if (!fs.existsSync(dataRoot)) fs.mkdirSync(dataRoot, { recursive: true });
+  if (!fs.existsSync(itemIconRoot)) fs.mkdirSync(itemIconRoot, { recursive: true });
   if (!fs.existsSync(worldArtRoot)) fs.mkdirSync(worldArtRoot, { recursive: true });
   if (!fs.existsSync(spriteExportRoot)) fs.mkdirSync(spriteExportRoot, { recursive: true });
-  for (const item of [publicRoot, bigIronRoot, assetsRoot, dataRoot, worldArtRoot, spriteExportRoot]) {
+  for (const item of [publicRoot, bigIronRoot, assetsRoot, dataRoot, itemIconRoot, worldArtRoot, spriteExportRoot]) {
     if (!fs.existsSync(item)) throw new Error(`Missing required path: ${item}`);
   }
 }
@@ -561,6 +669,7 @@ function selfTest() {
   assertPaths();
   const worlds = listData(".JSON", /^WORLD_/i);
   const sprites = listSprites();
+  readItems();
   if (worlds.length) normalizeWorld(readJson(path.join(dataRoot, worlds[0]), null));
   if (sprites.length) {
     const first = path.join(dataRoot, ...sprites[0].split("/"));

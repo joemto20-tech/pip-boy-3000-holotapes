@@ -21,6 +21,7 @@
       <button class="tab" data-view="art">World Art</button>
       <button class="tab" data-view="sprite">Sprite Creator</button>
       <button class="tab" data-view="battleScene">Battle Scene</button>
+      <button class="tab" data-view="items">Items</button>
       <button class="tab" data-view="package">Upload Checklist</button>
     </nav>
 
@@ -488,6 +489,102 @@
         </div>
         <div class="scene-sprite-grid" id="sceneSpriteGrid"></div>
         <textarea id="duelJson" spellcheck="false"></textarea>
+      </section>
+
+      <section class="panel left hidden" id="itemsPanel" data-view-panel="items">
+        <div class="box">
+          <h2>Object Window</h2>
+          <div class="field-row">
+            <label>Items
+              <select id="itemSelect"></select>
+            </label>
+            <button id="loadItem">Load</button>
+          </div>
+          <button id="newItem">New Item</button>
+        </div>
+
+        <div class="box">
+          <h2>Item Settings</h2>
+          <label>Name
+            <input id="itemName" value="Stimpak">
+          </label>
+          <div class="field-row">
+            <label>Kind
+              <select id="itemKind">
+                <option value="aid">Aid / Healing</option>
+                <option value="weapon">Weapon</option>
+                <option value="ammo">Ammo / Key</option>
+                <option value="misc">Misc Loot</option>
+              </select>
+            </label>
+            <label>Effect
+              <select id="itemEffect">
+                <option value="heal">Heal</option>
+                <option value="damage">Damage</option>
+                <option value="key">Story Key</option>
+                <option value="quest">Quest Item</option>
+                <option value="none">None</option>
+              </select>
+            </label>
+          </div>
+          <div class="field-row">
+            <label>Damage
+              <input id="itemDamage" type="number" min="0" value="0">
+            </label>
+            <label>Count
+              <input id="itemCount" type="number" min="1" value="1">
+            </label>
+          </div>
+          <label>Drop Chance
+            <input id="itemChance" type="number" min="0" max="1" step="0.05" value="1">
+          </label>
+        </div>
+
+        <div class="box">
+          <h2>Real Pip-Boy Write</h2>
+          <p class="hint">Leave Real Item ID blank for a new custom item. Use known Fallout IDs for real items like Stimpak.</p>
+          <div class="field-row">
+            <label>Category
+              <select id="itemCat">
+                <option value="">Auto</option>
+                <option value="AID">AID</option>
+                <option value="WEAPONS">WEAPONS</option>
+                <option value="AMMO">AMMO</option>
+                <option value="MISC">MISC</option>
+              </select>
+            </label>
+            <label>Real Item ID
+              <input id="itemRealId" placeholder="auto">
+            </label>
+          </div>
+          <label>Icon IMG/BMP/PNG
+            <input id="itemIcon" type="file" accept=".img,.bmp,.png,image/png,image/bmp,application/octet-stream">
+          </label>
+        </div>
+
+        <div class="actions">
+          <button id="saveItem" class="primary">Save Item</button>
+          <button id="downloadItems">Download ITEMS.JSON</button>
+        </div>
+      </section>
+
+      <section class="stage hidden" id="itemsStage" data-view-panel="items">
+        <div class="stage-head">
+          <strong id="itemTitle">ITEM</strong>
+          <span id="itemReadout">ready</span>
+        </div>
+        <div class="geck-board">
+          <div class="geck-card">
+            <strong>Preview</strong>
+            <div class="item-icon-preview" id="itemIconPreview">ICON</div>
+            <p id="itemPreviewText">Set a name and effect, then save.</p>
+          </div>
+          <div class="geck-card">
+            <strong>Reward Snippet</strong>
+            <textarea id="itemRewardSnippet" spellcheck="false" readonly></textarea>
+          </div>
+        </div>
+        <textarea id="itemJson" spellcheck="false"></textarea>
       </section>
 
       <section class="panel wide hidden" id="packagePanel" data-view-panel="package">
