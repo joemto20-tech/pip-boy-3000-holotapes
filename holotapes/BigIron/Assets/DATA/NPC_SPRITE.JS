@@ -1,1 +1,0 @@
-var NPC_SPRITE={width:12,height:14,bpp:2,buffer:atob("EIiBBIiEAaqQAqqAClWgWQBpKQBoClWgBqqQECgEACgAAAAAAAAAAAAA")};
