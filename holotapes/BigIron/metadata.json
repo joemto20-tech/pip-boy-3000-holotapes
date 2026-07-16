@@ -36,7 +36,6 @@
     { "name": "HOLO/BIGIRON/ST.IMG", "url": "Assets/ST.IMG" },
     { "name": "HOLO/BIGIRON/BIGIRON.IMG", "url": "BIGIRON.IMG" },
     { "name": "HOLO/BIGIRON/IMAGE.BIN", "url": "IMAGE.BIN" },
-    { "name": "HOLO/BIGIRON/MENU.IMG", "url": "MENU.IMG" },
     { "name": "HOLO/BIGIRON/SELECTER.IMG", "url": "Assets/CODE/SELECTER.IMG" },
     { "name": "HOLO/BIGIRON/VIDEO/Granny/BATTLE_IDLE.avi", "url": "Assets/VIDEO/Granny/BATTLE_IDLE.avi" },
     { "name": "HOLO/BIGIRON/VIDEO/Granny/BATTLE_START.avi", "url": "Assets/VIDEO/Granny/BATTLE_START.avi" },

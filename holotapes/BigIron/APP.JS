@@ -130,33 +130,27 @@
     return false;
   }
 
-  function drawImg(n){
-    var img=0;
-    try{img=fs.readFile(B+n);}catch(e){}
-    try{if(!img)img=fs.readFile(n);}catch(e2){}
-    try{if(!img)img=fs.readFile(B+"Assets/"+n);}catch(e3){}
-    try{
-      if(!img)return false;
-      h.setColor(0).fillRect(0,0,W-1,H-1);
-      h.drawImage(img,0,0);
-      img=null;
-      return true;
-    }catch(e4){}
-    return false;
-  }
-
   function drawFallback(){
     h.setClipRect(0,0,W-1,H-1);
     h.setColor(0).fillRect(0,0,W-1,H-1);
     h.setFontAlign(0,0);
-    font(4);h.setColor(3).drawString("BIG IRON",W/2,90);
-    font(2);h.drawString("START NEW",W/2,178);
-    h.drawString("LOAD",W/2,223);
+    h.setColor(2).drawRect(34,24,W-35,H-25);
+    h.drawRect(42,32,W-43,H-33);
+    font(4);h.setColor(3).drawString("BIG IRON",W/2,70);
+    font(1);h.setColor(2).drawString("PB3000RPG",W/2,104);
+    h.drawString("STATUS: DORMANT",W/2,130);
+    h.drawString("CHAMBERS READY: 0/6",W/2,146);
+    h.setColor(2).drawRect(118,166,W-119,198);
+    h.drawRect(118,211,W-119,243);
+    font(2);
+    h.setColor(sel?2:3).drawString("START NEW",W/2,174);
+    h.setColor(sel?3:2).drawString("LOAD GAME",W/2,219);
+    h.setColor(3).fillPoly([96,sel?220:175,96,sel?232:187,108,sel?226:181]);
+    font(1);h.setColor(2).drawString("TURN WHEEL / PRESS TO SELECT",W/2,286);
   }
 
   function drawMenu(){
-    if(!drawImg("MENU.IMG")&&!drawBin("MENU.BIN"))drawFallback();
-    h.setColor(3).fillPoly([124,sel?216:171,124,sel?228:183,136,sel?222:177]);
+    drawFallback();
     flip(0,H-1);
     gc();
   }
