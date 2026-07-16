@@ -879,7 +879,7 @@
   }
 
   function drawPause(note){
-    var options=["RESUME","SAVE LOCATION","PROGRESS","ITEMS","EXIT GAME"];
+    var options=["RESUME","SAVE LOCATION","PROGRESS","FIELD PACK","EXIT GAME"];
     var i,y;
     h.setClipRect(0,0,W-1,H-1);
     h.setColor(0).fillRect(0,0,W-1,H-1);
