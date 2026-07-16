@@ -541,7 +541,7 @@
     drawImagePlayer();
     drawFooter();
     tileDrawn=true;
-    h.flip();
+    A.flip(0,H-1);
   }
 
   function drawImageReveal(full,oldX,oldY){
@@ -569,7 +569,7 @@
     drawImagePlayer();
     drawFooter();
     tileDrawn=true;
-    h.flip();
+    A.flip(0,H-1);
   }
 
   function drawImagePatch(full,oldX,oldY){
@@ -582,7 +582,7 @@
     h.setClipRect(0,0,W-1,H-1);
     drawImagePlayer();
     drawFooter();
-    h.flip();
+    A.flip(0,H-1);
   }
 
   function drawImage(full,oldX,oldY){
@@ -671,7 +671,7 @@
   function drawTileWorld(full,oldX,oldY){
     var size=world.scale||world.tile||16;
     var movedCamera=updateCamera(oldX,oldY);
-    var i,j,top,bottom;
+    var i,j;
     try{
       if(full!==false||!tileDrawn||movedCamera){
         h.setClipRect(0,0,W-1,H-1);
@@ -687,10 +687,8 @@
       if(oldX!=playerX||oldY!=playerY)drawPlayerFootprint(playerX,playerY);
       drawPlayer((playerX-tileOx)*size+Math.floor((size-16)/2),(playerY-tileOy)*size+Math.floor((size-16)/2));
       drawFooter();
-      top=Math.max(0,(Math.min(oldY,playerY)-tileOy-1)*size);
-      bottom=Math.min(FOOTER_Y-1,(Math.max(oldY,playerY)-tileOy+4)*size-1);
-      if(bottom>=top)A.flip(top,bottom);
-      A.flip(FOOTER_Y-1,H-1);
+      h.setClipRect(0,0,W-1,H-1);
+      A.flip(0,H-1);
     }catch(e){}
   }
 
@@ -745,7 +743,7 @@
     h.setColor(3).drawString(text(title,22),W/2,135);
     font(2);
     h.setColor(2).drawString(text(sub,24),W/2,175);
-    h.flip();
+    A.flip(0,H-1);
     world=null;
     tileDrawn=false;
     A.gc();
@@ -850,7 +848,7 @@
         font(2);
         h.setColor(2).drawString(text(sub,24),W/2,172);
       }
-      h.flip();
+      A.flip(0,H-1);
       if(target.type=="shoot"){
         A.shoot({target:target.target||target.enemy||"RADROACH",map:id,mode:imageMode?"image":"tile",x:playerX,y:playerY,facing:facing,interact:target.id,once:target.once});
       }else{
@@ -891,7 +889,7 @@
     }
     font(1);
     h.setColor(2).drawString(note||"TURN WHEEL / PRESS TO SELECT",W/2,286);
-    h.flip();
+    A.flip(0,H-1);
   }
 
   function openPause(){
