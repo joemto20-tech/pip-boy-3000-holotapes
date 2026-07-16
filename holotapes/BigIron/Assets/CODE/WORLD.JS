@@ -65,7 +65,7 @@
       s=fs.statSync(path);
       n=parseInt(s&&(s.size||s.length),10)||0;
     }catch(e){}
-    return !n||n<=max;
+    return n>0&&n<=max;
   }
 
   function playerData(){
@@ -118,7 +118,7 @@
         return playerSprites[file];
       }
     }catch(e){}
-    if(!imageFits(path,512))return null;
+    if(!imageFits(path,320))return null;
     playerSprites[file]=readImage(path)||null;
     return playerSprites[file]||null;
   }
