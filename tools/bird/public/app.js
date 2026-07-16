@@ -799,13 +799,7 @@ function placeEncounter(tool, x, y) {
       ...base,
       type: "shop",
       once: false,
-      vendor: "SUNSCAR TRADER",
-      stock: [
-        { cat: "AID", id: 86377, name: "STIMPAK", price: 35 },
-        { cat: "WEAPONS", id: 17231, name: "10MM PISTOL", price: 55, equip: true, condition: 100 },
-        { cat: "WEAPONS", id: 586262, name: ".357 MAGNUM", price: 120, equip: true, condition: 100 }
-      ],
-      videos: { start: "BATTLE_START.avi", idle: "BATTLE_IDLE.avi", buy: "P_MOVE_1.avi", sell: "E_MOVE_1.avi" }
+      vendor: "SUNSCAR TRADER"
     }, "SHOP", "SUNSCAR TRADER"));
   } else if (tool === "forge") {
     world.interacts.push({ ...base, type: "forge", once: false });
@@ -1303,7 +1297,7 @@ async function loadInfo() {
     'round-locked exit -> { requiresRound:"SCORCHED" }',
     'boss -> { type:"battle", boss:true, enemy:"...", music:"NVTH" }',
     'shoot -> { type:"shoot", target:"RADROACH" }',
-    'shop -> { type:"shop", vendor:"...", stock:[{ cat:"WEAPONS", id:17231, price:55, equip:true }] }',
+    'shop -> { type:"shop", vendor:"..." }; stock defaults live in SHOP.JS to keep world JSON small',
     'sprite battle -> { type:"duel", es:"ENEMY_SPRITE", ps:"PLAYER_BATTLE_SPRITE", pr:"BULLET_SPRITE", fx:"HIT_SPRITE" }',
     'item reward -> { item:"STIMPAK", chance:1 }',
     'custom launch screen -> encounter lt:"TITLE", ls:"SUBTITLE"',
