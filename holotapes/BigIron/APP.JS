@@ -130,6 +130,21 @@
     return false;
   }
 
+  function drawImg(n){
+    var img=0;
+    try{img=fs.readFile(B+n);}catch(e){}
+    try{if(!img)img=fs.readFile(n);}catch(e2){}
+    try{if(!img)img=fs.readFile(B+"Assets/"+n);}catch(e3){}
+    try{
+      if(!img)return false;
+      h.setColor(0).fillRect(0,0,W-1,H-1);
+      h.drawImage(img,0,0);
+      img=null;
+      return true;
+    }catch(e4){}
+    return false;
+  }
+
   function drawFallback(){
     h.setClipRect(0,0,W-1,H-1);
     h.setColor(0).fillRect(0,0,W-1,H-1);
@@ -140,7 +155,7 @@
   }
 
   function drawMenu(){
-    if(!drawBin("MENU.BIN"))drawFallback();
+    if(!drawImg("MENU.IMG")&&!drawBin("MENU.BIN"))drawFallback();
     h.setColor(3).fillPoly([124,sel?216:171,124,sel?228:183,136,sel?222:177]);
     flip(0,H-1);
     gc();

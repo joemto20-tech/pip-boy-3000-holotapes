@@ -1236,7 +1236,7 @@ async function loadInfo() {
     "Start/menu boot files:",
     "APP.MIN.JS -> HOLO/BIGIRON/APP.JS",
     "IMAGE.BIN -> HOLO/BIGIRON/IMAGE.BIN",
-    "MENU.BIN -> HOLO/BIGIRON/MENU.BIN",
+    "MENU.IMG -> HOLO/BIGIRON/MENU.IMG",
     "BIGIRON.IMG -> HOLO/BIGIRON/BIGIRON.IMG",
     "Assets/CODE/SELECTER.IMG -> HOLO/BIGIRON/CODE/SELECTER.IMG",
     "",
