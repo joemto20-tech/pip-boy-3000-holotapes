@@ -889,8 +889,33 @@
     else h.setColor(2).drawString(e>=20?"FINAL ROUND READY":"KEEP RECORDING",256,200);
   }
 
+  function drawPauseMap(){
+    var rows=world&&world.rows?world.rows:[],mh=rows.length,mw=mh?rows[0].length:0;
+    var s=mw&&mh?Math.max(1,Math.min(4,Math.floor(Math.min(176/mw,106/mh)))):1;
+    var ox=246+Math.floor((180-mw*s)/2),oy=118+Math.floor((112-mh*s)/2),x,y,t,px,py;
+    h.setColor(2).drawRect(246,112,W-42,248);
+    h.setFontAlign(0,-1);
+    font(1);
+    h.setColor(3).drawString(text(mapName(id),26),342,116);
+    if(!mw||!mh)return;
+    h.setColor(0).fillRect(ox-2,oy-2,ox+mw*s+1,oy+mh*s+1);
+    for(y=0;y<mh;y++){
+      for(x=0;x<mw;x++){
+        t=rows[y].charAt(x);
+        if(t=="B"||t=="X")h.setColor(1);
+        else if(t=="P"||t=="D")h.setColor(3);
+        else if(t=="H")h.setColor(2);
+        else continue;
+        h.fillRect(ox+x*s,oy+y*s,ox+x*s+s-1,oy+y*s+s-1);
+      }
+    }
+    px=clamp(parseInt(playerX,10)||0,0,mw-1);
+    py=clamp(parseInt(playerY,10)||0,0,mh-1);
+    h.setColor(3).drawRect(ox+px*s-1,oy+py*s-1,ox+px*s+s,oy+py*s+s);
+  }
+
   function drawPause(note){
-    var options=["RESUME","SAVE LOCATION","PROGRESS","FIELD PACK","EXIT GAME"];
+    var options=["RESUME","SAVE LOCATION","PROGRESS","WORLD MAP","FIELD PACK","EXIT GAME"];
     var i,y;
     h.setClipRect(0,0,W-1,H-1);
     h.setColor(0).fillRect(0,0,W-1,H-1);
@@ -901,8 +926,8 @@
     h.setColor(3).drawString("PAUSED",W/2,58);
     font(1);
     h.setColor(2).drawString("BIG IRON",W/2,92);
-    for(i=0;i<5;i++){
-      y=108+i*34;
+    for(i=0;i<6;i++){
+      y=102+i*30;
       if(i==pause){
         h.setColor(2).fillRect(58,y-14,226,y+14);
         h.setColor(0);
@@ -914,8 +939,9 @@
       h.drawString((i==pause?"> ":"")+options[i],142,y);
     }
     if(pause==2)drawPauseProgress();
+    if(pause==3)drawPauseMap();
     font(1);
-    h.setColor(2).drawString(pause==2?"PROGRESS":"TURN WHEEL / PRESS TO SELECT",W/2,286);
+    h.setColor(2).drawString(pause==2?"PROGRESS":pause==3?"WORLD MAP":"TURN WHEEL / PRESS TO SELECT",W/2,286);
     A.flip(0,H-1);
   }
 
@@ -939,6 +965,8 @@
       }else if(pause==2){
         drawPause("PROGRESS");
       }else if(pause==3){
+        drawPause("WORLD MAP");
+      }else if(pause==4){
         save(true);
         if(A.inventory){
           A.inventory({map:id,mode:imageMode?"image":"tile",x:playerX,y:playerY,facing:facing});
@@ -984,7 +1012,7 @@
     }
     if(clickTimer){clearTimeout(clickTimer);clickTimer=null;}
     if(pause>=0){
-      pause=(pause+(value<0?-1:1)+5)%5;
+      pause=(pause+(value<0?-1:1)+6)%6;
       drawPause();
     }else{
       queueMove(value,0);
@@ -995,7 +1023,7 @@
     if(!value||removed)return;
     if(clickTimer){clearTimeout(clickTimer);clickTimer=null;}
     if(pause>=0){
-      pause=(pause+(value<0?-1:1)+5)%5;
+      pause=(pause+(value<0?-1:1)+6)%6;
       drawPause();
     }else{
       queueMove(0,value);
