@@ -140,6 +140,11 @@
     font(1);h.setColor(2).drawString("PB3000RPG",W/2,104);
     h.drawString("STATUS: DORMANT",W/2,130);
     h.drawString("CHAMBERS READY: 0/6",W/2,146);
+  }
+
+  function drawMenuChoices(){
+    h.setClipRect(0,0,W-1,H-1);
+    h.setFontAlign(0,0);
     h.setColor(2).drawRect(118,166,W-119,198);
     h.drawRect(118,211,W-119,243);
     font(2);
@@ -150,7 +155,8 @@
   }
 
   function drawMenu(){
-    drawFallback();
+    if(!drawBin("MENU.BIN"))drawFallback();
+    drawMenuChoices();
     flip(0,H-1);
     gc();
   }
