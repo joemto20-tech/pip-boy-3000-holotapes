@@ -206,12 +206,10 @@
   }
 
   function start(){
-    mode="splash";
     sel=0;
     if(startTimer)clearTimeout(startTimer);
-    if(!drawBin("IMAGE.BIN"))drawFallback();
-    flip(0,H-1);
-    startTimer=setTimeout(function(){fadeToMenu(0);},4300);
+    startTimer=0;
+    showMenu();
     music("HOLO_BICT");
   }
 
@@ -253,14 +251,12 @@
     if(loadTimer)clearTimeout(loadTimer);
     unload();
     if(api)api.flip=flip;
+    quietShell(true);
+    music(false);
     if(n=="BATTLE"){
-      quietShell(true);
-      music(false);
       screen("CHECKING","WEAPON");
       battleEquip=null;
       prefetchEquipment(true);
-    }else{
-      quietShell(false);
     }
     screen("LOADING",n);
     loadTimer=setTimeout(function(){
