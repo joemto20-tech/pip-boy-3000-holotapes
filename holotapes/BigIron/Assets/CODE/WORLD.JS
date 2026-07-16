@@ -4,6 +4,7 @@
   var H=A.h;
   var FOOTER_Y=H-24;
   var MOVE_MS=28;
+  var CLICK_MS=420;
 
   var world=null;
   var saveState=null;
@@ -944,7 +945,7 @@
       clickTimer=setTimeout(function(){
         clickTimer=null;
         if(!removed)press();
-      },250);
+      },CLICK_MS);
     }
   }
 
