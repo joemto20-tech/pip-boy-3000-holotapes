@@ -300,6 +300,24 @@ function messageList(value) {
   return parts.slice(0, 4);
 }
 
+function cleanScreenText(value, fallback, max = 24) {
+  return String(value || fallback || "")
+    .replace(/[^a-z0-9 ._!?'-]+/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, max)
+    .toUpperCase();
+}
+
+function addLaunchText(item, fallbackTitle, fallbackSubtitle) {
+  const rawTitle = cleanScreenText($("encLaunchTitle").value, "", 22);
+  const title = cleanScreenText(rawTitle && rawTitle !== "ENCOUNTER" ? rawTitle : fallbackTitle, "ENCOUNTER", 22);
+  const subtitle = cleanScreenText($("encLaunchSubtitle").value, fallbackSubtitle || "", 24);
+  if (title && title !== "ENCOUNTER") item.lt = title;
+  if (subtitle) item.ls = subtitle;
+  return item;
+}
+
 function buildDuelData(base = {}, enemy = "RANDOM") {
   const boxes = boxList($("duelBoxes").value);
   return {
@@ -640,9 +658,9 @@ function placeEncounter(tool, x, y) {
     once
   };
   if (tool === "duel") {
-    world.interacts.push(buildDuelData(base, enemy));
+    world.interacts.push(addLaunchText(buildDuelData(base, enemy), "DUEL", enemy));
   } else if (tool === "shoot") {
-    world.interacts.push({ ...base, type: "shoot", target: $("shootTarget").value || "RADROACH", enemy: $("shootTarget").value || "RADROACH" });
+    world.interacts.push(addLaunchText({ ...base, type: "shoot", target: $("shootTarget").value || "RADROACH", enemy: $("shootTarget").value || "RADROACH" }, "TAKE SHOT", $("shootTarget").value || "RADROACH"));
   } else if (tool === "forge") {
     world.interacts.push({ ...base, type: "forge", once: false });
   } else if (tool === "miniboss") {
@@ -657,26 +675,27 @@ function placeEncounter(tool, x, y) {
     };
     if (minRegular > 2) interact.minRegular = minRegular;
     if (bullet) interact.bullet = bullet;
+    addLaunchText(interact, "MINIBOSS", enemy);
     world.interacts.push(interact);
   } else if (tool === "finalBoss") {
     const music = $("encMusic").value;
-    world.interacts.push({
+    world.interacts.push(addLaunchText({
       ...base,
       type: "battle",
       boss: true,
       finalBoss: true,
       enemy,
       music: music === "false" ? false : (music || "NVTH")
-    });
+    }, "FINAL BOSS", enemy));
   } else if (tool === "boss") {
     const music = $("encMusic").value;
-    world.interacts.push({
+    world.interacts.push(addLaunchText({
       ...base,
       type: "battle",
       boss: true,
       enemy,
       music: music === "false" ? false : (music || "NVTH")
-    });
+    }, "BOSS", enemy));
   } else {
     const music = $("encMusic").value;
     const interact = {
@@ -693,6 +712,7 @@ function placeEncounter(tool, x, y) {
       interact.range = Math.max(0, Math.min(12, Number($("npcRange").value) || 0));
       interact.sight = 6;
     }
+    addLaunchText(interact, tool === "npcEncounter" ? "TALK" : "ENCOUNTER", enemy);
     world.interacts.push(interact);
   }
 }
@@ -718,6 +738,10 @@ function applyWorldTool(x, y) {
       facing: $("exitFacing").value || "down"
     };
     if (requiredRound) exit.requiresRound = requiredRound;
+    const travelTitle = cleanScreenText($("exitTravelTitle").value, "TRAVELLING", 22);
+    const travelSubtitle = cleanScreenText($("exitTravelSubtitle").value, exit.to, 24);
+    if (travelTitle && travelTitle !== "TRAVELLING") exit.tt = travelTitle;
+    if (travelSubtitle && travelSubtitle !== exit.to) exit.ts = travelSubtitle;
     world.exits = (world.exits || []).filter((item) => !(item.x === x && item.y === y));
     world.exits.push(exit);
   } else if (tool === "regular" || tool === "boss" || tool === "shoot" || tool === "duel" || tool === "npcEncounter" || tool === "miniboss" || tool === "forge" || tool === "finalBoss") {
@@ -1124,6 +1148,8 @@ async function loadInfo() {
     'boss -> { type:"battle", boss:true, enemy:"...", music:"NVTH" }',
     'shoot -> { type:"shoot", target:"RADROACH" }',
     'sprite battle -> { type:"duel", es:"ENEMY_SPRITE", ps:"PLAYER_BATTLE_SPRITE", pr:"BULLET_SPRITE", fx:"HIT_SPRITE" }',
+    'custom launch screen -> encounter lt:"TITLE", ls:"SUBTITLE"',
+    'custom travel screen -> exit tt:"TITLE", ts:"SUBTITLE"',
     "",
     "Other DATA snippets:",
     "Assets/DATA/EYEBOT.JS and similar visual snippets go in HOLO/BIGIRON/DATA/"

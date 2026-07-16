@@ -734,15 +734,17 @@
   }
 
   function transition(exit){
+    var title=exit.tt||"TRAVELLING";
+    var sub=exit.ts||exit.to;
     busy=true;
     if(moveTimer){clearTimeout(moveTimer);moveTimer=null;}
     save(true);
     h.setColor(0).fillRect(0,0,W-1,H-1);
     h.setFontAlign(0,0);
     font(3);
-    h.setColor(3).drawString("TRAVELLING",W/2,135);
+    h.setColor(3).drawString(text(title,22),W/2,135);
     font(2);
-    h.setColor(2).drawString(text(exit.to,24),W/2,175);
+    h.setColor(2).drawString(text(sub,24),W/2,175);
     h.flip();
     world=null;
     tileDrawn=false;
@@ -825,6 +827,7 @@
 
   function activate(){
     var target=findInteract();
+    var title,sub;
     if(!target){
       msg="NOTHING HERE";
       draw(false,playerX,playerY);
@@ -837,10 +840,16 @@
       }
       save(true);
       busy=true;
+      title=target.lt||target.prompt||"ENCOUNTER";
+      sub=target.ls||target.enemy||target.target||"";
       h.setColor(0).fillRect(0,0,W-1,H-1);
       h.setFontAlign(0,0);
       font(3);
-      h.setColor(3).drawString("ENCOUNTER",W/2,145);
+      h.setColor(3).drawString(text(title,22),W/2,132);
+      if(sub){
+        font(2);
+        h.setColor(2).drawString(text(sub,24),W/2,172);
+      }
       h.flip();
       if(target.type=="shoot"){
         A.shoot({target:target.target||target.enemy||"RADROACH",map:id,mode:imageMode?"image":"tile",x:playerX,y:playerY,facing:facing,interact:target.id,once:target.once});
