@@ -16,6 +16,7 @@ function caps(){var k=capKey(),v=parseInt(pp()[k],10);return isNaN(v)?0:v}
 function addCaps(n){var k=capKey(),p=pp();p[k]=Math.max(0,(parseInt(p[k],10)||0)+n);return 1}
 function sync(){try{if(player){player.modified=true;if(player.sync)player.sync()}}catch(e){}}
 function item(i){return stock[i]||0}
+function pick(){return item(mode?sel-1:sel)}
 function cnt(it){var a=0,i=-1,o,n=0;try{a=new InvFile(path((it.cat||"AID").toUpperCase()));i=a.indexOf(parseInt(it.id,10)||it.id);if(i>=0){o=a.get(i);n=parseInt(o&&o.cnt,10)||0}}catch(e){}return n}
 function add(it){var a=0,i=-1,o,k=parseInt(it.id,10)||it.id,cat=(it.cat||"AID").toUpperCase();try{a=new InvFile(path(cat));i=a.indexOf(k);if(i>=0){o=a.get(i)||{};o.cnt=(parseInt(o.cnt,10)||0)+1;a.set(i,o)}else{o={id:k,cnt:1};if(cat=="WEAPONS")o.condition=it.condition!==undefined?it.condition:100;if(a.append)a.append(o);else if(a.add)a.add(o);else if(a.push)a.push(o);else if(a.set)a.set(parseInt(a.length,10)||0,o);else return 0}a.sync();return 1}catch(e){return 0}}
 function rem(it){var a=0,i=-1,o,c,k=parseInt(it.id,10)||it.id,cat=(it.cat||"AID").toUpperCase();try{a=new InvFile(path(cat));i=a.indexOf(k);if(i<0)return 0;o=a.get(i)||{};c=parseInt(o.cnt,10)||0;if(c<1)return 0;if(c<=1)a.remove(i);else{o.cnt=c-1;a.set(i,o)}a.sync();return 1}catch(e){return 0}}
@@ -31,25 +32,25 @@ function line(){return"CAPS "+caps()}
 function label(it){var cat=(it.cat||"AID").toUpperCase();return name(cat,it.id,it.name||"ITEM")+" "+(it.price||0)}
 function draw(){
   var opts=mode==0?["BUY","SELL","LEAVE"]:stock,i,y,it,own;
-  if(sel>=opts.length)sel=0;
+  if(sel>=(mode==0?opts.length:opts.length+1))sel=0;
   h.setClipRect(0,Y,U-1,V-1);h.setColor(0).fillRect(0,Y,U-1,V-1);h.setColor(2).drawLine(0,Y,U-1,Y);
   h.setFontAlign(-1,-1);ft(1);h.setColor(3).drawString(tx(vendor,20),8,200);h.setColor(2).drawString(line(),260,200);
   h.setFontAlign(0,-1);ft(1);h.setColor(2).drawString(tx(msg||(mode==0?"WHAT DO YOU NEED?":mode==1?"BUY WHAT?":"SELL WHAT?"),54),U/2,218);
-  for(i=0;i<opts.length&&i<4;i++){
+  for(i=0;i<(mode==0?opts.length:opts.length+1)&&i<4;i++){
     y=238+i*20;h.setFontAlign(-1,-1);
     if(i==sel){h.setColor(2).fillRect(24,y-2,U-25,y+16);h.setColor(0)}else h.setColor(3);
     if(mode==0)h.drawString((i==sel?"> ":"  ")+opts[i],36,y);
-    else{it=opts[i];own=cnt(it);h.drawString((i==sel?"> ":"  ")+tx(label(it),28),36,y);h.setFontAlign(1,-1);h.drawString("x"+own,U-42,y)}
+    else if(i==0)h.drawString((i==sel?"> ":"  ")+"BACK",36,y);
+    else{it=opts[i-1];own=cnt(it);h.drawString((i==sel?"> ":"  ")+tx(label(it),28),36,y);h.setFontAlign(1,-1);h.drawString("x"+own,U-42,y)}
   }
-  if(mode>0&&stock.length<4){y=238+stock.length*20;h.setFontAlign(-1,-1);if(sel==stock.length){h.setColor(2).fillRect(24,y-2,U-25,y+16);h.setColor(0)}else h.setColor(3);h.drawString((sel==stock.length?"> ":"  ")+"BACK",36,y)}
   h.setClipRect(0,0,U-1,V-1);A.flip(Y,V-1)
 }
-function buy(){var it=item(sel),c;if(sel>=stock.length){mode=0;sel=0;msg="";draw();return}if(!it)return;c=caps();if(c<(it.price||0)){msg="NEED "+(it.price||0)+" CAPS";draw();return}if(!add(it)){msg="BUY FAILED";draw();return}addCaps(-(it.price||0));equip(it);sync();msg="BOUGHT "+tx(it.name||"ITEM",18);video(clip("buy","P_MOVE_1.avi"),0,idle)}
-function sell(){var it=item(sel),p=Math.max(1,Math.floor((it.price||2)/2));if(sel>=stock.length){mode=0;sel=1;msg="";draw();return}if(!it)return;if(cnt(it)<1){msg="NONE TO SELL";draw();return}if(!rem(it)){msg="SELL FAILED";draw();return}addCaps(p);sync();msg="SOLD "+tx(it.name||"ITEM",18);video(clip("sell","E_MOVE_1.avi"),0,idle)}
+function buy(){var it=pick(),c;if(sel<1){mode=0;sel=0;msg="";draw();return}if(!it)return;c=caps();if(c<(it.price||0)){msg="NEED "+(it.price||0)+" CAPS";draw();return}if(!add(it)){msg="BUY FAILED";draw();return}addCaps(-(it.price||0));equip(it);sync();msg="BOUGHT "+tx(it.name||"ITEM",18);video(clip("buy","P_MOVE_1.avi"),0,idle)}
+function sell(){var it=pick(),p;if(sel<1){mode=0;sel=1;msg="";draw();return}p=Math.max(1,Math.floor((it.price||2)/2));if(!it)return;if(cnt(it)<1){msg="NONE TO SELL";draw();return}if(!rem(it)){msg="SELL FAILED";draw();return}addCaps(p);sync();msg="SOLD "+tx(it.name||"ITEM",18);video(clip("sell","E_MOVE_1.avi"),0,idle)}
 function press(){if(mode==0){if(sel==0){mode=1;sel=0;msg="";draw()}else if(sel==1){mode=2;sel=0;msg="";draw()}else leave();return}if(mode==1)buy();else sell()}
 function leave(){off();A.world({map:arg.map,mode:arg.mode||"tile",x:arg.x,y:arg.y,facing:arg.facing,msg:"TRADE CLOSED"})}
-function k1(v,l){if(dead)return;if(v===0){if(!l)press();return}var n=mode==0?3:(stock.length<4?stock.length+1:stock.length)||1;sel=(sel+(v<0?-1:1)+n)%n;draw()}
-function k2(v){if(dead)return;if(v){var n=mode==0?3:(stock.length<4?stock.length+1:stock.length)||1;sel=(sel+(v<0?-1:1)+n)%n;draw()}}
+function k1(v,l){if(dead)return;if(v===0){if(l&&mode>0){mode=0;sel=0;msg="";draw();return}if(!l)press();return}var n=mode==0?3:stock.length+1;sel=(sel+(v<0?-1:1)+n)%n;draw()}
+function k2(v){if(dead)return;if(v){var n=mode==0?3:stock.length+1;sel=(sel+(v<0?-1:1)+n)%n;draw()}}
 function remove(){dead=1;off();CFG=0;stock=[];A.gc()}
 try{CFG=JSON.parse(fs.readFile(B+"battle.json"))}catch(e){CFG={}}VR=(arg.videoRoot||CFG.videoRoot||B+"VIDEO");F=arg.folder||CFG.defaultEnemyFolder||"Granny";if(!stock.length)stock=[{cat:"AID",id:86377,name:"STIMPAK",price:35},{cat:"WEAPONS",id:17231,name:"10MM PISTOL",price:55,equip:1},{cat:"WEAPONS",id:586262,name:".357 MAGNUM",price:120,equip:1}];
 video(clip("start","BATTLE_START.avi"),0,idle);
