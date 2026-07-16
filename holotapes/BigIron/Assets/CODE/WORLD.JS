@@ -28,8 +28,7 @@
   var tileCols=0;
   var tileRows=0;
   var tileDrawn=false;
-  var playerSprite=null;
-  var playerSpriteFacing="";
+  var playerSprites={};
   var selectorIcon=null;
 
   function clamp(v,min,max){
@@ -54,9 +53,18 @@
   }
 
   function readImage(path){
-    try{return fs.readFileSync(path);}catch(e){}
-    try{return fs.readFile(path);}catch(e2){}
+    try{return fs.readFile(path);}catch(e){}
+    try{return fs.readFileSync(path);}catch(e2){}
     return null;
+  }
+
+  function imageFits(path,max){
+    var s,n=0;
+    try{
+      s=fs.statSync(path);
+      n=parseInt(s&&(s.size||s.length),10)||0;
+    }catch(e){}
+    return !n||n<=max;
   }
 
   function playerData(){
@@ -100,11 +108,18 @@
 
   function loadPlayerSprite(){
     var file=facing=="down"?"PLAYER_SPRITEDOWN":facing=="left"?"PLAYER_SPRITEL":facing=="right"?"PLAYER_SPRITER":"PLAYER_SPRITEUP";
-    if(playerSprite&&playerSpriteFacing==facing)return playerSprite;
-    playerSprite=null;
-    playerSpriteFacing=facing;
-    playerSprite=readImage(BASE+"DATA/"+file+".IMG");
-    return playerSprite||null;
+    var path=BASE+"DATA/"+file+".IMG";
+    if(playerSprites[file]!==undefined)return playerSprites[file]||null;
+    playerSprites[file]=null;
+    try{
+      if(typeof global!="undefined"&&global[file]){
+        playerSprites[file]=global[file];
+        return playerSprites[file];
+      }
+    }catch(e){}
+    if(!imageFits(path,512))return null;
+    playerSprites[file]=readImage(path)||null;
+    return playerSprites[file]||null;
   }
 
   function loadSelectorIcon(){
@@ -980,8 +995,7 @@
     worldImage=null;
     saveState=null;
     active=null;
-    playerSprite=null;
-    playerSpriteFacing="";
+    playerSprites={};
     selectorIcon=null;
     A.gc();
   }
