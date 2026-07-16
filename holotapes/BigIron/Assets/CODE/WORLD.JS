@@ -31,6 +31,7 @@
   var tileRows=0;
   var tileDrawn=false;
   var playerSprites={};
+  var coldSprite=arg&&arg.msg?1:0;
 
   function clamp(v,min,max){
     return v<min?min:(v>max?max:v);
@@ -121,6 +122,7 @@
   function loadPlayerSprite(){
     var file=facing=="down"?"PLAYER_SPRITEDOWN":facing=="left"?"PLAYER_SPRITEL":facing=="right"?"PLAYER_SPRITER":"PLAYER_SPRITEUP";
     var path=BASE+"DATA/"+file+".IMG";
+    if(coldSprite)return null;
     if(playerSprites[file]!==undefined)return playerSprites[file]||null;
     playerSprites[file]=null;
     try{
@@ -772,6 +774,7 @@
 
   function step(dx,dy){
     if(busy||pause>=0)return;
+    coldSprite=0;
     var oldX=playerX;
     var oldY=playerY;
     var amount=imageMode?(world.step||2):1;
