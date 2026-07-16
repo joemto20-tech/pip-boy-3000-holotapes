@@ -801,7 +801,8 @@ function placeEncounter(tool, x, y) {
       ...base,
       type: "shop",
       once: false,
-      vendor: "SUNSCAR TRADER"
+      vendor: "SUNSCAR TRADER",
+      folder: "Shop"
     }, "SHOP", "SUNSCAR TRADER"));
   } else if (tool === "forge") {
     world.interacts.push({ ...base, type: "forge", once: false });
