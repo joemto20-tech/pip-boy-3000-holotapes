@@ -327,6 +327,7 @@
     equip:function(){return prefetchEquipment();},
     world:function(a){loadModule("WORLD",a);},
     battle:function(a){loadModule("BATTLE",a);},
+    inventory:function(a){loadModule("INVENTORY",a);},
     shoot:function(a){loadModule("SHOOT",a);},
     music:music,exit:exitApp,gc:gc
   };

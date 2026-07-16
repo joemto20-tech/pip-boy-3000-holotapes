@@ -879,7 +879,7 @@
   }
 
   function drawPause(note){
-    var options=["RESUME","SAVE LOCATION","PROGRESS","EXIT GAME"];
+    var options=["RESUME","SAVE LOCATION","PROGRESS","ITEMS","EXIT GAME"];
     var i,y;
     h.setClipRect(0,0,W-1,H-1);
     h.setColor(0).fillRect(0,0,W-1,H-1);
@@ -890,8 +890,8 @@
     h.setColor(3).drawString("PAUSED",W/2,58);
     font(1);
     h.setColor(2).drawString("BIG IRON",W/2,92);
-    for(i=0;i<4;i++){
-      y=114+i*39;
+    for(i=0;i<5;i++){
+      y=108+i*34;
       if(i==pause){
         h.setColor(2).fillRect(58,y-14,226,y+14);
         h.setColor(0);
@@ -927,6 +927,14 @@
         drawPause(msg);
       }else if(pause==2){
         drawPause("PROGRESS");
+      }else if(pause==3){
+        save(true);
+        if(A.inventory){
+          A.inventory({map:id,mode:imageMode?"image":"tile",x:playerX,y:playerY,facing:facing});
+        }else{
+          msg="ITEMS UNAVAILABLE";
+          drawPause(msg);
+        }
       }else{
         save(false);
         A.exit();
@@ -965,7 +973,7 @@
     }
     if(clickTimer){clearTimeout(clickTimer);clickTimer=null;}
     if(pause>=0){
-      pause=(pause+(value<0?-1:1)+4)%4;
+      pause=(pause+(value<0?-1:1)+5)%5;
       drawPause();
     }else{
       queueMove(value,0);
@@ -976,7 +984,7 @@
     if(!value||removed)return;
     if(clickTimer){clearTimeout(clickTimer);clickTimer=null;}
     if(pause>=0){
-      pause=(pause+(value<0?-1:1)+4)%4;
+      pause=(pause+(value<0?-1:1)+5)%5;
       drawPause();
     }else{
       queueMove(0,value);

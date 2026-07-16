@@ -13,6 +13,7 @@
     { "name": "HOLO/BIGIRON/battle.json", "url": "battle.json" },
     { "name": "HOLO/BIGIRON/CODE/WORLD.JS", "url": "Assets/CODE/WORLD.MIN.JS" },
     { "name": "HOLO/BIGIRON/CODE/BATTLE.JS", "url": "Assets/CODE/BATTLE.MIN.JS" },
+    { "name": "HOLO/BIGIRON/CODE/INVENTORY.JS", "url": "Assets/CODE/INVENTORY.MIN.JS" },
     { "name": "HOLO/BIGIRON/CODE/SHOOT.JS", "url": "Assets/CODE/SHOOT.MIN.JS" },
     { "name": "HOLO/BIGIRON/DATA/WORLD_01.JSON", "url": "Assets/DATA/WORLD_01.JSON" },
     { "name": "HOLO/BIGIRON/DATA/WORLD_02.JSON", "url": "Assets/DATA/WORLD_02.JSON" },
