@@ -11,9 +11,9 @@ function rtxt(p){try{return fs.readFile(p)}catch(e){}try{return fs.readFileSync(
 function path(cat){return"INV/"+(NV?"NV":"F3")+"/"+cat+".INV"}
 function dat(cat){return"DATA/"+(NV?"NV":"F3")+"/"+cat+".DAT"}
 function name(cat,id,f){var d=0,o=0;try{d=new DataFile(dat(cat));o=d.getId(parseInt(id,10)||id)}catch(e){}finally{try{if(d)d.close()}catch(e2){}}return o&&o.txt?tx(o.txt,18):f}
-function capKey(){var p=pp(),i;for(i=0;i<CAPS.length;i++)if(p[CAPS[i]]!==undefined)return CAPS[i];return""}
-function caps(){var k=capKey(),v=k?parseInt(pp()[k],10):0;return k?(isNaN(v)?0:v):-1}
-function addCaps(n){var k=capKey(),p=pp();if(!k)return 1;p[k]=Math.max(0,(parseInt(p[k],10)||0)+n);return 1}
+function capKey(){var p=pp(),i;for(i=0;i<CAPS.length;i++)if(p[CAPS[i]]!==undefined)return CAPS[i];return"caps"}
+function caps(){var k=capKey(),v=parseInt(pp()[k],10);return isNaN(v)?0:v}
+function addCaps(n){var k=capKey(),p=pp();p[k]=Math.max(0,(parseInt(p[k],10)||0)+n);return 1}
 function sync(){try{if(player){player.modified=true;if(player.sync)player.sync()}}catch(e){}}
 function item(i){return stock[i]||0}
 function cnt(it){var a=0,i=-1,o,n=0;try{a=new InvFile(path((it.cat||"AID").toUpperCase()));i=a.indexOf(parseInt(it.id,10)||it.id);if(i>=0){o=a.get(i);n=parseInt(o&&o.cnt,10)||0}}catch(e){}return n}
@@ -26,7 +26,8 @@ function clip(k,d){return arg.videos&&arg.videos[k]?arg.videos[k]:d}
 function vp(n){return join(join(VR,F),n)}
 function placeholder(n){h.setColor(0).fillRect(0,0,U-1,Y-1);h.setColor(2).drawRect(4,4,U-5,Y-5);h.setFontAlign(0,0);ft(2);h.setColor(3).drawString(tx(vendor,28),U/2,78);ft(1);h.setColor(2).drawString(tx(n,28),U/2,112);A.flip(0,Y-1)}
 function video(n,r,d){var p=vp(n);off();vd=d||0;rep=!!r;if(!exists(p)){placeholder(n);if(d)vft=setTimeout(done,450);return}if(!r)try{Pip.on("videoStopped",done)}catch(e){}try{Pip.videoStart(p,{x:0,y:0,repeat:!!r,debug:false});if(d)vft=setTimeout(done,120000)}catch(e2){placeholder(n);if(d)vft=setTimeout(done,450)}}
-function line(){var c=caps();return c<0?"NO CAPS DATA":"CAPS "+c}
+function idle(){video(clip("idle","BATTLE_IDLE.avi"),1,0);draw()}
+function line(){return"CAPS "+caps()}
 function label(it){var cat=(it.cat||"AID").toUpperCase();return name(cat,it.id,it.name||"ITEM")+" "+(it.price||0)}
 function draw(){
   var opts=mode==0?["BUY","SELL","LEAVE"]:stock,i,y,it,own;
@@ -40,16 +41,17 @@ function draw(){
     if(mode==0)h.drawString((i==sel?"> ":"  ")+opts[i],36,y);
     else{it=opts[i];own=cnt(it);h.drawString((i==sel?"> ":"  ")+tx(label(it),28),36,y);h.setFontAlign(1,-1);h.drawString("x"+own,U-42,y)}
   }
+  if(mode>0&&stock.length<4){y=238+stock.length*20;h.setFontAlign(-1,-1);if(sel==stock.length){h.setColor(2).fillRect(24,y-2,U-25,y+16);h.setColor(0)}else h.setColor(3);h.drawString((sel==stock.length?"> ":"  ")+"BACK",36,y)}
   h.setClipRect(0,0,U-1,V-1);A.flip(Y,V-1)
 }
-function buy(){var it=item(sel),c;if(!it)return; c=caps(); if(c>=0&&c<(it.price||0)){msg="NEED "+(it.price||0)+" CAPS";draw();return} if(!add(it)){msg="BUY FAILED";draw();return} if(c>=0)addCaps(-(it.price||0)); equip(it); sync(); msg="BOUGHT "+tx(it.name||"ITEM",18); video(clip("buy","P_MOVE_1.avi"),0,draw)}
-function sell(){var it=item(sel),p=Math.max(1,Math.floor((it.price||2)/2));if(!it)return;if(cnt(it)<1){msg="NONE TO SELL";draw();return} if(!rem(it)){msg="SELL FAILED";draw();return} addCaps(p); sync(); msg="SOLD "+tx(it.name||"ITEM",18); video(clip("sell","E_MOVE_1.avi"),0,draw)}
-function press(){if(mode==0){if(sel==0){mode=1;sel=0;msg="";draw()}else if(sel==1){mode=2;sel=0;msg="";draw()}else leave();return} if(mode==1)buy();else sell()}
+function buy(){var it=item(sel),c;if(sel>=stock.length){mode=0;sel=0;msg="";draw();return}if(!it)return;c=caps();if(c<(it.price||0)){msg="NEED "+(it.price||0)+" CAPS";draw();return}if(!add(it)){msg="BUY FAILED";draw();return}addCaps(-(it.price||0));equip(it);sync();msg="BOUGHT "+tx(it.name||"ITEM",18);video(clip("buy","P_MOVE_1.avi"),0,idle)}
+function sell(){var it=item(sel),p=Math.max(1,Math.floor((it.price||2)/2));if(sel>=stock.length){mode=0;sel=1;msg="";draw();return}if(!it)return;if(cnt(it)<1){msg="NONE TO SELL";draw();return}if(!rem(it)){msg="SELL FAILED";draw();return}addCaps(p);sync();msg="SOLD "+tx(it.name||"ITEM",18);video(clip("sell","E_MOVE_1.avi"),0,idle)}
+function press(){if(mode==0){if(sel==0){mode=1;sel=0;msg="";draw()}else if(sel==1){mode=2;sel=0;msg="";draw()}else leave();return}if(mode==1)buy();else sell()}
 function leave(){off();A.world({map:arg.map,mode:arg.mode||"tile",x:arg.x,y:arg.y,facing:arg.facing,msg:"TRADE CLOSED"})}
-function k1(v,l){if(dead)return;if(v===0){if(!l)press();return}var n=mode==0?3:stock.length||1;sel=(sel+(v<0?-1:1)+n)%n;draw()}
-function k2(v){if(dead)return;if(v){var n=mode==0?3:stock.length||1;sel=(sel+(v<0?-1:1)+n)%n;draw()}}
+function k1(v,l){if(dead)return;if(v===0){if(!l)press();return}var n=mode==0?3:(stock.length<4?stock.length+1:stock.length)||1;sel=(sel+(v<0?-1:1)+n)%n;draw()}
+function k2(v){if(dead)return;if(v){var n=mode==0?3:(stock.length<4?stock.length+1:stock.length)||1;sel=(sel+(v<0?-1:1)+n)%n;draw()}}
 function remove(){dead=1;off();CFG=0;stock=[];A.gc()}
 try{CFG=JSON.parse(fs.readFile(B+"battle.json"))}catch(e){CFG={}}VR=(arg.videoRoot||CFG.videoRoot||B+"VIDEO");F=arg.folder||CFG.defaultEnemyFolder||"Granny";if(!stock.length)stock=[{cat:"AID",id:86377,name:"STIMPAK",price:35},{cat:"WEAPONS",id:17231,name:"10MM PISTOL",price:55,equip:1},{cat:"WEAPONS",id:586262,name:".357 MAGNUM",price:120,equip:1}];
-video(clip("start","BATTLE_START.avi"),0,function(){video(clip("idle","BATTLE_IDLE.avi"),1,0);draw()});
+video(clip("start","BATTLE_START.avi"),0,idle);
 return{k1:k1,k2:k2,remove:remove}
 })

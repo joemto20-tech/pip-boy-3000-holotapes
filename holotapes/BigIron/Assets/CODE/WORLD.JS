@@ -470,6 +470,12 @@
       h.setColor(2).drawLine(mid,base,mid,y+4);
       h.setColor(3).drawRect(mid-half,y+3,mid+half,y+Math.floor(size/3)+2);
       h.drawLine(mid-half+2,y+7,mid+half-2,y+7);
+    }else if(type=="shop"){
+      h.setColor(2).fillRect(x+3,y+7,x+size-4,base);
+      h.setColor(3).drawLine(x+2,y+7,mid,y+2);
+      h.drawLine(mid,y+2,x+size-3,y+7);
+      h.setColor(0).fillRect(mid-2,base-6,mid+2,base);
+      h.setColor(3).drawRect(x+5,y+10,x+size-6,y+13);
     }else if(type=="rocks"){
       h.setColor(3).fillRect(x+3,base-4,x+6,base-1);
       h.fillRect(mid-1,base-6,mid+2,base-2);

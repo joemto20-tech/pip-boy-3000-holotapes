@@ -795,6 +795,8 @@ function placeEncounter(tool, x, y) {
   } else if (tool === "shoot") {
     world.interacts.push(addLaunchText({ ...base, type: "shoot", target: $("shootTarget").value || "RADROACH", enemy: $("shootTarget").value || "RADROACH" }, "TAKE SHOT", $("shootTarget").value || "RADROACH"));
   } else if (tool === "shop") {
+    world.decor = (world.decor || []).filter((item) => !(item.x === x && item.y === y));
+    world.decor.push({ type: "shop", x, y });
     world.interacts.push(addLaunchText({
       ...base,
       type: "shop",
