@@ -1,6 +1,6 @@
 (function(){
   var W=h.getWidth?h.getWidth():480,H=h.getHeight?h.getHeight():320;
-  var mod=null,loading=false,exiting=false,loadTimer=0,startTimer=0,exitTimer=0;
+  var mod=null,loading=false,exiting=false,loadTimer=0,exitTimer=0;
   var home=typeof Pip.MODE=="number"?Pip.MODE:1,mode="splash",sel=0;
   var musicOn=false,musicTrack="",musicPath="";
   var battleEquip=null;
@@ -168,35 +168,7 @@
     drawMenu();
   }
 
-  function fadeToMenu(step){
-    if(loading||mod)return;
-    try{
-      h.setColor(0);
-      h.fillRect(0,0,W-1,H-1);
-      flip(0,H-1);
-    }catch(e){}
-    startTimer=0;
-    showMenu();
-  }
-
-  function clearSave(){
-    var d='{"cleared":{}}',p;
-    wr(B+"SAVE/STATE.JSON",d);
-    wr(B+"STATE.JSON",d);
-    try{
-      if(typeof player!="undefined"&&player&&player.player){
-        p=player.player;
-        p.wb={};
-        player.modified=true;
-        if(player.sync)player.sync();
-      }
-    }catch(e){}
-    gc();
-  }
-
   function clearStartMedia(){
-    if(startTimer)clearTimeout(startTimer);
-    startTimer=0;
     music(false);
     try{if(Pip.videoStop)Pip.videoStop();}catch(e){}
     h.setClipRect(0,0,W-1,H-1);
@@ -207,10 +179,7 @@
 
   function start(){
     sel=0;
-    if(startTimer)clearTimeout(startTimer);
-    startTimer=0;
     showMenu();
-    music("HOLO_BICT");
   }
 
   function musicPathFor(t){
@@ -272,6 +241,7 @@
         s=null;
         gc();
         mod=f(api,a||{});
+        f=null;
         loading=false;
         gc();
       }catch(e){
@@ -296,9 +266,8 @@
   function remove(){
     loading=true;
     if(loadTimer)clearTimeout(loadTimer);
-    if(startTimer)clearTimeout(startTimer);
     if(exitTimer)clearTimeout(exitTimer);
-    loadTimer=startTimer=exitTimer=0;
+    loadTimer=exitTimer=0;
     unload();
     music(false);
     quietShell(false);
@@ -324,10 +293,7 @@
       mode="loading";
       clearStartMedia();
       if(sel)loadModule("WORLD",{});
-      else{
-        clearSave();
-        loadModule("WORLD",{newGame:true});
-      }
+      else loadModule("WORLD",{newGame:true});
     }
   }
 
