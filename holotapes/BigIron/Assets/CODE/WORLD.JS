@@ -843,7 +843,7 @@
       draw(false,playerX,playerY);
       return;
     }
-    if(target.type=="battle"||target.type=="shoot"){
+    if(target.type=="battle"||target.type=="shoot"||target.type=="shop"){
       if(!canStartEncounter(target)){
         draw(false,playerX,playerY);
         return;
@@ -851,7 +851,7 @@
       save(true);
       busy=true;
       title=target.lt||target.prompt||"ENCOUNTER";
-      sub=target.ls||target.enemy||target.target||"";
+      sub=target.ls||target.enemy||target.target||target.vendor||"";
       h.setColor(0).fillRect(0,0,W-1,H-1);
       h.setFontAlign(0,0);
       font(3);
@@ -861,7 +861,9 @@
         h.setColor(2).drawString(text(sub,24),W/2,172);
       }
       A.flip(0,H-1);
-      if(target.type=="shoot"){
+      if(target.type=="shop"){
+        A.shop({vendor:target.vendor,stock:target.stock,videos:target.videos,folder:target.folder,map:id,mode:imageMode?"image":"tile",x:playerX,y:playerY,facing:facing});
+      }else if(target.type=="shoot"){
         A.shoot({target:target.target||target.enemy||"RADROACH",map:id,mode:imageMode?"image":"tile",x:playerX,y:playerY,facing:facing,interact:target.id,once:target.once});
       }else{
         A.battle({enemy:target.enemyPool||target.enemy,map:id,mode:imageMode?"image":"tile",x:playerX,y:playerY,facing:facing,interact:target.id,once:target.once,music:target.music!==undefined?target.music:((id=="WORLD_03"||id=="WORLD_06")?"NVTH":false),boss:target.boss,miniboss:isMiniboss(target),finalBoss:isFinalBoss(target),bullet:bulletFor(target)});

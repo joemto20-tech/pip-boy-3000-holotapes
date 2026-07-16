@@ -21,7 +21,7 @@ const state = {
 
 const quickTools = [
   ["G", "Grass"], ["P", "Path"], ["B", "Block"], ["H", "House"], ["D", "Door"], ["S", "Sand"],
-  ["spawn", "Spawn"], ["exit", "Exit"], ["regular", "Regular"], ["npcEncounter", "NPC Enc"], ["boss", "Boss"], ["shoot", "Shoot"], ["duel", "Sprite Battle"], ["erase", "Erase"],
+  ["spawn", "Spawn"], ["exit", "Exit"], ["regular", "Regular"], ["npcEncounter", "NPC Enc"], ["boss", "Boss"], ["shoot", "Shoot"], ["shop", "Shop"], ["duel", "Sprite Battle"], ["erase", "Erase"],
   ["tree", "Tree"], ["npc", "NPC"], ["camp", "Camp"], ["sign", "Sign"], ["rocks", "Rocks"]
 ];
 
@@ -773,7 +773,7 @@ function paintArtPoint(point, fillRect) {
 function placeEncounter(tool, x, y) {
   const world = state.world;
   const enemy = $("encEnemy").value || "RANDOM";
-  const prompt = $("encPrompt").value || (tool === "duel" ? "SPRITE BATTLE?" : tool === "finalBoss" ? "FINAL BOSS?" : tool === "miniboss" ? "MINIBOSS?" : tool === "forge" ? "FORGE FINAL ROUND?" : tool === "boss" ? "BOSS?" : tool === "shoot" ? "TAKE SHOT?" : tool === "npcEncounter" ? "TALK?" : "ENCOUNTER?");
+  const prompt = $("encPrompt").value || (tool === "duel" ? "SPRITE BATTLE?" : tool === "finalBoss" ? "FINAL BOSS?" : tool === "miniboss" ? "MINIBOSS?" : tool === "forge" ? "FORGE FINAL ROUND?" : tool === "boss" ? "BOSS?" : tool === "shop" ? "TRADE?" : tool === "shoot" ? "TAKE SHOT?" : tool === "npcEncounter" ? "TALK?" : "ENCOUNTER?");
   const once = $("encOnce").checked;
   const pickedSprite = $("decorSprite").value;
   const minRegular = Math.max(0, Math.min(20, Number($("minRegular").value) || 0));
@@ -794,6 +794,19 @@ function placeEncounter(tool, x, y) {
     world.interacts.push(addLaunchText(buildDuelData(base, enemy), "DUEL", enemy));
   } else if (tool === "shoot") {
     world.interacts.push(addLaunchText({ ...base, type: "shoot", target: $("shootTarget").value || "RADROACH", enemy: $("shootTarget").value || "RADROACH" }, "TAKE SHOT", $("shootTarget").value || "RADROACH"));
+  } else if (tool === "shop") {
+    world.interacts.push(addLaunchText({
+      ...base,
+      type: "shop",
+      once: false,
+      vendor: "SUNSCAR TRADER",
+      stock: [
+        { cat: "AID", id: 86377, name: "STIMPAK", price: 35 },
+        { cat: "WEAPONS", id: 17231, name: "10MM PISTOL", price: 55, equip: true, condition: 100 },
+        { cat: "WEAPONS", id: 586262, name: ".357 MAGNUM", price: 120, equip: true, condition: 100 }
+      ],
+      videos: { start: "BATTLE_START.avi", idle: "BATTLE_IDLE.avi", buy: "P_MOVE_1.avi", sell: "E_MOVE_1.avi" }
+    }, "SHOP", "SUNSCAR TRADER"));
   } else if (tool === "forge") {
     world.interacts.push({ ...base, type: "forge", once: false });
   } else if (tool === "miniboss") {
@@ -877,7 +890,7 @@ function applyWorldTool(x, y) {
     if (travelSubtitle && travelSubtitle !== exit.to) exit.ts = travelSubtitle;
     world.exits = (world.exits || []).filter((item) => !(item.x === x && item.y === y));
     world.exits.push(exit);
-  } else if (tool === "regular" || tool === "boss" || tool === "shoot" || tool === "duel" || tool === "npcEncounter" || tool === "miniboss" || tool === "forge" || tool === "finalBoss") {
+  } else if (tool === "regular" || tool === "boss" || tool === "shoot" || tool === "shop" || tool === "duel" || tool === "npcEncounter" || tool === "miniboss" || tool === "forge" || tool === "finalBoss") {
     placeEncounter(tool, x, y);
   } else if (["tree", "npc", "camp", "sign", "rocks"].includes(tool)) {
     world.decor = (world.decor || []).filter((item) => !(item.x === x && item.y === y));
@@ -1237,6 +1250,7 @@ async function loadInfo() {
     "APP.MIN.JS -> HOLO/BIGIRON/APP.JS",
     "MENU.BIN -> HOLO/BIGIRON/MENU.BIN",
     "Start/load options are drawn by APP.JS over MENU.BIN",
+    "Assets/CODE/SHOP.JS -> HOLO/BIGIRON/CODE/SHOP.JS (or SHOP.MIN.JS after minify)",
     "BIGIRON.IMG -> HOLO/BIGIRON/BIGIRON.IMG",
     "Assets/CODE/SELECTER.IMG -> HOLO/BIGIRON/CODE/SELECTER.IMG",
     "",
@@ -1289,6 +1303,7 @@ async function loadInfo() {
     'round-locked exit -> { requiresRound:"SCORCHED" }',
     'boss -> { type:"battle", boss:true, enemy:"...", music:"NVTH" }',
     'shoot -> { type:"shoot", target:"RADROACH" }',
+    'shop -> { type:"shop", vendor:"...", stock:[{ cat:"WEAPONS", id:17231, price:55, equip:true }] }',
     'sprite battle -> { type:"duel", es:"ENEMY_SPRITE", ps:"PLAYER_BATTLE_SPRITE", pr:"BULLET_SPRITE", fx:"HIT_SPRITE" }',
     'item reward -> { item:"STIMPAK", chance:1 }',
     'custom launch screen -> encounter lt:"TITLE", ls:"SUBTITLE"',

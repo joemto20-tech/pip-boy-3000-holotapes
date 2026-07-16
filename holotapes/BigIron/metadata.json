@@ -9,43 +9,158 @@
   "type": "game",
   "readme": "README.md",
   "storage": [
-    { "name": "HOLO/BIGIRON/APP.JS", "url": "APP.MIN.JS" },
-    { "name": "HOLO/BIGIRON/battle.json", "url": "battle.json" },
-    { "name": "HOLO/BIGIRON/CODE/WORLD.JS", "url": "Assets/CODE/WORLD.MIN.JS" },
-    { "name": "HOLO/BIGIRON/CODE/BATTLE.JS", "url": "Assets/CODE/BATTLE.MIN.JS" },
-    { "name": "HOLO/BIGIRON/CODE/INVENTORY.JS", "url": "Assets/CODE/INVENTORY.MIN.JS" },
-    { "name": "HOLO/BIGIRON/CODE/SHOOT.JS", "url": "Assets/CODE/SHOOT.MIN.JS" },
-    { "name": "HOLO/BIGIRON/DATA/ITEMS.JSON", "url": "Assets/DATA/ITEMS.JSON" },
-    { "name": "HOLO/BIGIRON/DATA/WORLD_01.JSON", "url": "Assets/DATA/WORLD_01.JSON" },
-    { "name": "HOLO/BIGIRON/DATA/WORLD_02.JSON", "url": "Assets/DATA/WORLD_02.JSON" },
-    { "name": "HOLO/BIGIRON/DATA/WORLD_03.JSON", "url": "Assets/DATA/WORLD_03.JSON" },
-    { "name": "HOLO/BIGIRON/DATA/WORLD_04.JSON", "url": "Assets/DATA/WORLD_04.JSON" },
-    { "name": "HOLO/BIGIRON/DATA/WORLD_05.JSON", "url": "Assets/DATA/WORLD_05.JSON" },
-    { "name": "HOLO/BIGIRON/DATA/WORLD_06.JSON", "url": "Assets/DATA/WORLD_06.JSON" },
-    { "name": "HOLO/BIGIRON/DATA/PLAYER_SPRITEDOWN.IMG", "url": "Assets/DATA/PLAYER_SPRITEDOWN.IMG" },
-    { "name": "HOLO/BIGIRON/DATA/PLAYER_SPRITEL.IMG", "url": "Assets/DATA/PLAYER_SPRITEL.IMG" },
-    { "name": "HOLO/BIGIRON/DATA/PLAYER_SPRITER.IMG", "url": "Assets/DATA/PLAYER_SPRITER.IMG" },
-    { "name": "HOLO/BIGIRON/DATA/PLAYER_SPRITEUP.IMG", "url": "Assets/DATA/PLAYER_SPRITEUP.IMG" },
-    { "name": "HOLO/BIGIRON/AUDIO/NVTH.wav", "url": "Assets/AUDIO/NVTH.wav" },
-    { "name": "HOLO/BIGIRON/AUDIO/HOLO_BICT.wav", "url": "Assets/HOLO_BICT.wav" },
-    { "name": "HOLO/BIGIRON/ST.IMG", "url": "Assets/ST.IMG" },
-    { "name": "HOLO/BIGIRON/BIGIRON.IMG", "url": "BIGIRON.IMG" },
-    { "name": "HOLO/BIGIRON/MENU.BIN", "url": "MENU.BIN" },
-    { "name": "HOLO/BIGIRON/SELECTER.IMG", "url": "Assets/CODE/SELECTER.IMG" },
-    { "name": "HOLO/BIGIRON/VIDEO/Granny/BATTLE_IDLE.avi", "url": "Assets/VIDEO/Granny/BATTLE_IDLE.avi" },
-    { "name": "HOLO/BIGIRON/VIDEO/Granny/BATTLE_START.avi", "url": "Assets/VIDEO/Granny/BATTLE_START.avi" },
-    { "name": "HOLO/BIGIRON/VIDEO/Granny/DEFEAT.avi", "url": "Assets/VIDEO/Granny/DEFEAT.avi" },
-    { "name": "HOLO/BIGIRON/VIDEO/Granny/ENEMY_FAINT.avi", "url": "Assets/VIDEO/Granny/ENEMY_FAINT.avi" },
-    { "name": "HOLO/BIGIRON/VIDEO/Granny/E_MOVE_1.avi", "url": "Assets/VIDEO/Granny/E_MOVE_1.avi" },
-    { "name": "HOLO/BIGIRON/VIDEO/Granny/E_MOVE_2.avi", "url": "Assets/VIDEO/Granny/E_MOVE_2.avi" },
-    { "name": "HOLO/BIGIRON/VIDEO/Granny/E_MOVE_3.avi", "url": "Assets/VIDEO/Granny/E_MOVE_3.avi" },
-    { "name": "HOLO/BIGIRON/VIDEO/Granny/E_MOVE_4.avi", "url": "Assets/VIDEO/Granny/E_MOVE_4.avi" },
-    { "name": "HOLO/BIGIRON/VIDEO/Granny/PLAYER_FAINT.avi", "url": "Assets/VIDEO/Granny/PLAYER_FAINT.avi" },
-    { "name": "HOLO/BIGIRON/VIDEO/Granny/P_MOVE_1.avi", "url": "Assets/VIDEO/Granny/P_MOVE_1.avi" },
-    { "name": "HOLO/BIGIRON/VIDEO/Granny/P_MOVE_2.avi", "url": "Assets/VIDEO/Granny/P_MOVE_2.avi" },
-    { "name": "HOLO/BIGIRON/VIDEO/Granny/P_MOVE_3.avi", "url": "Assets/VIDEO/Granny/P_MOVE_3.avi" },
-    { "name": "HOLO/BIGIRON/VIDEO/Granny/P_MOVE_4.avi", "url": "Assets/VIDEO/Granny/P_MOVE_4.avi" },
-    { "name": "HOLO/BIGIRON/VIDEO/Granny/VICTORY.avi", "url": "Assets/VIDEO/Granny/VICTORY.avi" }
+    {
+      "name": "HOLO/BIGIRON/APP.JS",
+      "url": "APP.MIN.JS"
+    },
+    {
+      "name": "HOLO/BIGIRON/battle.json",
+      "url": "battle.json"
+    },
+    {
+      "name": "HOLO/BIGIRON/CODE/WORLD.JS",
+      "url": "Assets/CODE/WORLD.MIN.JS"
+    },
+    {
+      "name": "HOLO/BIGIRON/CODE/BATTLE.JS",
+      "url": "Assets/CODE/BATTLE.MIN.JS"
+    },
+    {
+      "name": "HOLO/BIGIRON/CODE/INVENTORY.JS",
+      "url": "Assets/CODE/INVENTORY.MIN.JS"
+    },
+    {
+      "name": "HOLO/BIGIRON/CODE/SHOOT.JS",
+      "url": "Assets/CODE/SHOOT.MIN.JS"
+    },
+    {
+      "name": "HOLO/BIGIRON/CODE/SHOP.JS",
+      "url": "Assets/CODE/SHOP.JS"
+    },
+    {
+      "name": "HOLO/BIGIRON/DATA/ITEMS.JSON",
+      "url": "Assets/DATA/ITEMS.JSON"
+    },
+    {
+      "name": "HOLO/BIGIRON/DATA/WORLD_01.JSON",
+      "url": "Assets/DATA/WORLD_01.JSON"
+    },
+    {
+      "name": "HOLO/BIGIRON/DATA/WORLD_02.JSON",
+      "url": "Assets/DATA/WORLD_02.JSON"
+    },
+    {
+      "name": "HOLO/BIGIRON/DATA/WORLD_03.JSON",
+      "url": "Assets/DATA/WORLD_03.JSON"
+    },
+    {
+      "name": "HOLO/BIGIRON/DATA/WORLD_04.JSON",
+      "url": "Assets/DATA/WORLD_04.JSON"
+    },
+    {
+      "name": "HOLO/BIGIRON/DATA/WORLD_05.JSON",
+      "url": "Assets/DATA/WORLD_05.JSON"
+    },
+    {
+      "name": "HOLO/BIGIRON/DATA/WORLD_06.JSON",
+      "url": "Assets/DATA/WORLD_06.JSON"
+    },
+    {
+      "name": "HOLO/BIGIRON/DATA/PLAYER_SPRITEDOWN.IMG",
+      "url": "Assets/DATA/PLAYER_SPRITEDOWN.IMG"
+    },
+    {
+      "name": "HOLO/BIGIRON/DATA/PLAYER_SPRITEL.IMG",
+      "url": "Assets/DATA/PLAYER_SPRITEL.IMG"
+    },
+    {
+      "name": "HOLO/BIGIRON/DATA/PLAYER_SPRITER.IMG",
+      "url": "Assets/DATA/PLAYER_SPRITER.IMG"
+    },
+    {
+      "name": "HOLO/BIGIRON/DATA/PLAYER_SPRITEUP.IMG",
+      "url": "Assets/DATA/PLAYER_SPRITEUP.IMG"
+    },
+    {
+      "name": "HOLO/BIGIRON/AUDIO/NVTH.wav",
+      "url": "Assets/AUDIO/NVTH.wav"
+    },
+    {
+      "name": "HOLO/BIGIRON/AUDIO/HOLO_BICT.wav",
+      "url": "Assets/HOLO_BICT.wav"
+    },
+    {
+      "name": "HOLO/BIGIRON/ST.IMG",
+      "url": "Assets/ST.IMG"
+    },
+    {
+      "name": "HOLO/BIGIRON/BIGIRON.IMG",
+      "url": "BIGIRON.IMG"
+    },
+    {
+      "name": "HOLO/BIGIRON/MENU.BIN",
+      "url": "MENU.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/SELECTER.IMG",
+      "url": "Assets/CODE/SELECTER.IMG"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/Granny/BATTLE_IDLE.avi",
+      "url": "Assets/VIDEO/Granny/BATTLE_IDLE.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/Granny/BATTLE_START.avi",
+      "url": "Assets/VIDEO/Granny/BATTLE_START.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/Granny/DEFEAT.avi",
+      "url": "Assets/VIDEO/Granny/DEFEAT.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/Granny/ENEMY_FAINT.avi",
+      "url": "Assets/VIDEO/Granny/ENEMY_FAINT.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/Granny/E_MOVE_1.avi",
+      "url": "Assets/VIDEO/Granny/E_MOVE_1.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/Granny/E_MOVE_2.avi",
+      "url": "Assets/VIDEO/Granny/E_MOVE_2.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/Granny/E_MOVE_3.avi",
+      "url": "Assets/VIDEO/Granny/E_MOVE_3.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/Granny/E_MOVE_4.avi",
+      "url": "Assets/VIDEO/Granny/E_MOVE_4.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/Granny/PLAYER_FAINT.avi",
+      "url": "Assets/VIDEO/Granny/PLAYER_FAINT.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/Granny/P_MOVE_1.avi",
+      "url": "Assets/VIDEO/Granny/P_MOVE_1.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/Granny/P_MOVE_2.avi",
+      "url": "Assets/VIDEO/Granny/P_MOVE_2.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/Granny/P_MOVE_3.avi",
+      "url": "Assets/VIDEO/Granny/P_MOVE_3.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/Granny/P_MOVE_4.avi",
+      "url": "Assets/VIDEO/Granny/P_MOVE_4.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/Granny/VICTORY.avi",
+      "url": "Assets/VIDEO/Granny/VICTORY.avi"
+    }
   ],
   "storageOptional": []
 }
