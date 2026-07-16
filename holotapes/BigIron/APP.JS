@@ -26,11 +26,8 @@
   function txt(p){try{return fs.readFileSync(p);}catch(e){}try{return fs.readFile(p);}catch(e2){}return null;}
   function img(p){try{return fs.readFile(p);}catch(e){}try{return fs.readFileSync(p);}catch(e2){}return null;}
   function wr(p,d){try{if(fs.writeFileSync){fs.writeFileSync(p,d);return true;}}catch(e){}try{if(fs.writeFile){fs.writeFile(p,d);return true;}}catch(e2){}return false;}
-  function readJson(p){try{return JSON.parse(txt(p)||"{}");}catch(e){return {};}}
 
   function playerData(){try{return typeof player!="undefined"&&player&&player.player?player.player:{};}catch(e){return {};}}
-  function cut(s,n){s=s==null?"":s.toString();return n&&s.length>n?s.substr(0,n):s;}
-  function num(v,d){v=parseInt(v,10);return isNaN(v)?d:v;}
   function weaponName(o,d){var v=o&&o.txt!==undefined?o.txt:d;v=v==null?"":v.toString();return v.length>20?v.substr(0,19)+"~":v;}
   function weaponDmg(o,d){var v=parseFloat(o&&o.DMG);return isNaN(v)?d:v;}
   function datPath(c){return"DATA/"+(NV?"NV":"F3")+"/"+c+".DAT";}
@@ -48,95 +45,6 @@
       battleEquip={weapon:"FISTS",armor:"NO ARMOR",dt:0,dmg:6,type:"MELEE"};
     }
     return battleEquip;
-  }
-
-  function storyState(){
-    var p=playerData(),s=0,a=0,b=0;
-    try{s=p&&p.wb&&p.wb.story?p.wb.story:0;}catch(e){}
-    if(s)return s;
-    a=readJson(B+"SAVE/STATE.JSON");
-    b=readJson(B+"STATE.JSON");
-    return (a&&a.story)|| (b&&b.story) || {};
-  }
-
-  function roundCount(st){
-    var r=st&&st.rounds,k,n=0;
-    if(!r)return 0;
-    for(k in r)if(r[k])n++;
-    return n;
-  }
-
-  function hpSnapshot(){
-    var p=playerData(),o=0,pm=70+num(p.endurance,5)*10+num(p.level,1)*5,hp=pm,r=1,sum=0,i,c;
-    try{if(player&&player.getinfo)o=player.getinfo(false);}catch(e){}
-    if(o){
-      if(o.maxHP!==undefined)pm=num(o.maxHP,pm);
-      if(o.hp!==undefined)r=parseFloat(o.hp);
-    }else{
-      var K="perceptioncondition,endurancecondition,leftattackcondition,rightattackcondition,rightmobilitycondition,leftmobilitycondition".split(",");
-      for(i=0;i<6;i++){c=parseFloat(p[K[i]]);sum+=isNaN(c)?100:Math.max(0,Math.min(100,c));}
-      r=sum/600;
-    }
-    if(isNaN(r))r=1;
-    hp=Math.max(0,Math.min(pm,Math.round(Math.max(0,Math.min(1,r))*pm)));
-    return {hp:hp,mh:pm};
-  }
-
-  function snapshot(extra){
-    var p=playerData(),e=prefetchEquipment(),st=storyState(),hps=hpSnapshot(),s;
-    extra=extra||{};
-    s={
-      n:cut(p.name||"COURIER",16),
-      lv:num(p.level,1),
-      xp:num(p.xp,0),
-      hp:hps.hp,
-      mh:hps.mh,
-      sp:[num(p.strength,5),num(p.perception,5),num(p.endurance,5),num(p.charisma,5),num(p.intelligence,5),num(p.agility,5),num(p.luck,5)],
-      dt:num(p.dt,e.dt||0),
-      w:cut(e.weapon||"FISTS",20),
-      d:num(e.dmg,6),
-      r:roundCount(st),
-      e:num(st.encounters,0),
-      dl:num(st.deadLead,0),
-      m:cut(extra.map||st.map||"",12)
-    };
-    wr(B+"SAVE/PROFILE.JSON",JSON.stringify(s))||wr(B+"PROFILE.JSON",JSON.stringify(s));
-    return s;
-  }
-
-  function addItem(id,name,cnt){
-    var p=playerData(),a,i;
-    cnt=num(cnt,1);
-    try{
-      p.wbLoot=p.wbLoot||[];
-      a=p.wbLoot;
-      for(i=0;i<a.length;i++)if(a[i]&&a[i].id==id){
-        a[i].cnt=num(a[i].cnt,1)+cnt;
-        player.modified=true;
-        if(player.sync)player.sync();
-        snapshot();
-        return a[i].name+" x"+a[i].cnt;
-      }
-      a.push({id:id,name:name,cnt:cnt});
-      player.modified=true;
-      if(player.sync)player.sync();
-    }catch(e){}
-    snapshot();
-    return name+" x"+cnt;
-  }
-
-  function inventory(){
-    var p=playerData(),e=prefetchEquipment(),a=[],l,i,it,n,c;
-    a.push({name:e.weapon||"FISTS",cnt:1,type:"EQUIPPED",dmg:e.dmg||0});
-    l=p&&p.wbLoot instanceof Array?p.wbLoot:[];
-    for(i=0;i<l.length&&a.length<24;i++){
-      it=l[i];
-      if(!it)continue;
-      n=cut(it.name||it.id||"ITEM",20);
-      c=num(it.cnt,1);
-      a.push({name:n,cnt:c,type:"LOOT"});
-    }
-    return a;
   }
 
   function flip(y1,y2){
@@ -416,15 +324,11 @@
     world:function(a){loadModule("WORLD",a);},
     battle:function(a){loadModule("BATTLE",a);},
     shoot:function(a){loadModule("SHOOT",a);},
-    music:music,exit:exitApp,gc:gc,
-    snapshot:snapshot,
-    inv:inventory,
-    addItem:addItem
+    music:music,exit:exitApp,gc:gc
   };
 
   try{Pip.CURRENT.fullscreen=true;}catch(e){}
   quietShell(true);
-  snapshot();
   try{Pip.onExclusive("knob1",k1);}catch(e2){try{Pip.on("knob1",k1);}catch(e3){}}
   try{Pip.onExclusive("knob2",k2);}catch(e4){try{Pip.on("knob2",k2);}catch(e5){}}
   start();

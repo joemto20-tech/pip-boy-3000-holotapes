@@ -22,7 +22,6 @@
   var queuedX=0;
   var queuedY=0;
   var pause=-1;
-  var invTop=0;
 
   var tileOx=-1;
   var tileOy=-1;
@@ -278,7 +277,6 @@
       saveState.facing=facing;
     }
     writeState(saveState,!silent);
-    try{if(A.snapshot)A.snapshot({map:id,x:playerX,y:playerY});}catch(e){}
     msg="GAME SAVED";
     if(!silent)safeSound("SELECT","TAB");
     if(refresh)A.gc();
@@ -286,8 +284,7 @@
   }
 
   function saveProfile(){
-    try{if(A.snapshot)A.snapshot({map:id,x:playerX,y:playerY});}catch(e){}
-    msg="PROFILE UPDATED";
+    msg="PROFILE COMING SOON";
     return true;
   }
 
@@ -859,19 +856,6 @@
       }else{
         A.battle({enemy:target.enemyPool||target.enemy,map:id,mode:imageMode?"image":"tile",x:playerX,y:playerY,facing:facing,interact:target.id,once:target.once,music:target.music!==undefined?target.music:((id=="WORLD_03"||id=="WORLD_06")?"NVTH":false),boss:target.boss,miniboss:isMiniboss(target),finalBoss:isFinalBoss(target),bullet:bulletFor(target)});
       }
-    }else if(target.type=="loot"||target.type=="item"||target.type=="dumpster"){
-      if(target.once&&saveState.cleared[target.id]){
-        msg="ALREADY SEARCHED";
-      }else{
-        var loot=target.loot||target.item||target;
-        var lid=loot.id||target.id||"BIGIRON_LOOT";
-        var lname=loot.name||target.name||target.prompt||"WASTELAND LOOT";
-        var lcnt=parseInt(loot.cnt||loot.count||target.cnt||1,10)||1;
-        try{if(A.addItem)msg="FOUND "+A.addItem(lid,lname,lcnt);else msg="FOUND "+lname;}catch(e){msg="FOUND "+lname;}
-        if(target.once&&target.id)saveState.cleared[target.id]=1;
-        save(true,true);
-      }
-      draw(false,playerX,playerY);
     }else if(target.type=="save"){
       save(false,true);
       draw(false,playerX,playerY);
@@ -881,46 +865,8 @@
     }
   }
 
-  function invCount(){
-    var a=[];
-    try{if(A.inv)a=A.inv();}catch(e){}
-    return a&&a.length?a.length:1;
-  }
-
-  function drawInventory(){
-    var a=[],i,it,y,max=8;
-    try{if(A.inv)a=A.inv();}catch(e){}
-    if(!a||!a.length)a=[{name:"NO ITEMS",cnt:0,type:""}];
-    if(invTop>Math.max(0,a.length-max))invTop=Math.max(0,a.length-max);
-    h.setClipRect(0,0,W-1,H-1);
-    h.setColor(0).fillRect(0,0,W-1,H-1);
-    h.setColor(2).drawRect(26,20,W-27,H-21);
-    h.drawRect(32,26,W-33,H-27);
-    h.setFontAlign(0,0);
-    font(4);
-    h.setColor(3).drawString("INVENTORY",W/2,52);
-    font(1);
-    h.setColor(2).drawString("BIG IRON",W/2,82);
-    h.setFontAlign(-1,-1);
-    for(i=0;i<max&&i+invTop<a.length;i++){
-      it=a[i+invTop]||{};
-      y=104+i*20;
-      h.setColor(i===0&&invTop===0?3:2);
-      h.drawString(text(it.type||"",10),52,y);
-      h.setColor(3);
-      h.drawString(text(it.name||"ITEM",22),150,y);
-      h.setFontAlign(1,-1);
-      h.drawString(it.dmg?("DMG "+it.dmg):("x"+(it.cnt||1)),W-58,y);
-      h.setFontAlign(-1,-1);
-    }
-    h.setFontAlign(0,0);
-    font(1);
-    h.setColor(2).drawString("PRESS TO RETURN",W/2,286);
-    h.flip();
-  }
-
   function drawPause(note){
-    var options=["RESUME","INVENTORY","SAVE LOCATION","PROFILE","EXIT GAME"];
+    var options=["RESUME","SAVE LOCATION","PROFILE SOON","EXIT GAME"];
     var i,y;
     h.setClipRect(0,0,W-1,H-1);
     h.setColor(0).fillRect(0,0,W-1,H-1);
@@ -931,8 +877,8 @@
     h.setColor(3).drawString("PAUSED",W/2,58);
     font(1);
     h.setColor(2).drawString("BIG IRON",W/2,92);
-    for(i=0;i<5;i++){
-      y=108+i*34;
+    for(i=0;i<4;i++){
+      y=114+i*39;
       if(i==pause){
         h.setColor(2).fillRect(92,y-14,W-93,y+14);
         h.setColor(0);
@@ -959,22 +905,13 @@
 
   function press(){
     if(pause>=0){
-      if(pause==99){
-        pause=0;
-        drawPause();
-        return;
-      }
       if(pause===0){
         pause=-1;
         draw(true);
       }else if(pause==1){
-        pause=99;
-        invTop=0;
-        drawInventory();
-      }else if(pause==2){
         save(false,true);
         drawPause(msg);
-      }else if(pause==3){
+      }else if(pause==2){
         saveProfile();
         drawPause(msg);
       }else{
@@ -1015,13 +952,8 @@
     }
     if(clickTimer){clearTimeout(clickTimer);clickTimer=null;}
     if(pause>=0){
-      if(pause==99){
-        invTop=clamp(invTop+(value<0?-1:1),0,Math.max(0,invCount()-8));
-        drawInventory();
-      }else{
-        pause=(pause+(value<0?-1:1)+5)%5;
-        drawPause();
-      }
+      pause=(pause+(value<0?-1:1)+4)%4;
+      drawPause();
     }else{
       queueMove(value,0);
     }
@@ -1031,13 +963,8 @@
     if(!value||removed)return;
     if(clickTimer){clearTimeout(clickTimer);clickTimer=null;}
     if(pause>=0){
-      if(pause==99){
-        invTop=clamp(invTop+(value<0?-1:1),0,Math.max(0,invCount()-8));
-        drawInventory();
-      }else{
-        pause=(pause+(value<0?-1:1)+5)%5;
-        drawPause();
-      }
+      pause=(pause+(value<0?-1:1)+4)%4;
+      drawPause();
     }else{
       queueMove(0,value);
     }

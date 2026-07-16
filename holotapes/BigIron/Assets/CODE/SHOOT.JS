@@ -15,7 +15,6 @@
   var dead=false;
   var busy=false;
   var pause=-1;
-  var invTop=0;
   var tickTimer=null;
   var clickTimer=null;
   var returnTimer=null;
@@ -116,7 +115,6 @@
       if(s.story.encounters>=20)s.story.forgeReady=1;
     }
     writeState(s);
-    try{if(A.snapshot)A.snapshot({map:arg.map});}catch(e){}
   }
 
   function bar(x,y,w,value,max){
@@ -247,7 +245,7 @@
   }
 
   function drawPause(note){
-    var options=["RESUME","INVENTORY","SAVE LOCATION","EXIT GAME"];
+    var options=["RESUME","SAVE LOCATION","EXIT GAME"];
     var i,y;
     h.setColor(0).fillRect(0,0,W-1,H-1);
     h.setColor(2).drawRect(26,20,W-27,H-21);
@@ -257,13 +255,13 @@
     h.setColor(3).drawString("PAUSED",W/2,58);
     font(1);
     h.setColor(2).drawString("SHOOTING RANGE",W/2,92);
-    for(i=0;i<4;i++){
-      y=116+i*40;
+    for(i=0;i<3;i++){
+      y=126+i*46;
       if(i==pause){
-        h.setColor(2).fillRect(92,y-15,W-93,y+15);
+        h.setColor(2).fillRect(92,y-16,W-93,y+16);
         h.setColor(0);
       }else{
-        h.setColor(2).drawRect(92,y-15,W-93,y+15);
+        h.setColor(2).drawRect(92,y-16,W-93,y+16);
         h.setColor(3);
       }
       font(2);
@@ -274,43 +272,6 @@
     h.flip();
   }
 
-  function invCount(){
-    var a=[];
-    try{if(A.inv)a=A.inv();}catch(e){}
-    return a&&a.length?a.length:1;
-  }
-
-  function drawInventory(){
-    var a=[],i,it,y,max=8;
-    try{if(A.inv)a=A.inv();}catch(e){}
-    if(!a||!a.length)a=[{name:"NO ITEMS",cnt:0,type:""}];
-    if(invTop>Math.max(0,a.length-max))invTop=Math.max(0,a.length-max);
-    h.setColor(0).fillRect(0,0,W-1,H-1);
-    h.setColor(2).drawRect(26,20,W-27,H-21);
-    h.drawRect(32,26,W-33,H-27);
-    h.setFontAlign(0,0);
-    font(4);
-    h.setColor(3).drawString("INVENTORY",W/2,52);
-    font(1);
-    h.setColor(2).drawString("BIG IRON",W/2,82);
-    h.setFontAlign(-1,-1);
-    for(i=0;i<max&&i+invTop<a.length;i++){
-      it=a[i+invTop]||{};
-      y=104+i*20;
-      h.setColor(i===0&&invTop===0?3:2);
-      h.drawString(text(it.type||"",10),52,y);
-      h.setColor(3);
-      h.drawString(text(it.name||"ITEM",22),150,y);
-      h.setFontAlign(1,-1);
-      h.drawString(it.dmg?("DMG "+it.dmg):("x"+(it.cnt||1)),W-58,y);
-      h.setFontAlign(-1,-1);
-    }
-    h.setFontAlign(0,0);
-    font(1);
-    h.setColor(2).drawString("PRESS TO RETURN",W/2,286);
-    h.flip();
-  }
-
   function openPause(){
     if(busy||dead)return;
     pause=0;
@@ -318,17 +279,10 @@
   }
 
   function pauseSelect(){
-    if(pause==99){
-      pause=0;
-      drawPause();
-    }else if(pause===0){
+    if(pause===0){
       pause=-1;
       draw();
     }else if(pause==1){
-      pause=99;
-      invTop=0;
-      drawInventory();
-    }else if(pause==2){
       saveWorld(false);
       drawPause("GAME SAVED");
     }else{
@@ -363,13 +317,8 @@
     }
     if(clickTimer){clearTimeout(clickTimer);clickTimer=null;}
     if(pause>=0){
-      if(pause==99){
-        invTop=clamp(invTop+(value<0?-1:1),0,Math.max(0,invCount()-8));
-        drawInventory();
-      }else{
-        pause=(pause+(value<0?-1:1)+4)%4;
-        drawPause();
-      }
+      pause=(pause+(value<0?-1:1)+3)%3;
+      drawPause();
       return;
     }
     cy=clamp(cy+(value<0?-8:8),24,H-74);
@@ -380,13 +329,8 @@
     if(dead||!value)return;
     if(clickTimer){clearTimeout(clickTimer);clickTimer=null;}
     if(pause>=0){
-      if(pause==99){
-        invTop=clamp(invTop+(value<0?-1:1),0,Math.max(0,invCount()-8));
-        drawInventory();
-      }else{
-        pause=(pause+(value<0?-1:1)+4)%4;
-        drawPause();
-      }
+      pause=(pause+(value<0?-1:1)+3)%3;
+      drawPause();
       return;
     }
     cx=clamp(cx+(value<0?-8:8),24,W-24);

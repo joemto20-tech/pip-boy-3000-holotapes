@@ -18,7 +18,7 @@ const state = {
 
 const quickTools = [
   ["G", "Grass"], ["P", "Path"], ["B", "Block"], ["H", "House"], ["D", "Door"], ["S", "Sand"],
-  ["spawn", "Spawn"], ["exit", "Exit"], ["regular", "Regular"], ["npcEncounter", "NPC Enc"], ["boss", "Boss"], ["shoot", "Shoot"], ["duel", "Sprite Battle"], ["item", "Item"], ["dumpster", "Dumpster"], ["erase", "Erase"],
+  ["spawn", "Spawn"], ["exit", "Exit"], ["regular", "Regular"], ["npcEncounter", "NPC Enc"], ["boss", "Boss"], ["shoot", "Shoot"], ["duel", "Sprite Battle"], ["erase", "Erase"],
   ["tree", "Tree"], ["npc", "NPC"], ["camp", "Camp"], ["sign", "Sign"], ["rocks", "Rocks"]
 ];
 
@@ -212,8 +212,6 @@ function encounterMark(item) {
   if (!item) return "";
   if (item.type === "shoot") return "SH";
   if (item.type === "duel") return "SB";
-  if (item.type === "dumpster") return "DU";
-  if (item.type === "item" || item.type === "loot") return "IT";
   if (item.boss) return "B!";
   if (item.npc) return "N!";
   return "E";
@@ -642,7 +640,7 @@ function paintArtPoint(point, fillRect) {
 function placeEncounter(tool, x, y) {
   const world = state.world;
   const enemy = $("encEnemy").value || "RANDOM";
-  const prompt = $("encPrompt").value || (tool === "duel" ? "SPRITE BATTLE?" : tool === "finalBoss" ? "FINAL BOSS?" : tool === "miniboss" ? "MINIBOSS?" : tool === "forge" ? "FORGE FINAL ROUND?" : tool === "boss" ? "BOSS?" : tool === "shoot" ? "TAKE SHOT?" : tool === "dumpster" ? "SEARCH?" : tool === "item" ? "PICK UP?" : tool === "npcEncounter" ? "TALK?" : "ENCOUNTER?");
+  const prompt = $("encPrompt").value || (tool === "duel" ? "SPRITE BATTLE?" : tool === "finalBoss" ? "FINAL BOSS?" : tool === "miniboss" ? "MINIBOSS?" : tool === "forge" ? "FORGE FINAL ROUND?" : tool === "boss" ? "BOSS?" : tool === "shoot" ? "TAKE SHOT?" : tool === "npcEncounter" ? "TALK?" : "ENCOUNTER?");
   const once = $("encOnce").checked;
   const pickedSprite = $("decorSprite").value;
   const minRegular = Math.max(0, Math.min(20, Number($("minRegular").value) || 0));
@@ -663,19 +661,6 @@ function placeEncounter(tool, x, y) {
     world.interacts.push(addLaunchText(buildDuelData(base, enemy), "DUEL", enemy));
   } else if (tool === "shoot") {
     world.interacts.push(addLaunchText({ ...base, type: "shoot", target: $("shootTarget").value || "RADROACH", enemy: $("shootTarget").value || "RADROACH" }, "TAKE SHOT", $("shootTarget").value || "RADROACH"));
-  } else if (tool === "item" || tool === "dumpster") {
-    const lootId = cleanOptionalId($("lootId").value || "") || "BIGIRON_LOOT";
-    const lootName = cleanScreenText($("lootName").value || "", "WASTELAND LOOT", 24);
-    const lootCount = Math.max(1, Math.min(99, Number($("lootCount").value) || 1));
-    world.interacts.push({
-      ...base,
-      type: tool,
-      loot: {
-        id: lootId,
-        name: lootName || "WASTELAND LOOT",
-        cnt: lootCount
-      }
-    });
   } else if (tool === "forge") {
     world.interacts.push({ ...base, type: "forge", once: false });
   } else if (tool === "miniboss") {
@@ -759,7 +744,7 @@ function applyWorldTool(x, y) {
     if (travelSubtitle && travelSubtitle !== exit.to) exit.ts = travelSubtitle;
     world.exits = (world.exits || []).filter((item) => !(item.x === x && item.y === y));
     world.exits.push(exit);
-  } else if (tool === "regular" || tool === "boss" || tool === "shoot" || tool === "duel" || tool === "item" || tool === "dumpster" || tool === "npcEncounter" || tool === "miniboss" || tool === "forge" || tool === "finalBoss") {
+  } else if (tool === "regular" || tool === "boss" || tool === "shoot" || tool === "duel" || tool === "npcEncounter" || tool === "miniboss" || tool === "forge" || tool === "finalBoss") {
     placeEncounter(tool, x, y);
   } else if (["tree", "npc", "camp", "sign", "rocks"].includes(tool)) {
     world.decor = (world.decor || []).filter((item) => !(item.x === x && item.y === y));
@@ -1163,7 +1148,6 @@ async function loadInfo() {
     'boss -> { type:"battle", boss:true, enemy:"...", music:"NVTH" }',
     'shoot -> { type:"shoot", target:"RADROACH" }',
     'sprite battle -> { type:"duel", es:"ENEMY_SPRITE", ps:"PLAYER_BATTLE_SPRITE", pr:"BULLET_SPRITE", fx:"HIT_SPRITE" }',
-    'item/dumpster -> { type:"item"|"dumpster", loot:{ id:"...", name:"...", cnt:1 } }',
     'custom launch screen -> encounter lt:"TITLE", ls:"SUBTITLE"',
     'custom travel screen -> exit tt:"TITLE", ts:"SUBTITLE"',
     "",
