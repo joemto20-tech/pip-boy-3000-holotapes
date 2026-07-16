@@ -28,6 +28,32 @@
   function wr(p,d){try{if(fs.writeFileSync){fs.writeFileSync(p,d);return true;}}catch(e){}try{if(fs.writeFile){fs.writeFile(p,d);return true;}}catch(e2){}return false;}
 
   function playerData(){try{return typeof player!="undefined"&&player&&player.player?player.player:{};}catch(e){return {};}}
+  function readProgress(){
+    var s={},p=playerData();
+    try{s=JSON.parse(txt(B+"SAVE/STATE.JSON")||"{}");}catch(e){}
+    if(!s.story)try{s=JSON.parse(txt(B+"STATE.JSON")||"{}");}catch(e2){}
+    if(!s.story&&p&&p.wb)s=p.wb;
+    return s||{};
+  }
+  function progressRounds(st){
+    var k,n=0,r=st&&st.rounds;
+    if(!r)return 0;
+    for(k in r)if(r[k])n++;
+    return n;
+  }
+  function drawProgress(){
+    var s=readProgress(),st=s.story||{},r=progressRounds(st),e=st.encounters||0,d=st.deadLead||e;
+    h.setColor(0).fillRect(276,194,468,294);
+    h.setColor(2).drawRect(276,194,468,294);
+    h.setFontAlign(-1,-1);
+    font(1);
+    h.setColor(3).drawString("BIG IRON "+r+"/6",286,202);
+    h.setColor(2).drawString("JUDGMENTS "+e+"/20",286,220);
+    h.drawString("DEAD LEAD "+d+"/20",286,236);
+    if(st.rounds&&st.rounds.COURIER)h.setColor(3).drawString("WEAPON READY",286,254);
+    else if(st.forgeReady)h.setColor(3).drawString("FORGE READY",286,254);
+    else h.setColor(2).drawString("SUNSCAR",286,254);
+  }
   function weaponName(o,d){var v=o&&o.txt!==undefined?o.txt:d;v=v==null?"":v.toString();return v.length>20?v.substr(0,19)+"~":v;}
   function weaponDmg(o,d){var v=parseFloat(o&&o.DMG);return isNaN(v)?d:v;}
   function datPath(c){return"DATA/"+(NV?"NV":"F3")+"/"+c+".DAT";}
@@ -150,6 +176,7 @@
     if(!drawBin("MENU.BIN"))drawFallback();
     if(c)h.setColor(3).drawImage(c,96,sel?191:146);
     else h.setColor(3).fillRect(124,sel?219:174,134,sel?229:184);
+    drawProgress();
     flip(0,H-1);
     gc();
   }
