@@ -763,7 +763,7 @@
     var oldX=playerX;
     var oldY=playerY;
     var amount=imageMode?(world.step||2):1;
-    var nx,ny,exit,t,edge;
+    var nx,ny,exit;
 
     if(dx<0)facing="left";
     else if(dx>0)facing="right";
@@ -772,22 +772,14 @@
 
     nx=playerX+dx*amount;
     ny=playerY+dy*amount;
-    if(imageMode){
-      edge=nx<0||ny<0||nx>=world.w||ny>=world.h;
-    }else{
-      t=tileAt(nx,ny);
-      edge=nx<0||ny<0||!world.rows||ny>=world.rows.length||(world.rows[ny]&&nx>=world.rows[ny].length)||(t=="P"&&(ny<1||ny>=world.rows.length-1||nx<1||nx>=world.rows[ny].length-1));
-    }
-    if(edge){
-      exit=findExit(nx,ny);
-      if(exit){
-        if(!canUseExit(exit)){
-          draw(false,oldX,oldY);
-          return;
-        }
-        transition(exit);
+    exit=findExit(nx,ny);
+    if(exit){
+      if(!canUseExit(exit)){
+        draw(false,oldX,oldY);
         return;
       }
+      transition(exit);
+      return;
     }
     if(!blocked(nx,ny)){
       playerX=nx;
