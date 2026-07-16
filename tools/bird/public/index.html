@@ -76,6 +76,8 @@
             <option value="boss">Boss Encounter</option>
             <option value="shoot">Shoot Encounter</option>
             <option value="duel">Sprite Battle Encounter</option>
+            <option value="item">Pickup Item</option>
+            <option value="dumpster">Dumpster Loot</option>
             <option value="tree">Tree</option>
             <option value="npc">NPC</option>
             <option value="camp">Camp</option>
@@ -117,6 +119,17 @@
           </div>
           <label>Shoot Target
             <input id="shootTarget" value="RADROACH">
+          </label>
+          <div class="field-row">
+            <label>Loot ID
+              <input id="lootId" value="BIGIRON_DEAD_LEAD">
+            </label>
+            <label>Loot Count
+              <input id="lootCount" type="number" value="1" min="1" max="99">
+            </label>
+          </div>
+          <label>Loot Name
+            <input id="lootName" value="DEAD MAN'S LEAD">
           </label>
           <div class="field-row">
             <label>Min Regular

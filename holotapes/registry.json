@@ -214,6 +214,20 @@
       {
         "name": "HOLO/BIGIRON/VIDEO/Granny/VICTORY.avi",
         "url": "BigIron/Assets/VIDEO/Granny/VICTORY.avi"
+      },
+      {
+        "name": "HOLO/BIGIRON/DATA/PROJECTILE.JS",
+        "url": "BigIron/Assets/DATA/PROJECTILE.JS"
+      },
+      {
+        "name": "HOLO/BIGIRON/DATA/PLAYER_BATTLE.JS",
+        "url": "BigIron/Assets/DATA/PLAYER_BATTLE.JS"
+      }
+    ],
+    "customFirmwareFiles": [
+      {
+        "name": "CFW/50_BIGIRON_STATS.JS",
+        "url": "BigIron/Assets/CFW/50_BIGIRON_STATS.JS"
       }
     ],
     "storageOptional": []
