@@ -73,7 +73,11 @@
         }
       }catch(e2){}
     }else{
-      if(!shellQuiet)return;
+      if(!shellQuiet){
+        try{if(Pip.startTimers)Pip.startTimers();}catch(e0){}
+        try{if(Pip.setWatches)Pip.setWatches();}catch(e1){}
+        return;
+      }
       shellQuiet=false;
       try{if(Pip.stopTimers)Pip.stopTimers();}catch(e3){}
       try{if(Pip.startTimers)Pip.startTimers();}catch(e4){}
@@ -235,12 +239,14 @@
     if(loadTimer)clearTimeout(loadTimer);
     unload();
     if(api)api.flip=flip;
-    quietShell(true);
     if(n=="BATTLE"){
+      quietShell(true);
       music(false);
       screen("CHECKING","WEAPON");
       battleEquip=null;
       prefetchEquipment(true);
+    }else{
+      quietShell(false);
     }
     screen("LOADING",n);
     loadTimer=setTimeout(function(){
@@ -328,7 +334,7 @@
   };
 
   try{Pip.CURRENT.fullscreen=true;}catch(e){}
-  quietShell(true);
+  quietShell(false);
   try{Pip.onExclusive("knob1",k1);}catch(e2){try{Pip.on("knob1",k1);}catch(e3){}}
   try{Pip.onExclusive("knob2",k2);}catch(e4){try{Pip.on("knob2",k2);}catch(e5){}}
   start();
