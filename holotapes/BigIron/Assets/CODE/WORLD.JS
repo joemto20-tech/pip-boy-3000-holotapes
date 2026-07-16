@@ -627,11 +627,11 @@
     }
   }
 
-  function updateCamera(){
+  function updateCamera(oldX,oldY){
     var size=world.scale||world.tile||16;
     var mapW=world.rows&&world.rows[0]?world.rows[0].length:0;
     var mapH=world.rows?world.rows.length:0;
-    var maxX,maxY,sx,sy,oldX=tileOx,oldY=tileOy;
+    var maxX,maxY,sx,sy,dx,dy,oldOx=tileOx,oldOy=tileOy;
     tileCols=Math.ceil(W/size);
     tileRows=Math.max(1,Math.floor(FOOTER_Y/size));
     maxX=Math.max(0,mapW-tileCols);
@@ -641,13 +641,19 @@
       tileOy=clamp(playerY-Math.floor(tileRows/2),0,maxY);
       return true;
     }
+    dx=oldX===undefined?0:playerX-oldX;
+    dy=oldY===undefined?0:playerY-oldY;
     sx=playerX-tileOx;
     sy=playerY-tileOy;
-    if(sx<0)tileOx=clamp(playerX,0,maxX);
-    else if(sx>=tileCols)tileOx=clamp(playerX-tileCols+1,0,maxX);
-    if(sy<0)tileOy=clamp(playerY,0,maxY);
-    else if(sy>=tileRows)tileOy=clamp(playerY-tileRows+1,0,maxY);
-    return tileOx!=oldX||tileOy!=oldY;
+    if(dx>0&&sx>=tileCols-1)tileOx=clamp(playerX,0,maxX);
+    else if(dx<0&&sx<=0)tileOx=clamp(playerX-tileCols+1,0,maxX);
+    else if(sx<0)tileOx=clamp(playerX-tileCols+1,0,maxX);
+    else if(sx>=tileCols)tileOx=clamp(playerX,0,maxX);
+    if(dy>0&&sy>=tileRows-1)tileOy=clamp(playerY,0,maxY);
+    else if(dy<0&&sy<=0)tileOy=clamp(playerY-tileRows+1,0,maxY);
+    else if(sy<0)tileOy=clamp(playerY-tileRows+1,0,maxY);
+    else if(sy>=tileRows)tileOy=clamp(playerY,0,maxY);
+    return tileOx!=oldOx||tileOy!=oldOy;
   }
 
   function drawOneTile(x,y){
@@ -664,7 +670,7 @@
 
   function drawTileWorld(full,oldX,oldY){
     var size=world.scale||world.tile||16;
-    var movedCamera=updateCamera();
+    var movedCamera=updateCamera(oldX,oldY);
     var i,j,top,bottom;
     try{
       if(full!==false||!tileDrawn||movedCamera){
@@ -855,8 +861,6 @@
     var i,y;
     h.setClipRect(0,0,W-1,H-1);
     h.setColor(0).fillRect(0,0,W-1,H-1);
-    h.setColor(1);
-    for(y=0;y<H;y+=16)h.drawLine(0,y,W-1,y);
     h.setColor(2).drawRect(26,20,W-27,H-21);
     h.drawRect(32,26,W-33,H-27);
     h.setFontAlign(0,0);

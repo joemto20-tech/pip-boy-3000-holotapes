@@ -154,12 +154,9 @@
   }
 
   function draw(){
-    var y;
     if(dead)return;
     h.setClipRect(0,0,W-1,H-1);
     h.setColor(0).fillRect(0,0,W-1,H-1);
-    h.setColor(1);
-    for(y=0;y<H;y+=16)h.drawLine(0,y,W-1,y);
     h.setColor(2).drawRect(4,4,W-5,H-5);
     roach();
     crosshair();
@@ -251,8 +248,6 @@
     var options=["RESUME","SAVE LOCATION","EXIT GAME"];
     var i,y;
     h.setColor(0).fillRect(0,0,W-1,H-1);
-    h.setColor(1);
-    for(y=0;y<H;y+=16)h.drawLine(0,y,W-1,y);
     h.setColor(2).drawRect(26,20,W-27,H-21);
     h.drawRect(32,26,W-33,H-27);
     h.setFontAlign(0,0);

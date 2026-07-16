@@ -82,11 +82,8 @@
   }
 
   function screen(a,b){
-    var y;
     h.setClipRect(0,0,W-1,H-1);
     h.setColor(0).fillRect(0,0,W-1,H-1);
-    h.setColor(1);
-    for(y=0;y<H;y+=16)h.drawLine(0,y,W-1,y);
     h.setFontAlign(0,0);
     font(3);h.setColor(3).drawString(a,W/2,125);
     font(1);h.setColor(2).drawString(b||"",W/2,172);
@@ -153,19 +150,14 @@
   }
 
   function fadeToMenu(step){
-    var y;
     if(loading||mod)return;
     try{
       h.setColor(0);
-      if(step<2){
-        for(y=step;y<H;y+=2)h.drawLine(0,y,W-1,y);
-      }else{
-        h.fillRect(0,0,W-1,H-1);
-      }
+      h.fillRect(0,0,W-1,H-1);
       flip(0,H-1);
     }catch(e){}
-    if(step<2)startTimer=setTimeout(function(){fadeToMenu(step+1);},70);
-    else{startTimer=0;showMenu();}
+    startTimer=0;
+    showMenu();
   }
 
   function clearSave(){
