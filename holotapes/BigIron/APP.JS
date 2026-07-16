@@ -4,7 +4,7 @@
   var home=typeof Pip.MODE=="number"?Pip.MODE:1,mode="splash",sel=0;
   var cursor=null,musicOn=false,musicTrack="",musicPath="";
   var battleEquip=null;
-  var shellQuiet=false;
+  var shellQuiet=false,shellTick=0;
 
   function exists(p){try{return !!fs.statSync(p);}catch(e){return false;}}
   function base(){
@@ -61,9 +61,13 @@
     }catch(e2){}
   }
 
+  function holdShell(){
+    try{Pip.lastFlip=getTime()+1;}catch(e){}
+  }
+
   function quietShell(on){
     if(on){
-      if(shellQuiet)return;
+      if(shellQuiet){holdShell();return;}
       shellQuiet=true;
       try{if(Pip.stopTimers)Pip.stopTimers();}catch(e){}
       try{
@@ -72,7 +76,11 @@
           if(Pip.timers.flip){clearInterval(Pip.timers.flip);Pip.timers.flip=0;}
         }
       }catch(e2){}
+      if(shellTick)clearInterval(shellTick);
+      shellTick=setInterval(holdShell,100);
+      holdShell();
     }else{
+      if(shellTick){clearInterval(shellTick);shellTick=0;}
       if(!shellQuiet){
         try{if(Pip.startTimers)Pip.startTimers();}catch(e0){}
         try{if(Pip.setWatches)Pip.setWatches();}catch(e1){}
