@@ -30,7 +30,6 @@
   var tileRows=0;
   var tileDrawn=false;
   var playerSprites={};
-  var selectorIcon=null;
 
   function clamp(v,min,max){
     return v<min?min:(v>max?max:v);
@@ -121,12 +120,6 @@
     if(!imageFits(path,320))return null;
     playerSprites[file]=readImage(path)||null;
     return playerSprites[file]||null;
-  }
-
-  function loadSelectorIcon(){
-    if(selectorIcon)return selectorIcon;
-    selectorIcon=readImage(BASE+"SELECTER.IMG")||readImage(BASE+"CODE/SELECTER.IMG")||readImage(BASE+"Assets/CODE/SELECTER.IMG");
-    return selectorIcon;
   }
 
   function writeText(path,data){
@@ -296,11 +289,6 @@
     msg="GAME SAVED";
     if(!silent)safeSound("SELECT","TAB");
     if(refresh)A.gc();
-    return true;
-  }
-
-  function saveProfile(){
-    msg="PROFILE COMING SOON";
     return true;
   }
 
@@ -503,22 +491,17 @@
   }
 
   function drawFooter(){
-    var icon=loadSelectorIcon();
     var rounds=roundCount();
     var bx=6;
     var by=FOOTER_Y-36;
     active=findInteract();
     h.setColor(0).fillRect(0,FOOTER_Y,W-1,H-1);
     h.setColor(2).drawLine(0,FOOTER_Y-1,W-1,FOOTER_Y-1);
-    if(icon){
-      try{h.setColor(3).drawImage(icon,bx,by);}catch(e){}
-    }else{
-      h.setColor(3).fillRect(bx,by,bx+24,by+24);
-    }
+    h.setColor(3).fillPoly([bx,by+2,bx,by+24,bx+18,by+13]);
+    h.setColor(2).drawRect(bx+20,by+3,bx+34,by+21);
     font(1);
     h.setFontAlign(0,0);
-    h.setColor(3).fillRect(bx+9,by+9,bx+21,by+21);
-    h.setColor(0).drawString(rounds,bx+15,by+15);
+    h.setColor(3).drawString(rounds,bx+27,by+12);
     font(2);
     h.setFontAlign(0,-1);
     if(active)h.setColor(3).drawString(active.prompt||"ENTER?",W/2,FOOTER_Y+4);
@@ -879,8 +862,22 @@
     }
   }
 
+  function drawPauseProgress(){
+    var st=storyState(),r=roundCount(),e=st.encounters||0,d=st.deadLead||e;
+    h.setColor(2).drawRect(246,112,W-42,248);
+    h.setFontAlign(-1,-1);
+    font(1);
+    h.setColor(3).drawString("BIG IRON "+r+"/6",256,122);
+    h.setColor(2).drawString("JUDGMENTS "+e+"/20",256,140);
+    h.drawString("DEAD LEAD "+d+"/20",256,156);
+    h.drawString("CITY "+id,256,174);
+    if(st.rounds&&st.rounds.COURIER)h.setColor(3).drawString("WEAPON READY",256,200);
+    else if(st.forgeReady)h.setColor(3).drawString("FORGE READY",256,200);
+    else h.setColor(2).drawString(e>=20?"FINAL ROUND READY":"KEEP RECORDING",256,200);
+  }
+
   function drawPause(note){
-    var options=["RESUME","SAVE LOCATION","PROFILE SOON","EXIT GAME"];
+    var options=["RESUME","SAVE LOCATION","PROGRESS","EXIT GAME"];
     var i,y;
     h.setClipRect(0,0,W-1,H-1);
     h.setColor(0).fillRect(0,0,W-1,H-1);
@@ -894,17 +891,18 @@
     for(i=0;i<4;i++){
       y=114+i*39;
       if(i==pause){
-        h.setColor(2).fillRect(92,y-14,W-93,y+14);
+        h.setColor(2).fillRect(58,y-14,226,y+14);
         h.setColor(0);
       }else{
-        h.setColor(2).drawRect(92,y-14,W-93,y+14);
+        h.setColor(2).drawRect(58,y-14,226,y+14);
         h.setColor(3);
       }
       font(2);
-      h.drawString((i==pause?"> ":"")+options[i],W/2,y);
+      h.drawString((i==pause?"> ":"")+options[i],142,y);
     }
+    if(pause==2)drawPauseProgress();
     font(1);
-    h.setColor(2).drawString(note||"TURN WHEEL / PRESS TO SELECT",W/2,286);
+    h.setColor(2).drawString(pause==2?"PROGRESS":"TURN WHEEL / PRESS TO SELECT",W/2,286);
     A.flip(0,H-1);
   }
 
@@ -926,8 +924,7 @@
         save(false,true);
         drawPause(msg);
       }else if(pause==2){
-        saveProfile();
-        drawPause(msg);
+        drawPause("PROGRESS");
       }else{
         save(false);
         A.exit();
@@ -997,7 +994,6 @@
     saveState=null;
     active=null;
     playerSprites={};
-    selectorIcon=null;
     A.gc();
   }
 

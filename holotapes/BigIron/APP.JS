@@ -2,7 +2,7 @@
   var W=h.getWidth?h.getWidth():480,H=h.getHeight?h.getHeight():320;
   var mod=null,loading=false,exiting=false,loadTimer=0,startTimer=0,exitTimer=0;
   var home=typeof Pip.MODE=="number"?Pip.MODE:1,mode="splash",sel=0;
-  var cursor=null,musicOn=false,musicTrack="",musicPath="";
+  var musicOn=false,musicTrack="",musicPath="";
   var battleEquip=null;
   var shellQuiet=false,shellTick=0;
 
@@ -28,32 +28,6 @@
   function wr(p,d){try{if(fs.writeFileSync){fs.writeFileSync(p,d);return true;}}catch(e){}try{if(fs.writeFile){fs.writeFile(p,d);return true;}}catch(e2){}return false;}
 
   function playerData(){try{return typeof player!="undefined"&&player&&player.player?player.player:{};}catch(e){return {};}}
-  function readProgress(){
-    var s={},p=playerData();
-    try{s=JSON.parse(txt(B+"SAVE/STATE.JSON")||"{}");}catch(e){}
-    if(!s.story)try{s=JSON.parse(txt(B+"STATE.JSON")||"{}");}catch(e2){}
-    if(!s.story&&p&&p.wb)s=p.wb;
-    return s||{};
-  }
-  function progressRounds(st){
-    var k,n=0,r=st&&st.rounds;
-    if(!r)return 0;
-    for(k in r)if(r[k])n++;
-    return n;
-  }
-  function drawProgress(){
-    var s=readProgress(),st=s.story||{},r=progressRounds(st),e=st.encounters||0,d=st.deadLead||e;
-    h.setColor(0).fillRect(276,194,468,294);
-    h.setColor(2).drawRect(276,194,468,294);
-    h.setFontAlign(-1,-1);
-    font(1);
-    h.setColor(3).drawString("BIG IRON "+r+"/6",286,202);
-    h.setColor(2).drawString("JUDGMENTS "+e+"/20",286,220);
-    h.drawString("DEAD LEAD "+d+"/20",286,236);
-    if(st.rounds&&st.rounds.COURIER)h.setColor(3).drawString("WEAPON READY",286,254);
-    else if(st.forgeReady)h.setColor(3).drawString("FORGE READY",286,254);
-    else h.setColor(2).drawString("SUNSCAR",286,254);
-  }
   function weaponName(o,d){var v=o&&o.txt!==undefined?o.txt:d;v=v==null?"":v.toString();return v.length>20?v.substr(0,19)+"~":v;}
   function weaponDmg(o,d){var v=parseFloat(o&&o.DMG);return isNaN(v)?d:v;}
   function datPath(c){return"DATA/"+(NV?"NV":"F3")+"/"+c+".DAT";}
@@ -165,18 +139,9 @@
     h.drawString("LOAD",W/2,223);
   }
 
-  function getCursor(){
-    if(cursor)return cursor;
-    cursor=img(B+"SELECTER.IMG")||img(B+"CODE/SELECTER.IMG")||img(B+"Assets/CODE/SELECTER.IMG")||img("Assets/CODE/SELECTER.IMG");
-    return cursor;
-  }
-
   function drawMenu(){
-    var c=getCursor();
     if(!drawBin("MENU.BIN"))drawFallback();
-    if(c)h.setColor(3).drawImage(c,96,sel?191:146);
-    else h.setColor(3).fillRect(124,sel?219:174,134,sel?229:184);
-    drawProgress();
+    h.setColor(3).fillPoly([124,sel?216:171,124,sel?228:183,136,sel?222:177]);
     flip(0,H-1);
     gc();
   }
@@ -217,7 +182,6 @@
   function clearStartMedia(){
     if(startTimer)clearTimeout(startTimer);
     startTimer=0;
-    cursor=null;
     music(false);
     try{if(Pip.videoStop)Pip.videoStop();}catch(e){}
     h.setClipRect(0,0,W-1,H-1);
@@ -331,7 +295,6 @@
     try{Pip.removeListener("knob2",k2);}catch(e2){}
     try{Pip.CURRENT.fullscreen=false;}catch(e3){}
     try{if(Pip.setWatches)Pip.setWatches();}catch(e4){}
-    cursor=null;
     gc();
   }
 
