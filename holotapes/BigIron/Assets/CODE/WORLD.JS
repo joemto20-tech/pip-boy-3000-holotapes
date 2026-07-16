@@ -45,6 +45,17 @@
     return max&&value.length>max?value.substr(0,max-1)+"~":value;
   }
 
+  function mapName(map){
+    if(world&&map==id&&world.name)return world.name;
+    if(map=="WORLD_01")return "SUNSCAR";
+    if(map=="WORLD_02")return "DOGTOWN HEIGHTS";
+    if(map=="WORLD_03")return "CROWN JUNCTION";
+    if(map=="WORLD_04")return "THE BROKEN ARCH";
+    if(map=="WORLD_05")return "THE BLACK LOOP";
+    if(map=="WORLD_06")return "VALE'S WORLD";
+    return map||id;
+  }
+
   function join(a,b){
     return a+(a.charAt(a.length-1)=="/"?"":"/")+b;
   }
@@ -734,7 +745,7 @@
 
   function transition(exit){
     var title=exit.tt||"TRAVELLING";
-    var sub=exit.ts||exit.to;
+    var sub=exit.ts||mapName(exit.to);
     busy=true;
     if(moveTimer){clearTimeout(moveTimer);moveTimer=null;}
     save(true);
@@ -752,7 +763,7 @@
       travelTimer=null;
       if(removed)return;
       loadWorld(exit.to,{x:(exit.spawn||[2,2])[0],y:(exit.spawn||[2,2])[1],facing:exit.facing||facing});
-      msg="ENTERED "+id;
+      msg="ENTERED "+mapName(id);
       if(imageMode&&imageDrawMode()=="reveal")mapSound("TORCH","SELECT");
       busy=false;
       draw(true);
@@ -872,7 +883,7 @@
     h.setColor(3).drawString("BIG IRON "+r+"/6",256,122);
     h.setColor(2).drawString("JUDGMENTS "+e+"/20",256,140);
     h.drawString("DEAD LEAD "+d+"/20",256,156);
-    h.drawString("CITY "+id,256,174);
+    h.drawString(text("CITY "+mapName(id),25),256,174);
     if(st.rounds&&st.rounds.COURIER)h.setColor(3).drawString("WEAPON READY",256,200);
     else if(st.forgeReady)h.setColor(3).drawString("FORGE READY",256,200);
     else h.setColor(2).drawString(e>=20?"FINAL ROUND READY":"KEEP RECORDING",256,200);

@@ -117,6 +117,17 @@ function cleanSpriteRef(value, fallback) {
   return (parts.length ? parts : [fallback]).join("/");
 }
 
+function worldDisplayName(id) {
+  const key = cleanBase(id, "WORLD_01");
+  if (key === "WORLD_01") return "Sunscar";
+  if (key === "WORLD_02") return "Dogtown Heights";
+  if (key === "WORLD_03") return "Crown Junction";
+  if (key === "WORLD_04") return "The Broken Arch";
+  if (key === "WORLD_05") return "The Black Loop";
+  if (key === "WORLD_06") return "Vale's World";
+  return key;
+}
+
 function dataPath(name, fallback, ext) {
   const fileName = cleanBase(name, fallback) + ext;
   const target = path.resolve(dataRoot, fileName);
@@ -192,6 +203,7 @@ function listWorldDetails() {
     return {
       file,
       id: cleanBase(world.id || file, file.replace(/\.JSON$/i, "")),
+      name: world.name || worldDisplayName(world.id || file),
       image: world.image || ""
     };
   });
@@ -297,7 +309,7 @@ function normalizeWorld(input) {
     exits: Array.isArray(input.exits) ? input.exits : [],
     decor: Array.isArray(input.decor) ? input.decor : []
   };
-  if (input.name) world.name = String(input.name);
+  world.name = input.name ? String(input.name) : worldDisplayName(world.id);
   for (const key of ["image", "imageDraw", "drawMode"]) {
     if (input[key]) world[key] = String(input[key]);
   }
@@ -329,7 +341,6 @@ function compactRuntimeWorld(world) {
     return item;
   };
   delete copy.tile;
-  delete copy.name;
   delete copy.scale;
   if (Array.isArray(copy.interacts)) copy.interacts = copy.interacts.filter((item) => !item || item.type !== "duel");
   if (Array.isArray(copy.interacts)) copy.interacts.forEach(clean);

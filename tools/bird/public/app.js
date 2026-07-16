@@ -37,6 +37,17 @@ const DUEL_SLOTS = {
   effect: { select: "duelEffectSprite", name: "HIT_SPRITE", width: 28, height: 28, fallback: "HIT_SPRITE" }
 };
 
+function worldFriendlyName(id) {
+  const key = cleanId(id || "WORLD_01");
+  if (key === "WORLD_01") return "Sunscar";
+  if (key === "WORLD_02") return "Dogtown Heights";
+  if (key === "WORLD_03") return "Crown Junction";
+  if (key === "WORLD_04") return "The Broken Arch";
+  if (key === "WORLD_05") return "The Black Loop";
+  if (key === "WORLD_06") return "Vale's World";
+  return key.replace(/_/g, " ");
+}
+
 const spritePresets = {
   blank: { label: "Blank 34x34", width: PLAYER_SPRITE_WIDTH, height: PLAYER_SPRITE_HEIGHT, bpp: PLAYER_SPRITE_BPP, pixels: null },
   pocketHero: { label: "Pocket RPG Hero", width: 16, height: 16, bpp: 4, rows: [
@@ -157,6 +168,7 @@ function rows(width, height, fill) {
 function newWorld(id = "WORLD_01", width = 42, height = 24) {
   state.world = {
     id,
+    name: $("worldName") && $("worldName").value ? $("worldName").value : worldFriendlyName(id),
     tile: 16,
     scale: 24,
     spawn: [2, 2],
@@ -242,6 +254,7 @@ function renderWorld() {
   grid.innerHTML = cells.join("");
   $("worldTitle").textContent = world.id;
   $("worldId").value = world.id;
+  $("worldName").value = world.name || worldFriendlyName(world.id);
   $("worldCols").value = width;
   $("worldRows").value = height;
   $("worldReadout").textContent = `${width} x ${height} - ${world.interacts.length} encounters`;
@@ -1177,7 +1190,7 @@ async function loadInfo() {
     ? state.info.worldDetails
     : state.info.worlds.map((file) => ({ file, id: file.replace(/\.JSON$/i, ""), image: "" }));
   const worldOptions = state.info.worlds.length
-    ? state.info.worlds.map((name) => `<option value="${name}">${name}</option>`).join("")
+    ? worldDetails.map((world) => `<option value="${world.file}">${world.name || world.id} (${world.file})</option>`).join("")
     : '<option value="WORLD_NEW.JSON">WORLD_NEW - new offline world</option>';
   $("worldSelect").innerHTML = worldOptions;
   $("artWorld").innerHTML = state.info.worlds.length
@@ -1185,7 +1198,7 @@ async function loadInfo() {
     : '<option value="WORLD_NEW.JSON">WORLD_NEW - save world first</option>';
   const linkedArt = new Set(worldDetails.map((world) => artJsonForWorld(world).toUpperCase()));
   const worldArtOptions = worldDetails.map((world) => {
-    const label = world.image ? `${world.id} - ${world.image}` : `${world.id} - new art`;
+    const label = world.image ? `${world.name || world.id} - ${world.image}` : `${world.name || world.id} - new art`;
     return `<option value="world:${world.file}">${label}</option>`;
   });
   const looseArtOptions = (state.info.worldArt || [])
@@ -1300,6 +1313,7 @@ async function loadWorld(name) {
 
 async function saveWorld() {
   state.world.id = cleanId($("worldId").value || state.world.id);
+  state.world.name = ($("worldName").value || worldFriendlyName(state.world.id)).trim();
   const body = await api("/api/world", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -1851,6 +1865,7 @@ function wireEvents() {
   $("saveWorld").onclick = () => saveWorld().catch((error) => setStatus(error.message, true));
   $("downloadWorld").onclick = () => download(`${cleanId($("worldId").value)}.JSON`, JSON.stringify(state.world, null, 2) + "\n", "application/json");
   $("worldId").oninput = () => { if (state.world) { state.world.id = cleanId($("worldId").value); renderWorld(); } };
+  $("worldName").oninput = () => { if (state.world) { state.world.name = $("worldName").value; renderWorld(); } };
 
   $("artCanvas").addEventListener("pointerdown", (event) => {
     if (!state.art) return;
