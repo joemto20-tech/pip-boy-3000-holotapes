@@ -3,6 +3,7 @@
   var W=A.w;
   var H=A.h;
   var FOOTER_Y=H-24;
+  var MOVE_MS=28;
 
   var world=null;
   var saveState=null;
@@ -680,7 +681,7 @@
 
   function drawPlayerFootprint(x,y){
     var ix,iy;
-    for(iy=y-1;iy<=y+3;iy++)for(ix=x-1;ix<=x+3;ix++)drawOneTile(ix,iy);
+    for(iy=y-1;iy<=y+2;iy++)for(ix=x-1;ix<=x+2;ix++)drawOneTile(ix,iy);
   }
 
   function drawTileWorld(full,oldX,oldY){
@@ -823,7 +824,7 @@
       return;
     }
     step(dx,dy);
-    moveTimer=setTimeout(flushMove,45);
+    if(queuedX||queuedY)moveTimer=setTimeout(flushMove,MOVE_MS);
   }
 
   function queueMove(dx,dy){
