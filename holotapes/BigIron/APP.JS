@@ -206,6 +206,10 @@
     try{Pip.audioStart(p);musicOn=true;musicTrack=t;musicPath=p;}catch(e5){musicOn=false;}
   }
 
+  function moduleQuiet(n){
+    return n!="WORLD";
+  }
+
   function unload(){
     if(mod){
       try{if(mod.remove)mod.remove();}catch(e){}
@@ -220,8 +224,8 @@
     if(loadTimer)clearTimeout(loadTimer);
     unload();
     if(api)api.flip=flip;
-    quietShell(true);
-    music(false);
+    quietShell(moduleQuiet(n));
+    if(moduleQuiet(n))music(false);
     if(n=="BATTLE"){
       screen("CHECKING","WEAPON");
       battleEquip=null;
