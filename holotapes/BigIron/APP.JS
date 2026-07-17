@@ -304,10 +304,11 @@
     equip:function(){return prefetchEquipment();},
     world:function(a){loadModule("WORLD",a);},
     battle:function(a){loadModule("BATTLE",a);},
+    sunboss:function(a){loadModule("SUNBOSS",a);},
     inventory:function(a){loadModule("INVENTORY",a);},
     shop:function(a){loadModule("SHOP",a);},
     shoot:function(a){loadModule("SHOOT",a);},
-    music:music,exit:exitApp,gc:gc
+    readImage:img,music:music,exit:exitApp,gc:gc
   };
 
   try{Pip.CURRENT.fullscreen=true;}catch(e){}

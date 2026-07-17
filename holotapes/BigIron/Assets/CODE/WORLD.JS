@@ -874,6 +874,8 @@
         A.shop({vendor:target.vendor,stock:target.stock,videos:target.videos,folder:target.folder,map:id,mode:imageMode?"image":"tile",x:playerX,y:playerY,facing:facing});
       }else if(target.type=="shoot"){
         A.shoot({target:target.target||target.enemy||"RADROACH",map:id,mode:imageMode?"image":"tile",x:playerX,y:playerY,facing:facing,interact:target.id,once:target.once});
+      }else if(enemyKey(target)=="SOLOMON_RAY"&&A.sunboss){
+        A.sunboss({enemy:target.enemyPool||target.enemy,map:id,mode:imageMode?"image":"tile",x:playerX,y:playerY,facing:facing,interact:target.id,once:target.once,music:target.music!==undefined?target.music:false,boss:target.boss,miniboss:isMiniboss(target),bullet:bulletFor(target)});
       }else{
         A.battle({enemy:target.enemyPool||target.enemy,map:id,mode:imageMode?"image":"tile",x:playerX,y:playerY,facing:facing,interact:target.id,once:target.once,music:target.music!==undefined?target.music:((id=="WORLD_03"||id=="WORLD_06")?"NVTH":false),boss:target.boss,miniboss:isMiniboss(target),finalBoss:isFinalBoss(target),bullet:bulletFor(target)});
       }
