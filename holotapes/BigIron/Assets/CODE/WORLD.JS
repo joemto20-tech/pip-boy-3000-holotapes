@@ -21,6 +21,7 @@
   var moveTimer=null;
   var clickTimer=null;
   var travelTimer=null;
+  var shotTimer=null;
   var queuedX=0;
   var queuedY=0;
   var pause=-1;
@@ -844,14 +845,14 @@
     if(!moveTimer)flushMove();
   }
 
-  function activate(){
-    var target=findInteract();
-    var title,sub;
+  function activate(target){
+    target=target||findInteract();
     if(!target){
       msg="NOTHING HERE";
       draw(false,playerX,playerY);
       return;
     }
+    var title,sub;
     if(target.type=="battle"||target.type=="shoot"||target.type=="shop"||target.type=="interior"){
       if(!canStartEncounter(target)){
         draw(false,playerX,playerY);
@@ -886,6 +887,45 @@
       forgeCourierRound();
       draw(false,playerX,playerY);
     }
+  }
+
+  function shotTarget(){
+    var list=imageMode?(world.imageInteracts||world.interacts||[]):world.interacts||[],step=imageMode?(world.step||2):1,x=playerX,y=playerY,i,n,z,dx=0,dy=0;
+    if(facing=="left")dx=-step;else if(facing=="right")dx=step;else if(facing=="down")dy=step;else dy=-step;
+    for(n=0;n<6;n++){x+=dx;y+=dy;
+      for(i=0;i<list.length;i++){z=list[i];if(z&&("battle"==z.type||"shoot"==z.type||"interior"==z.type)&&!(z.once&&saveState.cleared[z.id])&&zone(x,y,z))return {hit:z,x:x,y:y};}
+      if(blocked(x,y))break;
+    }
+    return {x:x,y:y};
+  }
+
+  function drawPellet(x,y){
+    var size=imageMode?(world.imgScale||2):(world.scale||world.tile||16),px=imageMode?x*size+size:(x-tileOx)*size+Math.floor(size/2),py=imageMode?y*size+size:(y-tileOy)*size+Math.floor(size/2);
+    h.setClipRect(0,0,W-1,FOOTER_Y-1);
+    h.setColor(3).fillRect(px-2,py-2,px+2,py+2);
+    h.setColor(2);
+    if(facing=="left"||facing=="right")h.drawLine(px-(facing=="right"?8:-8),py,px,py);
+    else h.drawLine(px,py-(facing=="down"?8:-8),px,py);
+    A.flip(0,FOOTER_Y-1);
+  }
+
+  function firePellet(){
+    var r;
+    if(busy||pause>=0||!world)return;
+    busy=true;
+    if(moveTimer){clearTimeout(moveTimer);moveTimer=null;}
+    queuedX=0;queuedY=0;
+    r=shotTarget();
+    draw(false,playerX,playerY);
+    drawPellet(r.x,r.y);
+    msg=r.hit?"HIT "+text(r.hit.prompt||r.hit.enemy||"TARGET",18):"MISSED";
+    shotTimer=setTimeout(function(){
+      shotTimer=null;
+      busy=false;
+      if(removed)return;
+      if(r.hit)activate(r.hit);
+      else draw(false,playerX,playerY);
+    },160);
   }
 
   function drawPauseProgress(){
@@ -987,8 +1027,7 @@
       if(longPress){
         if(clickTimer){clearTimeout(clickTimer);clickTimer=null;}
         if(pause<0){
-          save(false,true);
-          draw(false,playerX,playerY);
+          firePellet();
         }
         return;
       }
@@ -1020,9 +1059,11 @@
     if(moveTimer)clearTimeout(moveTimer);
     if(clickTimer)clearTimeout(clickTimer);
     if(travelTimer)clearTimeout(travelTimer);
+    if(shotTimer)clearTimeout(shotTimer);
     moveTimer=null;
     clickTimer=null;
     travelTimer=null;
+    shotTimer=null;
     world=null;
     worldImage=null;
     saveState=null;
