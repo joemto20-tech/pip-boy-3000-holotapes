@@ -852,7 +852,7 @@
       draw(false,playerX,playerY);
       return;
     }
-    if(target.type=="battle"||target.type=="shoot"||target.type=="shop"){
+    if(target.type=="battle"||target.type=="shoot"||target.type=="shop"||target.type=="interior"){
       if(!canStartEncounter(target)){
         draw(false,playerX,playerY);
         return;
@@ -870,7 +870,9 @@
         h.setColor(2).drawString(text(sub,24),W/2,172);
       }
       A.flip(0,H-1);
-      if(target.type=="shop"){
+      if(target.type=="interior"){
+        A.interior({name:target.name||target.room||target.prompt,room:target.room,enemy:target.enemyPool||target.enemy,map:id,mode:imageMode?"image":"tile",x:playerX,y:playerY,facing:facing,interact:target.id,once:target.once,music:target.music!==undefined?target.music:false,boss:target.boss,miniboss:isMiniboss(target),finalBoss:isFinalBoss(target),bullet:bulletFor(target)});
+      }else if(target.type=="shop"){
         A.shop({vendor:target.vendor,stock:target.stock,videos:target.videos,folder:target.folder,map:id,mode:imageMode?"image":"tile",x:playerX,y:playerY,facing:facing});
       }else if(target.type=="shoot"){
         A.shoot({target:target.target||target.enemy||"RADROACH",map:id,mode:imageMode?"image":"tile",x:playerX,y:playerY,facing:facing,interact:target.id,once:target.once});

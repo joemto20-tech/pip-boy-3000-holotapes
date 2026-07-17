@@ -312,6 +312,7 @@
     equip:function(){return prefetchEquipment();},
     world:function(a){loadModule("WORLD",a);},
     battle:function(a){loadModule("BATTLE",a);},
+    interior:function(a){loadModule("INTERIOR",a);},
     inventory:function(a){loadModule("INVENTORY",a);},
     shop:function(a){loadModule("SHOP",a);},
     shoot:function(a){loadModule("SHOOT",a);},
