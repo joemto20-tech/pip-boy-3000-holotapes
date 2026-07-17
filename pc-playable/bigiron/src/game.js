@@ -7,6 +7,18 @@
   var H = canvas.height;
   var FOOT = 260;
   var SAVE_KEY = "bigiron-pc-save-v1";
+  var spriteSheet = new Image();
+  var pauseImage = new Image();
+  var assets = { playerReady: false, pauseReady: false };
+
+  spriteSheet.onload = function () {
+    assets.playerReady = true;
+  };
+  pauseImage.onload = function () {
+    assets.pauseReady = true;
+  };
+  spriteSheet.src = "assets/player-walk.png";
+  pauseImage.src = "assets/pause-screen.bmp";
 
   var DATA = {
     worlds: {
@@ -332,6 +344,14 @@
   }
 
   function drawPlayer(px, py) {
+    if (assets.playerReady) {
+      var frameW = spriteSheet.width / 4;
+      var frameH = spriteSheet.height;
+      var frame = game.facing === "left" ? 0 : game.facing === "up" ? 1 : game.facing === "right" ? 2 : 3;
+      var size = 34;
+      ctx.drawImage(spriteSheet, frame * frameW, 0, frameW, frameH, px - 5, py - 12, size, size);
+      return;
+    }
     ctx.fillStyle = palette.white;
     ctx.fillRect(px + 8, py + 5, 8, 8);
     ctx.fillStyle = palette.light;
@@ -538,6 +558,17 @@
   }
 
   function drawCourier(x, y) {
+    if (assets.playerReady) {
+      var frameW = spriteSheet.width / 4;
+      var frameH = spriteSheet.height;
+      ctx.save();
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(spriteSheet, 0, 0, frameW, frameH, x + 4, y - 4, 116, 116);
+      ctx.restore();
+      ctx.fillStyle = palette.mid;
+      ctx.fillRect(x + 82, y + 54, 42, 8);
+      return;
+    }
     ctx.fillStyle = palette.light;
     ctx.fillRect(x + 34, y + 40, 44, 58);
     ctx.fillStyle = palette.white;
@@ -720,6 +751,11 @@
 
   function drawPause() {
     clear();
+    if (assets.pauseReady) {
+      ctx.drawImage(pauseImage, 0, 0, W, H);
+      ctx.fillStyle = "rgba(5, 7, 4, 0.68)";
+      ctx.fillRect(242, 100, 188, 148);
+    }
     box(34, 24, 412, 270, false);
     text("PAUSED", W / 2, 54, palette.white, 32, "center");
     var opts = ["RESUME", "SAVE", "PROGRESS", "FIELD PACK", "EXIT TO TITLE"];

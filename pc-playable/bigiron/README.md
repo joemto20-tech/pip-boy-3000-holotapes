@@ -2,9 +2,15 @@
 
 This is a separate browser-playable PC version of the Big Iron holotape. It does not touch the Pip-Boy runtime, the Pip-Boy save files, or the minified holotape files.
 
-## Run
+## Run As A Page
 
 Open `index.html` in a browser.
+
+## Run Like An App
+
+Double-click `START_BIGIRON_PC.bat`, then open `http://127.0.0.1:4173/`.
+
+From Chrome or Edge, use the install button in the address bar to install it like an app. The app mode also enables the local offline cache.
 
 ## Controls
 
