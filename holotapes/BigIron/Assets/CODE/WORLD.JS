@@ -152,6 +152,66 @@
     return false;
   }
 
+  function expandRows(data){
+    var src=(""+data).split("|"),out=[],i,j,s,part,n,c,k,code;
+    for(i=0;i<src.length;i++){
+      s="";
+      part=src[i];
+      for(j=0;j<part.length;j++){
+        code=part.charCodeAt(j);
+        if(code>=48&&code<=57){
+          n=0;
+          while(j<part.length){
+            code=part.charCodeAt(j);
+            if(code<48||code>57)break;
+            n=n*10+code-48;
+            j++;
+          }
+          c=part.charAt(j);
+        }else{
+          n=1;
+          c=part.charAt(j);
+        }
+        for(k=0;k<n;k++)s+=c;
+      }
+      out.push(s);
+    }
+    return out;
+  }
+
+  function expandWorld(data){
+    var i,a,t,out;
+    if(!data)return data;
+    if(data.R&&!data.rows)data.rows=expandRows(data.R);
+    if(data.i&&!data.interacts){
+      out=[];
+      for(i=0;i<data.i.length;i++){
+        a=data.i[i];
+        t=a&&a[1];
+        if(t=="b")out.push({id:a[0],type:"battle",x:a[2],y:a[3],prompt:a[4],enemy:a[5],once:true});
+        else if(t=="s")out.push({id:a[0],type:"shop",x:a[2],y:a[3],prompt:a[4],lt:"SHOP",vendor:a[5],folder:a[6]});
+      }
+      data.interacts=out;
+    }
+    if(data.e&&!data.exits){
+      out=[];
+      for(i=0;i<data.e.length;i++){
+        a=data.e[i];
+        out.push({x:a[0],y:a[1],to:a[2],spawn:[a[3],a[4]],facing:a[5]});
+      }
+      data.exits=out;
+    }
+    if(data.d&&!data.decor){
+      out=[];
+      for(i=0;i<data.d.length;i++){
+        a=data.d[i];
+        out.push({type:a[0],x:a[1],y:a[2]});
+      }
+      data.decor=out;
+    }
+    return data;
+  }
+
   function safeSound(name,fallback){
     try{
       if(Pip.playSound){
@@ -322,11 +382,11 @@
     tileDrawn=false;
     A.gc();
 
-    try{world=JSON.parse(fs.readFile(path));}catch(e){world=null;}
+    try{world=expandWorld(JSON.parse(fs.readFile(path)));}catch(e){world=null;}
     if(!world&&name!="WORLD_01"){
       name="WORLD_01";
       path=BASE+"DATA/WORLD_01.JSON";
-      try{world=JSON.parse(fs.readFile(path));}catch(e2){world=null;}
+      try{world=expandWorld(JSON.parse(fs.readFile(path)));}catch(e2){world=null;}
     }
     if(!world)throw "WORLD "+name;
 
