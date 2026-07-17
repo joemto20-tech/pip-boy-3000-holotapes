@@ -6,8 +6,6 @@ const ASSETS = [
   "./src/game.js",
   "./manifest.webmanifest",
   "./assets/icon.svg",
-  "./assets/player-walk.png",
-  "./assets/pause-screen.bmp",
 ];
 
 self.addEventListener("install", (event) => {
