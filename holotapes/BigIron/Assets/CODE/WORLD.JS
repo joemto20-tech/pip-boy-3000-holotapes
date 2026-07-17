@@ -22,6 +22,9 @@
   var clickTimer=null;
   var travelTimer=null;
   var shotTimer=null;
+  var traderTimer=null;
+  var traderStep=0;
+  var traderDir=1;
   var queuedX=0;
   var queuedY=0;
   var pause=-1;
@@ -321,6 +324,8 @@
     tileOx=-1;
     tileOy=-1;
     tileDrawn=false;
+    traderStep=0;
+    traderDir=1;
     A.gc();
 
     try{world=JSON.parse(fs.readFile(path));}catch(e){world=null;}
@@ -444,6 +449,22 @@
     return null;
   }
 
+  function shopNpc(step){
+    var list=imageMode?(world.imageInteracts||world.interacts||[]):world.interacts||[],i,z;
+    if(step===undefined)step=traderStep;
+    for(i=0;i<list.length;i++){z=list[i];if(z&&z.type=="shop")return {x:z.x-1+step,y:z.y+1};}
+    return null;
+  }
+
+  function drawNpc(px,py){
+    var x=px+2,y=py+1;
+    h.setColor(3).drawRect(x+5,y+5,x+10,y+10);
+    h.setColor(2).drawLine(x+7,y+3,x+7,y+12);
+    h.drawLine(x+4,y+9,x+11,y+9);
+    h.drawLine(x+7,y+12,x+4,y+15);
+    h.drawLine(x+7,y+12,x+11,y+15);
+  }
+
   function drawDecor(entry,x,y,size){
     var type=decorType(entry);
     var mid=x+Math.floor(size/2);
@@ -512,6 +533,20 @@
     h.setColor(2).drawLine(px+7,py+3,px+7,py+12);
   }
 
+  function drawTrader(){
+    var p=shopNpc(),size,px,py;
+    if(!p)return;
+    if(imageMode){
+      size=world.imgScale||2;
+      drawNpc(p.x*size-8,p.y*size-12);
+    }else{
+      size=world.scale||world.tile||16;
+      px=(p.x-tileOx)*size+Math.floor((size-16)/2);
+      py=(p.y-tileOy)*size+Math.floor((size-16)/2);
+      if(px>-16&&py>-16&&px<W&&py<FOOTER_Y)drawNpc(px,py);
+    }
+  }
+
   function drawFooter(){
     var rounds=roundCount();
     var bx=6;
@@ -536,6 +571,7 @@
 
   function drawImagePlayer(){
     var scale=world.imgScale||2;
+    drawTrader();
     drawPlayer(playerX*scale-8,playerY*scale-12);
   }
 
@@ -698,6 +734,7 @@
         h.setClipRect(0,0,W-1,H-1);
         h.setColor(0).fillRect(0,0,W-1,H-1);
         for(j=0;j<tileRows;j++)for(i=0;i<tileCols;i++)drawSceneTile(tileOx+i,tileOy+j,i*size,j*size,size);
+        drawTrader();
         drawPlayer((playerX-tileOx)*size+Math.floor((size-16)/2),(playerY-tileOy)*size+Math.floor((size-16)/2));
         drawFooter();
         tileDrawn=true;
@@ -706,6 +743,7 @@
       }
       drawPlayerFootprint(oldX,oldY);
       if(oldX!=playerX||oldY!=playerY)drawPlayerFootprint(playerX,playerY);
+      drawTrader();
       drawPlayer((playerX-tileOx)*size+Math.floor((size-16)/2),(playerY-tileOy)*size+Math.floor((size-16)/2));
       drawFooter();
       h.setClipRect(0,0,W-1,H-1);
@@ -717,6 +755,18 @@
     if(removed||!world)return;
     if(imageMode)drawImage(full,oldX,oldY);
     else drawTileWorld(full,oldX,oldY);
+  }
+
+  function tickTrader(){
+    traderTimer=null;
+    if(removed)return;
+    if(world&&!busy&&pause<0&&shopNpc()){
+      traderStep+=traderDir;
+      if(traderStep>=2){traderStep=2;traderDir=-1;}
+      else if(traderStep<=0){traderStep=0;traderDir=1;}
+      draw(true);
+    }
+    traderTimer=setTimeout(tickTrader,650);
   }
 
   function canUseExit(exit){
@@ -923,8 +973,7 @@
       shotTimer=null;
       busy=false;
       if(removed)return;
-      if(r.hit)activate(r.hit);
-      else draw(false,playerX,playerY);
+      draw(false,playerX,playerY);
     },160);
   }
 
@@ -1060,10 +1109,12 @@
     if(clickTimer)clearTimeout(clickTimer);
     if(travelTimer)clearTimeout(travelTimer);
     if(shotTimer)clearTimeout(shotTimer);
+    if(traderTimer)clearTimeout(traderTimer);
     moveTimer=null;
     clickTimer=null;
     travelTimer=null;
     shotTimer=null;
+    traderTimer=null;
     world=null;
     worldImage=null;
     saveState=null;
@@ -1084,6 +1135,7 @@
   loadWorld(arg.map||saveState.map||"WORLD_01",arg.x!==undefined?arg:null);
   if(arg.msg)msg=arg.msg;
   draw(true);
+  if(!traderTimer)traderTimer=setTimeout(tickTrader,650);
 
   return {k1:k1,k2:k2,save:save,remove:remove};
 })
