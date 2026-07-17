@@ -3,8 +3,8 @@ const path = require("path");
 
 const root = path.resolve(__dirname, "..");
 const requestedTargets = process.argv.slice(2).map((value) => String(value || "").toUpperCase()).filter(Boolean);
-const targets = requestedTargets.length ? requestedTargets : ["WORLD", "BATTLE", "SHOOT"];
-const allowedTargets = { APP: true, WORLD: true, BATTLE: true, SHOOT: true };
+const targets = requestedTargets.length ? requestedTargets : ["WORLD", "BATTLE", "SHOOT", "PAUSE"];
+const allowedTargets = { APP: true, WORLD: true, BATTLE: true, SHOOT: true, SHOP: true, PAUSE: true };
 
 function stripComments(src) {
   let out = "";
