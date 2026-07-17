@@ -314,7 +314,6 @@
     battle:function(a){loadModule("BATTLE",a);},
     interior:function(a){loadModule("INTERIOR",a);},
     inventory:function(a){loadModule("INVENTORY",a);},
-    pause:function(a){loadModule("PAUSE",a);},
     shop:function(a){loadModule("SHOP",a);},
     shoot:function(a){loadModule("SHOOT",a);},
     music:music,exit:exitApp,gc:gc

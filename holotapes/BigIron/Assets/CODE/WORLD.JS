@@ -27,6 +27,7 @@
   var traderDir=1;
   var queuedX=0;
   var queuedY=0;
+  var pause=-1;
 
   var tileOx=-1;
   var tileOy=-1;
@@ -759,7 +760,7 @@
   function tickTrader(){
     traderTimer=null;
     if(removed)return;
-    if(world&&!busy&&shopNpc()){
+    if(world&&!busy&&pause<0&&shopNpc()){
       traderStep+=traderDir;
       if(traderStep>=2){traderStep=2;traderDir=-1;}
       else if(traderStep<=0){traderStep=0;traderDir=1;}
@@ -829,7 +830,7 @@
   }
 
   function step(dx,dy){
-    if(busy)return;
+    if(busy||pause>=0)return;
     coldSprite=0;
     var oldX=playerX;
     var oldY=playerY;
@@ -883,7 +884,7 @@
   }
 
   function queueMove(dx,dy){
-    if(busy)return;
+    if(busy||pause>=0)return;
     if(dx){
       queuedX=dx<0?-1:1;
       queuedY=0;
@@ -960,7 +961,7 @@
 
   function firePellet(){
     var r;
-    if(busy||!world)return;
+    if(busy||pause>=0||!world)return;
     busy=true;
     if(moveTimer){clearTimeout(moveTimer);moveTimer=null;}
     queuedX=0;queuedY=0;
@@ -976,16 +977,83 @@
     },160);
   }
 
+  function drawPauseProgress(){
+    var st=storyState(),r=roundCount(),e=st.encounters||0,d=st.deadLead||e;
+    h.setColor(2).drawRect(246,112,W-42,248);
+    h.setFontAlign(-1,-1);
+    font(1);
+    h.setColor(3).drawString("BIG IRON "+r+"/6",256,122);
+    h.setColor(2).drawString("JUDGMENTS "+e+"/20",256,140);
+    h.drawString("DEAD LEAD "+d+"/20",256,156);
+    h.drawString(text("CITY "+mapName(id),25),256,174);
+    if(st.rounds&&st.rounds.COURIER)h.setColor(3).drawString("WEAPON READY",256,200);
+    else if(st.forgeReady)h.setColor(3).drawString("FORGE READY",256,200);
+    else h.setColor(2).drawString(e>=20?"FINAL ROUND READY":"KEEP RECORDING",256,200);
+  }
+
+  function drawPause(note){
+    var options=["RESUME","SAVE LOCATION","PROGRESS","FIELD PACK","EXIT GAME"];
+    var i,y;
+    h.setClipRect(0,0,W-1,H-1);
+    h.setColor(0).fillRect(0,0,W-1,H-1);
+    h.setColor(2).drawRect(26,20,W-27,H-21);
+    h.drawRect(32,26,W-33,H-27);
+    h.setFontAlign(0,0);
+    font(4);
+    h.setColor(3).drawString("PAUSED",W/2,58);
+    font(1);
+    h.setColor(2).drawString("BIG IRON",W/2,92);
+    for(i=0;i<5;i++){
+      y=112+i*34;
+      if(i==pause){
+        h.setColor(2).fillRect(58,y-14,226,y+14);
+        h.setColor(0);
+      }else{
+        h.setColor(2).drawRect(58,y-14,226,y+14);
+        h.setColor(3);
+      }
+      font(2);
+      h.drawString((i==pause?"> ":"")+options[i],142,y);
+    }
+    if(pause==2)drawPauseProgress();
+    font(1);
+    h.setColor(2).drawString(pause==2?"PROGRESS":"TURN WHEEL / PRESS TO SELECT",W/2,286);
+    A.flip(0,H-1);
+  }
+
   function openPause(){
     if(busy)return;
+    pause=0;
     if(moveTimer){clearTimeout(moveTimer);moveTimer=null;}
     queuedX=0;
     queuedY=0;
-    save(true);
-    if(A.pause)A.pause({map:id,mode:imageMode?"image":"tile",x:playerX,y:playerY,facing:facing,city:mapName(id),story:storyState(),msg:msg});
+    drawPause();
   }
 
   function press(){
+    if(pause>=0){
+      if(pause===0){
+        pause=-1;
+        draw(true);
+      }else if(pause==1){
+        save(false,true);
+        drawPause(msg);
+      }else if(pause==2){
+        drawPause("PROGRESS");
+      }else if(pause==3){
+        save(true);
+        if(A.inventory){
+          A.inventory({map:id,mode:imageMode?"image":"tile",x:playerX,y:playerY,facing:facing});
+        }else{
+          msg="ITEMS UNAVAILABLE";
+          drawPause(msg);
+        }
+      }else{
+        save(false);
+        A.exit();
+      }
+      return;
+    }
     activate();
   }
 
@@ -1007,20 +1075,32 @@
     if(value===0){
       if(longPress){
         if(clickTimer){clearTimeout(clickTimer);clickTimer=null;}
-        firePellet();
+        if(pause<0){
+          firePellet();
+        }
         return;
       }
       click();
       return;
     }
     if(clickTimer){clearTimeout(clickTimer);clickTimer=null;}
-    queueMove(value,0);
+    if(pause>=0){
+      pause=(pause+(value<0?-1:1)+5)%5;
+      drawPause();
+    }else{
+      queueMove(value,0);
+    }
   }
 
   function k2(value){
     if(!value||removed)return;
     if(clickTimer){clearTimeout(clickTimer);clickTimer=null;}
-    queueMove(0,value);
+    if(pause>=0){
+      pause=(pause+(value<0?-1:1)+5)%5;
+      drawPause();
+    }else{
+      queueMove(0,value);
+    }
   }
 
   function remove(){
