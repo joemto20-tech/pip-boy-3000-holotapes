@@ -48,10 +48,18 @@
   }
 
   function flip(y1,y2){
+    var b=0;
     try{
+      if(Pip.blitOptions&&y1!==undefined&&y2!==undefined){
+        b=Pip.blitOptions;
+        b.y1=Math.max(0,Math.min(H-1,Math.floor(y1)));
+        b.y2=Math.max(b.y1,Math.min(H-1,Math.floor(y2)));
+      }
       h.flip();
       try{Pip.lastFlip=getTime();}catch(e2){}
-    }catch(e3){}
+    }catch(e3){}finally{
+      try{if(b){delete b.y1;delete b.y2;}}catch(e4){}
+    }
   }
 
   function rawFlip(){
