@@ -206,10 +206,6 @@
     try{Pip.audioStart(p);musicOn=true;musicTrack=t;musicPath=p;}catch(e5){musicOn=false;}
   }
 
-  function moduleQuiet(n){
-    return n!="WORLD";
-  }
-
   function unload(){
     if(mod){
       try{if(mod.remove)mod.remove();}catch(e){}
@@ -224,8 +220,8 @@
     if(loadTimer)clearTimeout(loadTimer);
     unload();
     if(api)api.flip=flip;
-    quietShell(moduleQuiet(n));
-    if(moduleQuiet(n))music(false);
+    quietShell(true);
+    music(false);
     if(n=="BATTLE"){
       screen("CHECKING","WEAPON");
       battleEquip=null;
@@ -308,11 +304,10 @@
     equip:function(){return prefetchEquipment();},
     world:function(a){loadModule("WORLD",a);},
     battle:function(a){loadModule("BATTLE",a);},
-    sunboss:function(a){loadModule("SUNBOSS",a);},
     inventory:function(a){loadModule("INVENTORY",a);},
     shop:function(a){loadModule("SHOP",a);},
     shoot:function(a){loadModule("SHOOT",a);},
-    readImage:img,music:music,exit:exitApp,gc:gc
+    music:music,exit:exitApp,gc:gc
   };
 
   try{Pip.CURRENT.fullscreen=true;}catch(e){}

@@ -152,8 +152,6 @@
     return false;
   }
 
-  function expandWorld(w){var i,a,o;if(!w)return w;if(w.R&&!w.rows){w.rows=(""+w.R).split("|");w.compact=1;}if(w.i&&!w.interacts){o=[];for(i=0;i<w.i.length;i++){a=w.i[i];o.push(a[1]=="b"?{id:a[0],type:"battle",x:a[2],y:a[3],prompt:a[4],enemy:a[5],once:true}:{id:a[0],type:"shop",x:a[2],y:a[3],prompt:a[4],lt:"SHOP",vendor:a[5],folder:a[6]});}w.interacts=o;}if(w.e&&!w.exits){o=[];for(i=0;i<w.e.length;i++){a=w.e[i];o.push({x:a[0],y:a[1],to:a[2],spawn:[a[3],a[4]],facing:a[5]});}w.exits=o;}if(w.d&&!w.decor){o=[];for(i=0;i<w.d.length;i++){a=w.d[i];o.push({type:a[0],x:a[1],y:a[2]});}w.decor=o;}return w;}
-
   function safeSound(name,fallback){
     try{
       if(Pip.playSound){
@@ -324,11 +322,11 @@
     tileDrawn=false;
     A.gc();
 
-    try{world=expandWorld(JSON.parse(fs.readFile(path)));}catch(e){world=null;}
+    try{world=JSON.parse(fs.readFile(path));}catch(e){world=null;}
     if(!world&&name!="WORLD_01"){
       name="WORLD_01";
       path=BASE+"DATA/WORLD_01.JSON";
-      try{world=expandWorld(JSON.parse(fs.readFile(path)));}catch(e2){world=null;}
+      try{world=JSON.parse(fs.readFile(path));}catch(e2){world=null;}
     }
     if(!world)throw "WORLD "+name;
 
@@ -407,10 +405,9 @@
     return null;
   }
 
-  function compactTile(row,x){var i=0,j,n,c,z;for(j=0;j<row.length;j++){n=0;while((z=row.charCodeAt(j))>47&&z<58){n=n*10+z-48;j++;}c=row.charAt(j);if(!n)n=1;if(x<i+n)return c;i+=n;}return "B";}
-
   function tileAt(x,y){
-    var row;if(!world||!world.rows||y<0||y>=world.rows.length||x<0)return "B";row=world.rows[y];return world.compact?compactTile(row,x):(x>=row.length?"B":row.charAt(x));
+    if(!world||!world.rows||y<0||y>=world.rows.length||x<0||x>=world.rows[y].length)return "B";
+    return world.rows[y].charAt(x);
   }
 
   function blocked(x,y){
@@ -652,7 +649,7 @@
 
   function updateCamera(oldX,oldY){
     var size=world.scale||world.tile||16;
-    var mapW=world.w||(world.rows&&world.rows[0]?world.rows[0].length:0);
+    var mapW=world.rows&&world.rows[0]?world.rows[0].length:0;
     var mapH=world.rows?world.rows.length:0;
     var maxX,maxY,sx,sy,dx,dy,oldOx=tileOx,oldOy=tileOy;
     tileCols=Math.ceil(W/size);
@@ -877,8 +874,6 @@
         A.shop({vendor:target.vendor,stock:target.stock,videos:target.videos,folder:target.folder,map:id,mode:imageMode?"image":"tile",x:playerX,y:playerY,facing:facing});
       }else if(target.type=="shoot"){
         A.shoot({target:target.target||target.enemy||"RADROACH",map:id,mode:imageMode?"image":"tile",x:playerX,y:playerY,facing:facing,interact:target.id,once:target.once});
-      }else if(enemyKey(target)=="SOLOMON_RAY"&&A.sunboss){
-        A.sunboss({enemy:target.enemyPool||target.enemy,map:id,mode:imageMode?"image":"tile",x:playerX,y:playerY,facing:facing,interact:target.id,once:target.once,music:target.music!==undefined?target.music:false,boss:target.boss,miniboss:isMiniboss(target),bullet:bulletFor(target)});
       }else{
         A.battle({enemy:target.enemyPool||target.enemy,map:id,mode:imageMode?"image":"tile",x:playerX,y:playerY,facing:facing,interact:target.id,once:target.once,music:target.music!==undefined?target.music:((id=="WORLD_03"||id=="WORLD_06")?"NVTH":false),boss:target.boss,miniboss:isMiniboss(target),finalBoss:isFinalBoss(target),bullet:bulletFor(target)});
       }
