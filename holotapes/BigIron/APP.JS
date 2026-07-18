@@ -159,7 +159,7 @@
     h.setColor(sel?2:3).drawString("START NEW",W/2,174);
     h.setColor(sel?3:2).drawString("LOAD GAME",W/2,219);
     h.setColor(3).fillPoly([96,sel?220:175,96,sel?232:187,108,sel?226:181]);
-    font(1);h.setColor(2).drawString("TURN WHEEL / PRESS TO SELECT",W/2,286);
+    font(1);h.setColor(2).drawString("RIGHT WHEEL / LEFT CLICK",W/2,286);
   }
 
   function drawMenu(){
@@ -174,6 +174,7 @@
     mode="menu";
     sel=0;
     drawMenu();
+    music("BICT");
   }
 
   function clearStartMedia(){
@@ -291,12 +292,7 @@
     if(mod&&mod.k1){mod.k1(v,l);return;}
     if(mode=="splash")return;
     if(mode=="menu"){
-      if(v!==0){
-        sel=sel?0:1;
-        drawMenu();
-        return;
-      }
-      if(l)return;
+      if(v!==0||l)return;
       sound("SELECT");
       mode="loading";
       clearStartMedia();
@@ -305,7 +301,14 @@
     }
   }
 
-  function k2(v){if(!loading&&mod&&mod.k2)mod.k2(v);}
+  function k2(v){
+    if(loading)return;
+    if(mod&&mod.k2){mod.k2(v);return;}
+    if(mode=="menu"&&v){
+      sel=sel?0:1;
+      drawMenu();
+    }
+  }
 
   var api={
     base:B,w:W,h:H,flip:flip,
@@ -314,6 +317,7 @@
     battle:function(a){loadModule("BATTLE",a);},
     interior:function(a){loadModule("INTERIOR",a);},
     inventory:function(a){loadModule("INVENTORY",a);},
+    pause:function(a){loadModule("PAUSE",a);},
     shop:function(a){loadModule("SHOP",a);},
     shoot:function(a){loadModule("SHOOT",a);},
     music:music,exit:exitApp,gc:gc
