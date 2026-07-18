@@ -1,0 +1,51 @@
+{
+  "id": "piptris",
+  "name": "Piptris",
+  "author": "@CodyTolene",
+  "version": "4.0.0",
+  "description": "Stack, rotate, and clear falling blocks in this Tetris inspired mini-game. Simple, addictive, and perfect for idle moments between scavenging runs or stimpak breaks.",
+  "icon": "previews/piptris.png",
+  "previews": ["assets/piptris.mp4", "previews/gameplay.bmp"],
+  "type": "game",
+  "readme": "README.md",
+  "storage": [
+    { "name": "HOLO/PIPTRIS/APP.JS", "url": "app.min.js" },
+    { "name": "HOLO/PIPTRIS/piptris.json", "url": "assets/piptris.json" },
+    { "name": "HOLO/PIPTRIS/block.json", "url": "assets/block.json" },
+    { "name": "HOLO/PIPTRIS/nuke.json", "url": "assets/nuke.json" },
+    {
+      "name": "HOLO/PIPTRIS/radioactive.json",
+      "url": "assets/radioactive.json"
+    }
+  ],
+  "storageOptional": [
+    {
+      "label": "Big Band Swing (Music)",
+      "name": "HOLO/PIPTRIS/piptris-big-band-swing.wav",
+      "previewMp3": "assets/piptris-big-band-swing.mp3",
+      "sizeKB": 826,
+      "url": "assets/piptris-big-band-swing.wav"
+    },
+    {
+      "label": "Electro Swing (Music)",
+      "name": "HOLO/PIPTRIS/piptris-electro-swing.wav",
+      "previewMp3": "assets/piptris-electro-swing.mp3",
+      "sizeKB": 1150,
+      "url": "assets/piptris-electro-swing.wav"
+    },
+    {
+      "label": "Symphony (Music)",
+      "name": "HOLO/PIPTRIS/piptris-symphony.wav",
+      "previewMp3": "assets/piptris-symphony.mp3",
+      "sizeKB": 1614,
+      "url": "assets/piptris-symphony.wav"
+    },
+    {
+      "label": "Whimsical (Music)",
+      "name": "HOLO/PIPTRIS/piptris-whimsical.wav",
+      "previewMp3": "assets/piptris-whimsical.mp3",
+      "sizeKB": 1635,
+      "url": "assets/piptris-whimsical.wav"
+    }
+  ]
+}

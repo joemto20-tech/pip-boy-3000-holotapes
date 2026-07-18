@@ -1,0 +1,26 @@
+BIG IRON PACKAGE - PAUSE MODULE / NO OVERWORLD PELLETS
+
+Built from checkpoint 58953c7, then cleaned so the overworld pellet-shot feature is removed.
+The normal SHOOT encounter module is still included.
+
+Key changes in this package:
+- Separate pause module is included: holotapes/BigIron/Assets/CODE/PAUSE.JS
+- Pause screen has STAT / INV / DATA / MAP tabs based on the reference image.
+- WORLD.JS no longer has shotTimer, shotTarget, drawPellet, firePellet, or long-press shooting.
+- APP.MIN.JS, WORLD.MIN.JS, BATTLE.MIN.JS, SHOOT.MIN.JS, SHOP.MIN.JS, PAUSE.MIN.JS, and INVENTORY.MIN.JS were rebuilt from readable source.
+
+Suggested Pip-Boy upload targets:
+- holotapes/BigIron/APP.MIN.JS -> HOLO/BIGIRON/APP.JS
+- holotapes/BigIron/Assets/CODE/WORLD.MIN.JS -> HOLO/BIGIRON/CODE/WORLD.JS
+- holotapes/BigIron/Assets/CODE/PAUSE.MIN.JS -> HOLO/BIGIRON/CODE/PAUSE.JS
+- holotapes/BigIron/Assets/CODE/BATTLE.MIN.JS -> HOLO/BIGIRON/CODE/BATTLE.JS
+- holotapes/BigIron/Assets/CODE/SHOP.MIN.JS -> HOLO/BIGIRON/CODE/SHOP.JS
+- holotapes/BigIron/Assets/CODE/SHOOT.MIN.JS -> HOLO/BIGIRON/CODE/SHOOT.JS
+- holotapes/BigIron/Assets/CODE/INVENTORY.MIN.JS -> HOLO/BIGIRON/CODE/INVENTORY.JS
+- holotapes/BigIron/Assets/CODE/INTERIOR.JS -> HOLO/BIGIRON/CODE/INTERIOR.JS
+- holotapes/BigIron/Assets/DATA/*.JSON -> HOLO/BIGIRON/DATA/
+- holotapes/BigIron/Assets/CODE/*.IMG -> HOLO/BIGIRON/CODE/
+- holotapes/BigIron/Assets/VIDEO/ -> HOLO/BIGIRON/VIDEO/
+- holotapes/BigIron/Assets/DATA/*.IMG -> HOLO/BIGIRON/DATA/
+
+If testing against old uploads, delete stale HOLO/BIGIRON/CODE/PAUSE.JS or WORLD.JS first, then upload this package's versions.

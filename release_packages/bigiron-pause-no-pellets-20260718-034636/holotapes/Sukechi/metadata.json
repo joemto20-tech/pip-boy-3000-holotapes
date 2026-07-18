@@ -1,0 +1,13 @@
+{
+  "id": "ssukechi",
+  "name": "Sukechi",
+  "author": "@Theeohn",
+  "version": "1.0.0",
+  "description": "Like an etch-a-sketch but for your pip-boy and shades to choose from, plus an eraser!",
+  "icon": "previews/sukechi.png",
+  "previews": ["previews/game.bmp"],
+  "type": "game",
+  "readme": "README.md",
+  "storage": [{ "name": "HOLO/SUKECHI/APP.JS", "url": "app.min.js" }],
+  "storageOptional": []
+}

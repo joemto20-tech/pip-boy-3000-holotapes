@@ -1,0 +1,16 @@
+{
+  "id": "pipwordle",
+  "name": "Pip-Wordle",
+  "author": "@amogus-67",
+  "version": "1.0.0",
+  "description": "A Wordle clone for the Pip-Boy 3000.",
+  "icon": "previews/wordle.png",
+  "previews": ["previews/menu.bmp", "previews/game.bmp"],
+  "type": "game",
+  "readme": "README.md",
+  "storage": [
+    { "name": "HOLO/PIP_WORDLE/APP.JS", "url": "app.min.js" },
+    { "name": "HOLO/PIP_WORDLE/words_5.TXT", "url": "assets/words_5.txt" }
+  ],
+  "storageOptional": []
+}

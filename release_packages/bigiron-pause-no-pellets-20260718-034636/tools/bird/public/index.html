@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>B.I.R.D. - Big Iron Render Dock</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div>
+        <h1>B.I.R.D.</h1>
+        <p>Big Iron Render Dock - worlds, art, encounters, and runtime sprites</p>
+      </div>
+      <div class="status" id="status">Starting</div>
+    </header>
+
+    <nav class="tabs" aria-label="B.I.R.D. sections">
+      <button class="tab active" data-view="world">World Builder</button>
+      <button class="tab" data-view="art">World Art</button>
+      <button class="tab" data-view="sprite">Sprite Creator</button>
+      <button class="tab" data-view="battleScene">Battle Scene</button>
+      <button class="tab" data-view="items">Items</button>
+      <button class="tab" data-view="package">Upload Checklist</button>
+    </nav>
+
+    <main class="workspace">
+      <section class="panel left" id="worldPanel" data-view-panel="world">
+        <div class="field-row">
+          <label>World
+            <select id="worldSelect"></select>
+          </label>
+          <button id="loadWorld">Load</button>
+        </div>
+        <div class="field-row">
+          <label>World ID
+            <input id="worldId" value="WORLD_01">
+          </label>
+          <button id="newWorld">New</button>
+        </div>
+        <label>Map Name
+          <input id="worldName" value="Sunscar">
+        </label>
+        <div class="field-row">
+          <label>Map Width
+            <input id="worldCols" type="number" min="8" max="96" value="42">
+          </label>
+          <label>Map Height
+            <input id="worldRows" type="number" min="8" max="64" value="24">
+          </label>
+        </div>
+        <div class="box">
+          <h2>World Art</h2>
+          <label>Preset
+            <select id="worldArtPreset"></select>
+          </label>
+          <div class="actions">
+            <button id="newWorldBuild">New World + Art</button>
+            <button id="presetWorldArt">Apply Preset Art</button>
+            <button id="editWorldArt">Edit Art Tools</button>
+          </div>
+        </div>
+        <label>Paint Tool
+          <select id="worldTool">
+            <option value="G">Grass</option>
+            <option value="P">Path</option>
+            <option value="B">Blocker</option>
+            <option value="H">House</option>
+            <option value="D">Door</option>
+            <option value="S">Sand</option>
+            <option value="X">Wall</option>
+            <option value="spawn">Spawn</option>
+            <option value="exit">Exit</option>
+            <option value="regular">Regular Encounter</option>
+            <option value="npcEncounter">NPC Encounter</option>
+            <option value="miniboss">Miniboss Encounter</option>
+            <option value="forge">Forge Press</option>
+            <option value="finalBoss">Final Boss Encounter</option>
+            <option value="boss">Boss Encounter</option>
+            <option value="shoot">Shoot Encounter</option>
+            <option value="duel">Sprite Battle Encounter</option>
+            <option value="tree">Tree</option>
+            <option value="npc">NPC</option>
+            <option value="camp">Camp</option>
+            <option value="sign">Sign</option>
+            <option value="rocks">Rocks</option>
+            <option value="erase">Erase Marker</option>
+          </select>
+        </label>
+        <div class="tool-grid" id="quickTools"></div>
+
+        <div class="box">
+          <h2>Encounter</h2>
+          <label>Enemy
+            <select id="encEnemy"></select>
+          </label>
+          <label>Prompt
+            <input id="encPrompt" value="ENCOUNTER?">
+          </label>
+          <div class="field-row">
+            <label>Launch Title
+              <input id="encLaunchTitle" value="ENCOUNTER">
+            </label>
+            <label>Launch Subtitle
+              <input id="encLaunchSubtitle" placeholder="RADSCORP">
+            </label>
+          </div>
+          <div class="field-row">
+            <label>Music
+              <select id="encMusic">
+                <option value="">Map default</option>
+                <option value="NVTH">NVTH boss theme</option>
+                <option value="false">None</option>
+              </select>
+            </label>
+            <label class="check">
+              <input id="encOnce" type="checkbox" checked>
+              Once
+            </label>
+          </div>
+          <label>Shoot Target
+            <input id="shootTarget" value="RADROACH">
+          </label>
+          <div class="field-row">
+            <label>Min Regular
+              <input id="minRegular" type="number" value="2" min="0" max="20">
+            </label>
+            <label>Bullet ID
+              <input id="bulletId" value="SCORCHED">
+            </label>
+          </div>
+          <div class="field-row">
+            <label>NPC Patrol
+              <select id="npcPatrol">
+                <option value="horizontal">Horizontal</option>
+                <option value="vertical">Vertical</option>
+                <option value="still">Still</option>
+              </select>
+            </label>
+            <label>NPC Facing
+              <select id="npcFacing">
+                <option value="right">Right</option>
+                <option value="left">Left</option>
+                <option value="down">Down</option>
+                <option value="up">Up</option>
+              </select>
+            </label>
+          </div>
+          <label>NPC Range
+            <input id="npcRange" type="number" value="3" min="0" max="12">
+          </label>
+          <label>Map Sprite
+            <select id="decorSprite"></select>
+          </label>
+        </div>
+
+        <div class="box">
+          <h2>Exit</h2>
+          <div class="field-row">
+            <label>To
+              <input id="exitTo" value="WORLD_02">
+            </label>
+            <label>Facing
+              <select id="exitFacing">
+                <option value="down">Down</option>
+                <option value="up">Up</option>
+                <option value="left">Left</option>
+                <option value="right">Right</option>
+              </select>
+            </label>
+          </div>
+          <div class="field-row">
+            <label>Spawn X
+              <input id="exitX" type="number" value="2">
+            </label>
+            <label>Spawn Y
+              <input id="exitY" type="number" value="2">
+            </label>
+          </div>
+          <label>Required Round
+            <input id="exitRequiredRound" placeholder="SCORCHED">
+          </label>
+          <div class="field-row">
+            <label>Travel Title
+              <input id="exitTravelTitle" value="TRAVELLING">
+            </label>
+            <label>Travel Subtitle
+              <input id="exitTravelSubtitle" placeholder="WORLD_02">
+            </label>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="saveWorld" class="primary">Save World JSON</button>
+          <button id="downloadWorld">Download JSON</button>
+        </div>
+      </section>
+
+      <section class="stage" id="worldStage" data-view-panel="world">
+        <div class="stage-head">
+          <strong id="worldTitle">WORLD_01</strong>
+          <span id="worldReadout">42 x 24</span>
+        </div>
+        <div class="world-grid" id="worldGrid"></div>
+        <textarea id="worldJson" spellcheck="false"></textarea>
+      </section>
+
+      <section class="panel left hidden" id="artPanel" data-view-panel="art">
+        <div class="field-row">
+          <label>Existing World/Art
+            <select id="artSelect"></select>
+          </label>
+          <button id="loadArt">Load</button>
+        </div>
+        <label>Name
+          <input id="artName" value="WORLD_01_ART">
+        </label>
+        <div class="field-row">
+          <label>Preset
+            <select id="artPreset"></select>
+          </label>
+          <button id="loadArtPreset">Use</button>
+        </div>
+        <div class="field-row">
+          <label>Width
+            <input id="artWidth" type="number" min="32" max="255" value="240">
+          </label>
+          <label>Height
+            <input id="artHeight" type="number" min="32" max="255" value="148">
+          </label>
+        </div>
+        <div class="box">
+          <h2>Image To JSON</h2>
+          <label>Image
+            <input id="imageImport" type="file" accept="image/*">
+          </label>
+          <div class="field-row">
+            <label>Fit
+              <select id="imageImportMode">
+                <option value="fit">Fit</option>
+                <option value="crop">Crop</option>
+                <option value="stretch">Stretch</option>
+              </select>
+            </label>
+            <button id="convertImage">Convert</button>
+          </div>
+        </div>
+        <div class="field-row">
+          <label>Brush
+            <select id="artBrush">
+              <option value="0">Black</option>
+              <option value="1">Dim</option>
+              <option value="2">Green</option>
+              <option value="3">Bright</option>
+            </select>
+          </label>
+          <label>Size
+            <input id="artBrushSize" type="number" min="1" max="16" value="3">
+          </label>
+        </div>
+        <div class="field-row">
+          <label>Tool
+            <select id="artTool">
+              <option value="brush">Brush</option>
+              <option value="line">Line</option>
+              <option value="rect">Rectangle</option>
+              <option value="fill">Fill</option>
+            </select>
+          </label>
+          <label>Apply To
+            <select id="artWorld"></select>
+          </label>
+        </div>
+        <div class="actions">
+          <button id="newArt">New Art</button>
+          <button id="clearArt">Clear</button>
+          <button id="saveArt" class="primary">Save IMG + Link World</button>
+          <button id="downloadArtJson">Download Art JSON</button>
+        </div>
+      </section>
+
+      <section class="stage hidden" id="artStage" data-view-panel="art">
+        <div class="stage-head">
+          <strong id="artTitle">WORLD_01_ART</strong>
+          <span id="artReadout">240 x 148</span>
+        </div>
+        <canvas id="artCanvas" width="480" height="296"></canvas>
+        <textarea id="artJson" spellcheck="false"></textarea>
+      </section>
+
+      <section class="panel left hidden" id="spritePanel" data-view-panel="sprite">
+        <div class="field-row">
+          <label>Existing Sprite
+            <select id="spriteSelect"></select>
+          </label>
+          <button id="loadSprite">Load</button>
+        </div>
+        <p class="hint">Player direction sprites use 34x34 IMG files for the current low-memory build.</p>
+        <label>Name
+          <input id="spriteName" value="PLAYER_SPRITEUP">
+        </label>
+        <label>Save Scope
+          <select id="spriteScope">
+            <option value="global">Global</option>
+            <option value="world">Current World</option>
+          </select>
+        </label>
+        <div class="field-row">
+          <label>Preset
+            <select id="spritePreset"></select>
+          </label>
+          <button id="loadPreset">Use</button>
+        </div>
+        <div class="box">
+          <h2>Import Sprite</h2>
+          <label>Sprite IMG
+            <input id="spriteImgImport" type="file" accept=".img,application/octet-stream">
+          </label>
+          <button id="importSpriteImg">Import IMG</button>
+        </div>
+        <div class="box">
+          <h2>Image To Sprite</h2>
+          <label>Image
+            <input id="spriteImageImport" type="file" accept="image/*">
+          </label>
+          <div class="field-row">
+            <label>Fit
+              <select id="spriteImageMode">
+                <option value="fit">Fit</option>
+                <option value="crop">Crop</option>
+                <option value="stretch">Stretch</option>
+              </select>
+            </label>
+            <button id="convertSpriteImage">Convert</button>
+          </div>
+        </div>
+        <div class="field-row">
+          <label>Width
+            <input id="spriteWidth" type="number" min="8" max="64" value="34">
+          </label>
+          <label>Height
+            <input id="spriteHeight" type="number" min="8" max="64" value="34">
+          </label>
+        </div>
+        <div class="field-row">
+          <label>BPP
+            <select id="spriteBpp">
+              <option value="1">1</option>
+              <option value="2" selected>2</option>
+              <option value="4">4</option>
+            </select>
+          </label>
+          <label>Brush
+            <select id="spriteBrush">
+              <option value="0">0</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+            </select>
+          </label>
+        </div>
+        <div class="actions">
+          <button id="newSprite">New</button>
+          <button id="mirrorSprite">Mirror</button>
+          <button id="invertSprite">Invert</button>
+          <button id="saveSprite" class="primary">Save Runtime Sprite</button>
+          <button id="saveSpriteLocal">Save Local Copy</button>
+          <button id="downloadSprite">Download IMG</button>
+        </div>
+      </section>
+
+      <section class="stage hidden" id="spriteStage" data-view-panel="sprite">
+        <div class="stage-head">
+          <strong id="spriteTitle">PLAYER_SPRITEUP</strong>
+          <span id="spriteReadout">12 x 14</span>
+        </div>
+        <div class="sprite-grid" id="spriteGrid"></div>
+        <textarea id="spriteCode" spellcheck="false"></textarea>
+      </section>
+
+      <section class="panel left hidden" id="battleScenePanel" data-view-panel="battleScene">
+        <div class="box">
+          <h2>Battle Template</h2>
+          <div class="field-row">
+            <label>Enemy Name
+              <input id="duelEnemyName" value="RADSCORP">
+            </label>
+            <label>Enemy Level
+              <input id="duelEnemyLevel" type="number" value="16" min="1" max="99">
+            </label>
+          </div>
+          <label>Enemy Sprite
+            <select id="duelEnemySprite"></select>
+          </label>
+          <div class="field-row">
+            <label>Player Name
+              <input id="duelPlayerName" value="GUNSLNGR">
+            </label>
+            <label>Player Level
+              <input id="duelPlayerLevel" type="number" value="18" min="1" max="99">
+            </label>
+          </div>
+          <label>Player Sprite
+            <select id="duelPlayerSprite"></select>
+          </label>
+          <div class="field-row">
+            <label>Projectile
+              <select id="duelProjectileSprite"></select>
+            </label>
+            <label>Effect
+              <select id="duelEffectSprite"></select>
+            </label>
+          </div>
+          <div class="field-row">
+            <label>Enemy Sprite XY
+              <input id="duelEnemyPos" value="210,18">
+            </label>
+            <label>Player Sprite XY
+              <input id="duelPlayerPos" value="30,86">
+            </label>
+          </div>
+          <label>Projectile Path
+            <input id="duelShotPath" value="128,122,220,70">
+          </label>
+          <label>Boxes: enemy; player; command; text; spare
+            <input id="duelBoxes" value="8,8,154,52;158,111,154,58;178,171,134,42;4,203,312,33;4,171,174,42">
+          </label>
+          <label>Action Text: attack; power; defend; run
+            <input id="duelMessages" value="ATTACK!;POWER!;DEFEND!;FLEE!">
+          </label>
+          <div class="actions">
+            <button id="duelUseWorldTool" class="primary">Use On World Map</button>
+            <button id="duelRefreshPreview">Refresh Preview</button>
+          </div>
+        </div>
+
+        <div class="box">
+          <h2>Scene Sprite Maker</h2>
+          <label>Slot
+            <select id="sceneSpriteSlot">
+              <option value="enemy">Enemy</option>
+              <option value="player">Player</option>
+              <option value="projectile">Projectile</option>
+              <option value="effect">Effect</option>
+            </select>
+          </label>
+          <label>Name
+            <input id="sceneSpriteName" value="RADSCORP_SPRITE">
+          </label>
+          <div class="field-row">
+            <label>Width
+              <input id="sceneSpriteWidth" type="number" min="4" max="96" value="64">
+            </label>
+            <label>Height
+              <input id="sceneSpriteHeight" type="number" min="4" max="96" value="48">
+            </label>
+          </div>
+          <div class="field-row">
+            <label>BPP
+              <select id="sceneSpriteBpp">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="4" selected>4</option>
+              </select>
+            </label>
+            <label>Brush
+              <select id="sceneSpriteBrush"></select>
+            </label>
+          </div>
+          <label>Image To Slot Sprite
+            <input id="sceneSpriteImageImport" type="file" accept="image/*">
+          </label>
+          <div class="actions">
+            <button id="sceneNewSprite">New Slot Sprite</button>
+            <button id="sceneLoadSprite">Load Slot Sprite</button>
+            <button id="sceneConvertImage">Convert Image</button>
+            <button id="sceneSaveSprite" class="primary">Save Slot Sprite</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="stage hidden" id="battleSceneStage" data-view-panel="battleScene">
+        <div class="stage-head">
+          <strong>Sprite Battle Preview</strong>
+          <span id="duelPreviewReadout">320 x 236</span>
+        </div>
+        <canvas id="battleSceneCanvas" width="640" height="472"></canvas>
+        <div class="stage-head">
+          <strong id="sceneSpriteTitle">RADSCORP_SPRITE</strong>
+          <span id="sceneSpriteReadout">64 x 48</span>
+        </div>
+        <div class="scene-sprite-grid" id="sceneSpriteGrid"></div>
+        <textarea id="duelJson" spellcheck="false"></textarea>
+      </section>
+
+      <section class="panel left hidden" id="itemsPanel" data-view-panel="items">
+        <div class="box">
+          <h2>Object Window</h2>
+          <div class="field-row">
+            <label>Items
+              <select id="itemSelect"></select>
+            </label>
+            <button id="loadItem">Load</button>
+          </div>
+          <button id="newItem">New Item</button>
+        </div>
+
+        <div class="box">
+          <h2>Item Settings</h2>
+          <label>Name
+            <input id="itemName" value="Stimpak">
+          </label>
+          <div class="field-row">
+            <label>Kind
+              <select id="itemKind">
+                <option value="aid">Aid / Healing</option>
+                <option value="weapon">Weapon</option>
+                <option value="ammo">Ammo / Key</option>
+                <option value="misc">Misc Loot</option>
+              </select>
+            </label>
+            <label>Effect
+              <select id="itemEffect">
+                <option value="heal">Heal</option>
+                <option value="damage">Damage</option>
+                <option value="key">Story Key</option>
+                <option value="quest">Quest Item</option>
+                <option value="none">None</option>
+              </select>
+            </label>
+          </div>
+          <div class="field-row">
+            <label>Damage
+              <input id="itemDamage" type="number" min="0" value="0">
+            </label>
+            <label>Count
+              <input id="itemCount" type="number" min="1" value="1">
+            </label>
+          </div>
+          <label>Drop Chance
+            <input id="itemChance" type="number" min="0" max="1" step="0.05" value="1">
+          </label>
+        </div>
+
+        <div class="box">
+          <h2>Real Pip-Boy Write</h2>
+          <p class="hint">Leave Real Item ID blank for a new custom item. Use known Fallout IDs for real items like Stimpak.</p>
+          <div class="field-row">
+            <label>Category
+              <select id="itemCat">
+                <option value="">Auto</option>
+                <option value="AID">AID</option>
+                <option value="WEAPONS">WEAPONS</option>
+                <option value="AMMO">AMMO</option>
+                <option value="MISC">MISC</option>
+              </select>
+            </label>
+            <label>Real Item ID
+              <input id="itemRealId" placeholder="auto">
+            </label>
+          </div>
+          <label>Icon IMG/BMP/PNG
+            <input id="itemIcon" type="file" accept=".img,.bmp,.png,image/png,image/bmp,application/octet-stream">
+          </label>
+        </div>
+
+        <div class="actions">
+          <button id="saveItem" class="primary">Save Item</button>
+          <button id="downloadItems">Download ITEMS.JSON</button>
+        </div>
+      </section>
+
+      <section class="stage hidden" id="itemsStage" data-view-panel="items">
+        <div class="stage-head">
+          <strong id="itemTitle">ITEM</strong>
+          <span id="itemReadout">ready</span>
+        </div>
+        <div class="geck-board">
+          <div class="geck-card">
+            <strong>Preview</strong>
+            <div class="item-icon-preview" id="itemIconPreview">ICON</div>
+            <p id="itemPreviewText">Set a name and effect, then save.</p>
+          </div>
+          <div class="geck-card">
+            <strong>Reward Snippet</strong>
+            <textarea id="itemRewardSnippet" spellcheck="false" readonly></textarea>
+          </div>
+        </div>
+        <textarea id="itemJson" spellcheck="false"></textarea>
+      </section>
+
+      <section class="panel wide hidden" id="packagePanel" data-view-panel="package">
+        <h2>Current Big Iron Upload Checklist</h2>
+        <p class="hint">This list follows the working build: compact APP, BIN start/menu screens, IMG player sprites, and minified runtime modules.</p>
+        <pre id="packageNotes"></pre>
+      </section>
+    </main>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

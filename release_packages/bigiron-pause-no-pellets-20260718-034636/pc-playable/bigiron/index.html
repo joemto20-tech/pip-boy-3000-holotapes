@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Big Iron PC Playable</title>
+    <meta name="theme-color" content="#151a12" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="screen-wrap" aria-label="Big Iron game screen">
+        <canvas id="game" width="480" height="320"></canvas>
+      </section>
+      <section class="controls" aria-label="Controls">
+        <button data-key="ArrowUp">Up</button>
+        <button data-key="ArrowLeft">Left</button>
+        <button data-key="Enter">Select</button>
+        <button data-key="ArrowRight">Right</button>
+        <button data-key="ArrowDown">Down</button>
+        <button data-key="Escape">Back</button>
+      </section>
+    </main>
+    <script src="src/game.js"></script>
+    <script>
+      if ("serviceWorker" in navigator && location.protocol !== "file:") {
+        navigator.serviceWorker.register("sw.js").catch(function () {});
+      }
+    </script>
+  </body>
+</html>
