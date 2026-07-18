@@ -1,0 +1,71 @@
+{
+  "tunings": [
+    {
+      "name": "STANDARD",
+      "strings": [
+        {"label":"6 LOW E","note":"E2","freq":82.41,"file":"E2.wav"},
+        {"label":"5 A","note":"A2","freq":110.00,"file":"A2.wav"},
+        {"label":"4 D","note":"D3","freq":146.83,"file":"D3.wav"},
+        {"label":"3 G","note":"G3","freq":196.00,"file":"G3.wav"},
+        {"label":"2 B","note":"B3","freq":246.94,"file":"B3.wav"},
+        {"label":"1 HIGH E","note":"E4","freq":329.63,"file":"E4.wav"}
+      ]
+    },
+    {
+      "name": "DROP D",
+      "strings": [
+        {"label":"6 LOW D","note":"D2","freq":73.42,"file":"D2.wav"},
+        {"label":"5 A","note":"A2","freq":110.00,"file":"A2.wav"},
+        {"label":"4 D","note":"D3","freq":146.83,"file":"D3.wav"},
+        {"label":"3 G","note":"G3","freq":196.00,"file":"G3.wav"},
+        {"label":"2 B","note":"B3","freq":246.94,"file":"B3.wav"},
+        {"label":"1 HIGH E","note":"E4","freq":329.63,"file":"E4.wav"}
+      ]
+    },
+    {
+      "name": "HALF STEP DOWN",
+      "strings": [
+        {"label":"6 LOW Eb","note":"Eb2","freq":77.78,"file":"EB2.wav"},
+        {"label":"5 Ab","note":"Ab2","freq":103.83,"file":"AB2.wav"},
+        {"label":"4 Db","note":"Db3","freq":138.59,"file":"DB3.wav"},
+        {"label":"3 Gb","note":"Gb3","freq":185.00,"file":"GB3.wav"},
+        {"label":"2 Bb","note":"Bb3","freq":233.08,"file":"BB3.wav"},
+        {"label":"1 HIGH Eb","note":"Eb4","freq":311.13,"file":"EB4.wav"}
+      ]
+    },
+    {
+      "name": "D STANDARD",
+      "strings": [
+        {"label":"6 LOW D","note":"D2","freq":73.42,"file":"D2.wav"},
+        {"label":"5 G","note":"G2","freq":98.00,"file":"G2.wav"},
+        {"label":"4 C","note":"C3","freq":130.81,"file":"C3.wav"},
+        {"label":"3 F","note":"F3","freq":174.61,"file":"F3.wav"},
+        {"label":"2 A","note":"A3","freq":220.00,"file":"A3.wav"},
+        {"label":"1 HIGH D","note":"D4","freq":293.66,"file":"D4.wav"}
+      ]
+    },
+    {
+      "name": "OPEN G",
+      "strings": [
+        {"label":"6 LOW D","note":"D2","freq":73.42,"file":"D2.wav"},
+        {"label":"5 G","note":"G2","freq":98.00,"file":"G2.wav"},
+        {"label":"4 D","note":"D3","freq":146.83,"file":"D3.wav"},
+        {"label":"3 G","note":"G3","freq":196.00,"file":"G3.wav"},
+        {"label":"2 B","note":"B3","freq":246.94,"file":"B3.wav"},
+        {"label":"1 HIGH D","note":"D4","freq":293.66,"file":"D4.wav"}
+      ]
+    },
+    {
+      "name": "7 STRING STANDARD",
+      "strings": [
+        {"label":"7 LOW B","note":"B1","freq":61.74,"file":"B1.wav"},
+        {"label":"6 LOW E","note":"E2","freq":82.41,"file":"E2.wav"},
+        {"label":"5 A","note":"A2","freq":110.00,"file":"A2.wav"},
+        {"label":"4 D","note":"D3","freq":146.83,"file":"D3.wav"},
+        {"label":"3 G","note":"G3","freq":196.00,"file":"G3.wav"},
+        {"label":"2 B","note":"B3","freq":246.94,"file":"B3.wav"},
+        {"label":"1 HIGH E","note":"E4","freq":329.63,"file":"E4.wav"}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,198 @@
+{
+  "B1": {
+    "target_hz": 61.7354,
+    "actual_hz": 61.735531,
+    "error_cents": 0.003666,
+    "samples": 64015,
+    "seconds": 4.000938,
+    "file": "B1.wav",
+    "profile": "speaker_harmonic_v1",
+    "peak": 23341
+  },
+  "D2": {
+    "target_hz": 73.4162,
+    "actual_hz": 73.41626,
+    "error_cents": 0.001405,
+    "samples": 64073,
+    "seconds": 4.004562,
+    "file": "D2.wav",
+    "profile": "speaker_harmonic_v1",
+    "peak": 23341
+  },
+  "EB2": {
+    "target_hz": 77.7817,
+    "actual_hz": 77.781599,
+    "error_cents": -0.002253,
+    "samples": 63974,
+    "seconds": 3.998375,
+    "file": "EB2.wav",
+    "profile": "speaker_harmonic_v1",
+    "peak": 23341
+  },
+  "E2": {
+    "target_hz": 82.4069,
+    "actual_hz": 82.407292,
+    "error_cents": 0.008231,
+    "samples": 64072,
+    "seconds": 4.0045,
+    "file": "E2.wav",
+    "profile": "speaker_harmonic_v1",
+    "peak": 23341
+  },
+  "G2": {
+    "target_hz": 97.9989,
+    "actual_hz": 97.998469,
+    "error_cents": -0.007618,
+    "samples": 64001,
+    "seconds": 4.000063,
+    "file": "G2.wav",
+    "profile": "speaker_harmonic_v1",
+    "peak": 23340
+  },
+  "AB2": {
+    "target_hz": 103.8262,
+    "actual_hz": 103.826247,
+    "error_cents": 0.00079,
+    "samples": 63953,
+    "seconds": 3.997063,
+    "file": "AB2.wav",
+    "profile": "speaker_harmonic_v1",
+    "peak": 23341
+  },
+  "A2": {
+    "target_hz": 110.0,
+    "actual_hz": 110.0,
+    "error_cents": 0.0,
+    "samples": 64000,
+    "seconds": 4.0,
+    "file": "A2.wav",
+    "profile": "speaker_harmonic_v1",
+    "peak": 23334
+  },
+  "C3": {
+    "target_hz": 130.8128,
+    "actual_hz": 130.813363,
+    "error_cents": 0.007447,
+    "samples": 63969,
+    "seconds": 3.998063,
+    "file": "C3.wav",
+    "profile": "speaker_harmonic_v1",
+    "peak": 23341
+  },
+  "DB3": {
+    "target_hz": 138.5913,
+    "actual_hz": 138.59095,
+    "error_cents": -0.004368,
+    "samples": 63958,
+    "seconds": 3.997375,
+    "file": "DB3.wav",
+    "profile": "speaker_harmonic_v1",
+    "peak": 23340
+  },
+  "D3": {
+    "target_hz": 146.8324,
+    "actual_hz": 146.832593,
+    "error_cents": 0.00228,
+    "samples": 63964,
+    "seconds": 3.99775,
+    "file": "D3.wav",
+    "profile": "speaker_harmonic_v1",
+    "peak": 23341
+  },
+  "F3": {
+    "target_hz": 174.6141,
+    "actual_hz": 174.614591,
+    "error_cents": 0.004866,
+    "samples": 63958,
+    "seconds": 3.997375,
+    "file": "F3.wav",
+    "profile": "speaker_harmonic_v1",
+    "peak": 23339
+  },
+  "GB3": {
+    "target_hz": 184.9972,
+    "actual_hz": 184.997109,
+    "error_cents": -0.000848,
+    "samples": 64001,
+    "seconds": 4.000063,
+    "file": "GB3.wav",
+    "profile": "speaker_harmonic_v1",
+    "peak": 23339
+  },
+  "G3": {
+    "target_hz": 195.9977,
+    "actual_hz": 195.996938,
+    "error_cents": -0.006735,
+    "samples": 64001,
+    "seconds": 4.000063,
+    "file": "G3.wav",
+    "profile": "speaker_harmonic_v1",
+    "peak": 23342
+  },
+  "A3": {
+    "target_hz": 220.0,
+    "actual_hz": 220.0,
+    "error_cents": 0.0,
+    "samples": 64000,
+    "seconds": 4.0,
+    "file": "A3.wav",
+    "profile": "speaker_harmonic_v1",
+    "peak": 23335
+  },
+  "BB3": {
+    "target_hz": 233.0819,
+    "actual_hz": 233.080121,
+    "error_cents": -0.013212,
+    "samples": 63978,
+    "seconds": 3.998625,
+    "file": "BB3.wav",
+    "profile": "speaker_harmonic_v1",
+    "peak": 23341
+  },
+  "B3": {
+    "target_hz": 246.9417,
+    "actual_hz": 246.942123,
+    "error_cents": 0.002965,
+    "samples": 64015,
+    "seconds": 4.000938,
+    "file": "B3.wav",
+    "profile": "speaker_harmonic_v1",
+    "peak": 23342
+  },
+  "D4": {
+    "target_hz": 293.6648,
+    "actual_hz": 293.662819,
+    "error_cents": -0.011679,
+    "samples": 64019,
+    "seconds": 4.001188,
+    "file": "D4.wav",
+    "profile": "speaker_harmonic_v1",
+    "peak": 23341
+  },
+  "EB4": {
+    "target_hz": 311.127,
+    "actual_hz": 311.128465,
+    "error_cents": 0.008154,
+    "samples": 64025,
+    "seconds": 4.001563,
+    "file": "EB4.wav",
+    "profile": "speaker_harmonic_v1",
+    "peak": 23340
+  },
+  "E4": {
+    "target_hz": 329.6276,
+    "actual_hz": 329.62639,
+    "error_cents": -0.006354,
+    "samples": 64024,
+    "seconds": 4.0015,
+    "file": "E4.wav",
+    "profile": "speaker_harmonic_v1",
+    "peak": 23341
+  },
+  "_profile": {
+    "version": "1.1",
+    "description": "harmonic-rich seamless reference tones for small speaker playback",
+    "sample_rate": 16000,
+    "encoding": "PCM 16-bit mono"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "id": "TUNER",
+  "name": "GUITAR TUNER",
+  "version": "1.0.0",
+  "description": "HAMCo reference-tone guitar tuner"
+}
