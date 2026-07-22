@@ -8,8 +8,7 @@
   "previews": [],
   "type": "app",
   "readme": "README.txt",
-  "storage": [
-    { "name": "APPINFO/LEDCOLOR.info", "url": "LEDCOLOR.info" },
+  "storage": [    
     { "name": "HOLO/LEDCOLOR/APP.JS", "url": "APP.JS" },
     { "name": "HOLO/LEDCOLOR/LED.JSON", "url": "LED.JSON" },
     { "name": "HOLO/LEDCOLOR/leds.IMG", "url": "leds.IMG" }
