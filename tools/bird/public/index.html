@@ -3,740 +3,186 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>B.I.R.D. - Big Iron Render Dock</title>
+  <title>B.I.R.D. 2</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="shell">
-    <header class="topbar">
-      <div>
-        <h1>B.I.R.D.</h1>
-        <p>Big Iron Render Dock - worlds, art, encounters, and runtime sprites</p>
+  <header class="appbar">
+    <div class="brand" aria-label="Big Iron Render Dock">
+      <strong>B.I.R.D.</strong>
+      <span>BIG IRON RENDER DOCK</span>
+    </div>
+    <label class="project-field">
+      <span>PROJECT</span>
+      <input id="projectName" value="Big Iron" maxlength="40">
+    </label>
+    <div class="budget-strip" aria-label="Runtime budgets">
+      <div><span>MODULE</span><meter id="moduleMeter" min="0" max="20000" value="0"></meter><b id="moduleBytes">0 B</b></div>
+      <div><span>MAP DATA</span><meter id="mapMeter" min="0" max="889350" value="0"></meter><b id="mapBytes">0 B</b></div>
+    </div>
+    <div class="header-actions">
+      <span id="saveState" class="save-state">READY</span>
+      <button id="saveProject" class="button secondary" type="button">Save</button>
+      <button id="buildProject" class="button primary" type="button">Build Runtime</button>
+    </div>
+  </header>
+
+  <nav class="tabs" aria-label="Editor sections">
+    <button class="tab active" data-view="world" type="button">World</button>
+    <button class="tab" data-view="interior" type="button">Interior</button>
+    <button class="tab" data-view="npc" type="button">NPC</button>
+    <button class="tab" data-view="dialogue" type="button">Dialogue</button>
+    <button class="tab" data-view="media" type="button">Media</button>
+    <button class="tab" data-view="build" type="button">Build</button>
+  </nav>
+
+  <main id="appMain">
+    <section id="sceneView" class="view active">
+      <aside class="pane explorer">
+        <div class="pane-title">
+          <h1 id="sceneListTitle">Worlds</h1>
+          <button id="newScene" class="icon-button" type="button" title="New map" aria-label="New map">+</button>
+        </div>
+        <div id="sceneList" class="list"></div>
+        <div class="pane-title lower">
+          <h2>Layers</h2>
+        </div>
+        <label class="check-row"><input id="showBackground" type="checkbox" checked> Background</label>
+        <label class="check-row"><input id="showCollision" type="checkbox" checked> Collision</label>
+        <label class="check-row"><input id="showEntities" type="checkbox" checked> Entities</label>
+        <label class="check-row"><input id="showGrid" type="checkbox"> Grid</label>
+      </aside>
+
+      <div class="stage-pane">
+        <div class="tool-row">
+          <div id="toolGroup" class="segmented" role="group" aria-label="Map tools">
+            <button class="selected" data-tool="select" type="button" title="Select and move">Select</button>
+            <button data-tool="collision" type="button" title="Paint collision">Collision</button>
+            <button data-tool="erase" type="button" title="Erase collision">Erase</button>
+            <button data-tool="rect" type="button" title="Draw collision rectangle">Rectangle</button>
+            <button data-tool="spawn" type="button" title="Place player spawn">Spawn</button>
+            <button data-tool="npc" type="button" title="Place NPC">NPC</button>
+            <button data-tool="trigger" type="button" title="Place trigger">Trigger</button>
+            <button data-tool="exit" type="button" title="Place exit">Exit</button>
+          </div>
+          <label class="compact-field">BRUSH <input id="brushSize" type="number" min="1" max="8" value="1"></label>
+          <button id="undoButton" class="button quiet" type="button" disabled>Undo</button>
+          <button id="redoButton" class="button quiet" type="button" disabled>Redo</button>
+          <label class="zoom-field">ZOOM <input id="zoomRange" type="range" min="20" max="300" value="60"><output id="zoomValue">60%</output></label>
+        </div>
+        <div id="stageScroller" class="stage-scroller">
+          <div id="canvasWrap" class="canvas-wrap">
+            <canvas id="sceneCanvas" width="1440" height="1080"></canvas>
+          </div>
+        </div>
+        <div class="stage-status">
+          <span id="cursorReadout">X 0 Y 0</span>
+          <span id="sceneDimensions">1440 x 1080</span>
+          <span id="selectionReadout">NO SELECTION</span>
+          <span id="sceneWarning" class="warning"></span>
+        </div>
       </div>
-      <div class="status" id="status">Starting</div>
-    </header>
 
-    <nav class="tabs" aria-label="B.I.R.D. sections">
-      <button class="tab" data-view="worlds">World Index</button>
-      <button class="tab active" data-view="world">World Builder</button>
-      <button class="tab" data-view="interior">Interior</button>
-      <button class="tab" data-view="art">World Art</button>
-      <button class="tab" data-view="sprite">Sprite Creator</button>
-      <button class="tab" data-view="battleScene">Battle UI</button>
-      <button class="tab" data-view="items">Items</button>
-      <button class="tab" data-view="media">Media & Build</button>
-    </nav>
+      <aside class="pane inspector">
+        <div class="pane-title"><h2>Inspector</h2></div>
+        <div id="sceneInspector" class="inspector-body"></div>
+      </aside>
+    </section>
 
-    <main class="workspace">
-      <section class="panel left hidden" id="worldIndexPanel" data-view-panel="worlds">
-        <h2>World Index</h2>
-        <p class="hint">Each map has a live Big Iron memory budget. Red means stop adding content or split it into another map/interior.</p>
-        <div class="box">
-          <h2>Budget Rules</h2>
-          <div id="limitReadout" class="limit-list"></div>
+    <section id="npcView" class="view three-pane">
+      <aside class="pane explorer">
+        <div class="pane-title"><h1>NPCs</h1><button id="newNpc" class="icon-button" type="button" title="New NPC">+</button></div>
+        <label class="filter-field"><span>MAP</span><select id="npcMapFilter"></select></label>
+        <div id="npcList" class="list"></div>
+      </aside>
+      <div class="content-pane">
+        <div class="content-header">
+          <div><span class="eyebrow">NPC</span><h1 id="npcHeading">No NPC selected</h1></div>
+          <button id="placeNpc" class="button secondary" type="button">Place on Map</button>
         </div>
-        <div class="actions">
-          <button id="refreshWorldIndex">Refresh Index</button>
-          <button id="openSelectedWorld" class="primary">Open Selected World</button>
+        <div class="npc-layout">
+          <div class="sprite-well"><canvas id="npcPreview" width="204" height="204"></canvas></div>
+          <form id="npcForm" class="property-grid"></form>
         </div>
-      </section>
+      </div>
+      <aside class="pane inspector">
+        <div class="pane-title"><h2>Collision</h2></div>
+        <div id="npcCollisionPanel" class="inspector-body"></div>
+      </aside>
+    </section>
 
-      <section class="stage hidden" id="worldIndexStage" data-view-panel="worlds">
-        <div class="stage-head">
-          <strong>Big Iron World Chain</strong>
-          <span id="worldIndexReadout">6 worlds</span>
+    <section id="dialogueView" class="view three-pane">
+      <aside class="pane explorer">
+        <div class="pane-title"><h1>Dialogues</h1><button id="newDialogue" class="icon-button" type="button" title="New dialogue">+</button></div>
+        <div id="dialogueList" class="list"></div>
+      </aside>
+      <div class="content-pane dialogue-canvas">
+        <div class="content-header">
+          <div><span class="eyebrow">DIALOGUE</span><h1 id="dialogueHeading">No dialogue selected</h1></div>
+          <button id="newNode" class="button secondary" type="button">Add Node</button>
         </div>
-        <div class="world-cards" id="worldCards"></div>
-      </section>
+        <div id="nodeList" class="node-list"></div>
+      </div>
+      <aside class="pane inspector">
+        <div class="pane-title"><h2>Node</h2></div>
+        <div id="dialogueInspector" class="inspector-body"></div>
+      </aside>
+    </section>
 
-      <section class="panel left" id="worldPanel" data-view-panel="world">
-        <div class="field-row">
-          <label>World
-            <select id="worldSelect"></select>
-          </label>
-          <button id="loadWorld">Load</button>
+    <section id="mediaView" class="view media-view">
+      <aside class="pane media-filter">
+        <div class="pane-title"><h1>Media</h1><button id="importAsset" class="icon-button" type="button" title="Import asset">+</button></div>
+        <label class="filter-field"><span>TYPE</span><select id="assetTypeFilter"><option value="all">All</option><option value="image">Images</option><option value="video">Video</option><option value="audio">Audio</option><option value="data">Data</option></select></label>
+        <label class="filter-field"><span>SOURCE</span><select id="assetSourceFilter"><option value="all">All</option><option value="game">Game</option><option value="workspace">Imports</option></select></label>
+        <label class="filter-field"><span>SEARCH</span><input id="assetSearch" type="search"></label>
+        <div id="assetList" class="list asset-list"></div>
+      </aside>
+      <div class="content-pane media-workbench">
+        <div class="content-header">
+          <div><span class="eyebrow">ASSET</span><h1 id="assetHeading">Select an asset</h1></div>
+          <button id="convertAsset" class="button primary" type="button" disabled>Convert</button>
         </div>
-        <div class="field-row">
-          <label>World ID
-            <input id="worldId" value="WORLD_NEW">
-          </label>
-          <button id="newWorld">New</button>
+        <div class="media-layout">
+          <div class="preview-stage"><canvas id="assetPreview" width="480" height="320"></canvas></div>
+          <form id="assetForm" class="property-grid media-properties"></form>
         </div>
-        <label>Map Name
-          <input id="worldName" value="New World">
-        </label>
-        <div class="field-row">
-          <label>Map Width
-            <input id="worldCols" type="number" min="8" max="96" value="42">
-          </label>
-          <label>Map Height
-            <input id="worldRows" type="number" min="8" max="64" value="24">
-          </label>
-        </div>
-        <div class="box budget-box">
-          <h2>Memory Budget</h2>
-          <div id="worldBudgetBars"></div>
-          <p class="hint" id="worldBudgetHint">Compact maps keep the Pip-Boy from running out of memory.</p>
-        </div>
-        <div class="box">
-          <h2>World Art</h2>
-          <label>Preset
-            <select id="worldArtPreset"></select>
-          </label>
-          <div class="actions">
-            <button id="newWorldBuild">New World + Art</button>
-            <button id="presetWorldArt">Apply Preset Art</button>
-            <button id="editWorldArt">Edit Art Tools</button>
-          </div>
-        </div>
-        <label>Paint Tool
-          <select id="worldTool">
-            <option value="G">Grass</option>
-            <option value="P">Path</option>
-            <option value="B">Blocker</option>
-            <option value="H">House</option>
-            <option value="D">Door</option>
-            <option value="S">Sand</option>
-            <option value="X">Wall</option>
-            <option value="spawn">Spawn</option>
-            <option value="exit">Exit</option>
-            <option value="regular">Regular Encounter</option>
-            <option value="npcEncounter">NPC Encounter</option>
-            <option value="interior">Interior Door</option>
-            <option value="miniboss">Miniboss Encounter</option>
-            <option value="forge">Forge Press</option>
-            <option value="finalBoss">Final Boss Encounter</option>
-            <option value="boss">Boss Encounter</option>
-            <option value="shoot">Shoot Encounter</option>
-            <option value="tree">Tree</option>
-            <option value="npc">NPC</option>
-            <option value="camp">Camp</option>
-            <option value="sign">Sign</option>
-            <option value="rocks">Rocks</option>
-            <option value="erase">Erase Marker</option>
-          </select>
-        </label>
-        <div class="tool-grid" id="quickTools"></div>
+      </div>
+    </section>
 
-        <div class="box">
-          <h2>Encounter</h2>
-          <label>Enemy
-            <select id="encEnemy"></select>
-          </label>
-          <label>Prompt
-            <input id="encPrompt" value="ENCOUNTER?">
-          </label>
-          <div class="field-row">
-            <label>Launch Title
-              <input id="encLaunchTitle" value="ENCOUNTER">
-            </label>
-            <label>Launch Subtitle
-              <input id="encLaunchSubtitle" placeholder="RADSCORP">
-            </label>
-          </div>
-          <div class="field-row">
-            <label>Music
-              <select id="encMusic">
-                <option value="">Map default</option>
-                <option value="NVTH">NVTH boss theme</option>
-                <option value="false">None</option>
-              </select>
-            </label>
-            <label class="check">
-              <input id="encOnce" type="checkbox" checked>
-              Once
-            </label>
-          </div>
-          <label>Shoot Target
-            <input id="shootTarget" value="RADROACH">
-          </label>
-          <div class="field-row">
-            <label>Min Regular
-              <input id="minRegular" type="number" value="2" min="0" max="20">
-            </label>
-            <label>Bullet ID
-              <input id="bulletId" value="SCORCHED">
-            </label>
-          </div>
-          <div class="field-row">
-            <label>NPC Patrol
-              <select id="npcPatrol">
-                <option value="horizontal">Horizontal</option>
-                <option value="vertical">Vertical</option>
-                <option value="still">Still</option>
-              </select>
-            </label>
-            <label>NPC Facing
-              <select id="npcFacing">
-                <option value="right">Right</option>
-                <option value="left">Left</option>
-                <option value="down">Down</option>
-                <option value="up">Up</option>
-              </select>
-            </label>
-          </div>
-          <label>NPC Range
-            <input id="npcRange" type="number" value="3" min="0" max="12">
-          </label>
-          <label>Map Sprite
-            <select id="decorSprite"></select>
-          </label>
-          <div class="field-row">
-            <label>Shop Sprite
-              <select id="shopSprite"></select>
-            </label>
-            <button id="editShopSprite">Edit Shop Sprite</button>
-          </div>
-        </div>
+    <section id="buildView" class="view build-view">
+      <div class="build-head">
+        <div><span class="eyebrow">RUNTIME</span><h1>Build Output</h1></div>
+        <div class="header-actions"><button id="validateProject" class="button secondary" type="button">Validate</button><button id="buildProjectSecondary" class="button primary" type="button">Build Runtime</button></div>
+      </div>
+      <div class="build-grid">
+        <section class="build-section"><h2>Validation</h2><div id="validationList" class="validation-list"></div></section>
+        <section class="build-section"><h2>Files</h2><div id="buildFiles" class="file-table"></div></section>
+        <section class="build-section upload-map"><h2>Pip-Boy Upload</h2><div id="uploadList" class="file-table"></div></section>
+      </div>
+      <div id="buildResult" class="build-result" hidden>
+        <div><strong id="buildResultTitle">BUILD READY</strong><span id="buildResultPath"></span></div>
+        <a id="downloadBuild" class="button primary" href="#">Download ZIP</a>
+      </div>
+    </section>
+  </main>
 
-        <div class="box">
-          <h2>Exit</h2>
-          <div class="field-row">
-            <label>To
-              <input id="exitTo" value="WORLD_02">
-            </label>
-            <label>Facing
-              <select id="exitFacing">
-                <option value="down">Down</option>
-                <option value="up">Up</option>
-                <option value="left">Left</option>
-                <option value="right">Right</option>
-              </select>
-            </label>
-          </div>
-          <div class="field-row">
-            <label>Spawn X
-              <input id="exitX" type="number" value="2">
-            </label>
-            <label>Spawn Y
-              <input id="exitY" type="number" value="2">
-            </label>
-          </div>
-          <label>Required Round
-            <input id="exitRequiredRound" placeholder="SCORCHED">
-          </label>
-          <div class="field-row">
-            <label>Travel Title
-              <input id="exitTravelTitle" value="TRAVELLING">
-            </label>
-            <label>Travel Subtitle
-              <input id="exitTravelSubtitle" placeholder="WORLD_02">
-            </label>
-          </div>
-        </div>
+  <dialog id="assetDialog">
+    <form method="dialog" class="dialog-shell">
+      <div class="dialog-head"><h1>Import Asset</h1><button class="icon-button" value="cancel" type="submit" aria-label="Close">x</button></div>
+      <label class="drop-zone" id="dropZone">
+        <input id="assetFile" type="file" accept=".png,.bmp,.jpg,.jpeg,.img,.bin,.avi,.wav" multiple>
+        <strong>Choose files</strong>
+        <span>PNG / BMP / JPG / IMG / BIN / AVI / WAV</span>
+      </label>
+      <label class="field"><span>FOLDER</span><input id="assetFolder" value="imports" maxlength="32"></label>
+      <div id="importQueue" class="import-queue"></div>
+      <div class="dialog-actions"><button class="button quiet" value="cancel" type="submit">Cancel</button><button id="confirmImport" class="button primary" value="default" type="button">Import</button></div>
+    </form>
+  </dialog>
 
-        <div class="actions">
-          <button id="saveWorld" class="primary">Save World JSON</button>
-          <button id="downloadWorld">Download JSON</button>
-        </div>
-      </section>
-
-      <section class="stage" id="worldStage" data-view-panel="world">
-        <div class="stage-head">
-          <strong id="worldTitle">WORLD_01</strong>
-          <span id="worldReadout">42 x 24</span>
-        </div>
-        <div class="world-grid" id="worldGrid"></div>
-        <textarea id="worldJson" spellcheck="false"></textarea>
-      </section>
-
-      <section class="panel left hidden" id="interiorPanel" data-view-panel="interior">
-        <h2>Interior World Editor</h2>
-        <p class="hint">Build a door encounter that loads the lightweight interior module, lets an NPC confront the player, then hands into battle.</p>
-        <div class="box">
-          <h2>Interior Door</h2>
-          <label>Room Name
-            <input id="interiorRoom" value="SUN KING'S HALL">
-          </label>
-          <label>Door Prompt
-            <input id="interiorPrompt" value="ENTER?">
-          </label>
-          <label>Enemy
-            <select id="interiorEnemy"></select>
-          </label>
-          <label>Enemy Sprite Slot
-            <select id="interiorNpcSprite"></select>
-          </label>
-          <div class="field-row">
-            <label>BPP
-              <select id="interiorSpriteBpp">
-                <option value="1">1</option>
-                <option value="2" selected>2</option>
-                <option value="4">4</option>
-              </select>
-            </label>
-          </div>
-          <label>Upload Enemy Image
-            <input id="interiorSpriteImage" type="file" accept="image/*">
-          </label>
-          <button id="saveInteriorEnemySprite">Convert + Save NPC IMG Slot</button>
-          <label>Confrontation Dialogue
-            <textarea id="interiorDialogue" spellcheck="false">HOW YOU ENJOYING THE RADS?</textarea>
-          </label>
-          <div class="field-row">
-            <label>Fight Text
-              <input id="interiorFightText" value="FIGHT">
-            </label>
-            <label>Flee Text
-              <input id="interiorFleeText" value="FLEE">
-            </label>
-          </div>
-          <div class="field-row">
-            <label>Launch Title
-              <input id="interiorLaunchTitle" value="INTERIOR">
-            </label>
-            <label>Subtitle
-              <input id="interiorLaunchSubtitle" placeholder="SOLOMON RAY">
-            </label>
-          </div>
-          <label class="check">
-            <input id="interiorOnce" type="checkbox" checked>
-            Clear after victory
-          </label>
-        </div>
-        <div class="box">
-          <h2>Placement</h2>
-          <p class="hint">Choose Interior Door here, then click the door tile in World Builder.</p>
-          <div class="actions">
-            <button id="useInteriorTool" class="primary">Use Interior Door Tool</button>
-            <button id="previewInterior">Preview Interior JSON</button>
-          </div>
-        </div>
-      </section>
-
-      <section class="stage hidden" id="interiorStage" data-view-panel="interior">
-        <div class="stage-head">
-          <strong id="interiorTitle">Interior Preview</strong>
-          <span>runtime-light</span>
-        </div>
-        <div class="interior-preview">
-          <div class="room-wall"></div>
-          <div class="room-npc" id="interiorNpcPreview">NPC</div>
-          <div class="room-player">YOU</div>
-          <div class="room-dialogue" id="interiorDialoguePreview">HOW YOU ENJOYING THE RADS?</div>
-        </div>
-        <textarea id="interiorJson" spellcheck="false"></textarea>
-      </section>
-
-      <section class="panel left hidden" id="artPanel" data-view-panel="art">
-        <div class="field-row">
-          <label>Existing World/Art
-            <select id="artSelect"></select>
-          </label>
-          <button id="loadArt">Load</button>
-        </div>
-        <label>Name
-          <input id="artName" value="WORLD_01_ART">
-        </label>
-        <div class="field-row">
-          <label>Preset
-            <select id="artPreset"></select>
-          </label>
-          <button id="loadArtPreset">Use</button>
-        </div>
-        <div class="field-row">
-          <label>Width
-            <input id="artWidth" type="number" min="32" max="255" value="240">
-          </label>
-          <label>Height
-            <input id="artHeight" type="number" min="32" max="255" value="148">
-          </label>
-        </div>
-        <div class="box">
-          <h2>Image To JSON</h2>
-          <label>Image
-            <input id="imageImport" type="file" accept="image/*">
-          </label>
-          <div class="field-row">
-            <label>Fit
-              <select id="imageImportMode">
-                <option value="fit">Fit</option>
-                <option value="crop">Crop</option>
-                <option value="stretch">Stretch</option>
-              </select>
-            </label>
-            <button id="convertImage">Convert</button>
-          </div>
-        </div>
-        <div class="field-row">
-          <label>Brush
-            <select id="artBrush">
-              <option value="0">Black</option>
-              <option value="1">Dim</option>
-              <option value="2">Green</option>
-              <option value="3">Bright</option>
-            </select>
-          </label>
-          <label>Size
-            <input id="artBrushSize" type="number" min="1" max="16" value="3">
-          </label>
-        </div>
-        <div class="field-row">
-          <label>Tool
-            <select id="artTool">
-              <option value="brush">Brush</option>
-              <option value="line">Line</option>
-              <option value="rect">Rectangle</option>
-              <option value="fill">Fill</option>
-            </select>
-          </label>
-          <label>Apply To
-            <select id="artWorld"></select>
-          </label>
-        </div>
-        <div class="actions">
-          <button id="newArt">New Art</button>
-          <button id="clearArt">Clear</button>
-          <button id="saveArt" class="primary">Save IMG + Link World</button>
-          <button id="downloadArtJson">Download Art JSON</button>
-        </div>
-      </section>
-
-      <section class="stage hidden" id="artStage" data-view-panel="art">
-        <div class="stage-head">
-          <strong id="artTitle">WORLD_01_ART</strong>
-          <span id="artReadout">240 x 148</span>
-        </div>
-        <canvas id="artCanvas" width="480" height="296"></canvas>
-        <textarea id="artJson" spellcheck="false"></textarea>
-      </section>
-
-      <section class="panel left hidden" id="spritePanel" data-view-panel="sprite">
-        <div class="box">
-          <h2>Enemy NPC Slots</h2>
-          <p class="hint">Every enemy gets a matching 34x34 IMG sprite slot. Use a slot, upload art, then Save Runtime Sprite.</p>
-          <div id="enemySpriteSlots" class="enemy-slot-list"></div>
-        </div>
-        <div class="field-row">
-          <label>Existing Sprite
-            <select id="spriteSelect"></select>
-          </label>
-          <button id="loadSprite">Load</button>
-        </div>
-        <p class="hint">Player and NPC sprites use 34x34 IMG files for the current low-memory build.</p>
-        <label>Name
-          <input id="spriteName" value="PLAYER_SPRITEUP">
-        </label>
-        <label>Save Scope
-          <select id="spriteScope">
-            <option value="global">Global</option>
-            <option value="world">Current World</option>
-            <option value="npc">NPC IMG</option>
-            <option value="interior">Interior NPC IMG</option>
-          </select>
-        </label>
-        <div class="field-row">
-          <label>Preset
-            <select id="spritePreset"></select>
-          </label>
-          <button id="loadPreset">Use</button>
-        </div>
-        <div class="box">
-          <h2>Import Sprite</h2>
-          <label>Sprite IMG
-            <input id="spriteImgImport" type="file" accept=".img,application/octet-stream">
-          </label>
-          <button id="importSpriteImg">Import IMG</button>
-        </div>
-        <div class="box">
-          <h2>Image To Sprite</h2>
-          <label>Image
-            <input id="spriteImageImport" type="file" accept="image/*">
-          </label>
-          <div class="field-row">
-            <label>Fit
-              <select id="spriteImageMode">
-                <option value="fit">Fit</option>
-                <option value="crop">Crop</option>
-                <option value="stretch">Stretch</option>
-              </select>
-            </label>
-            <button id="convertSpriteImage">Convert</button>
-          </div>
-        </div>
-        <div class="field-row">
-          <label>Width
-            <input id="spriteWidth" type="number" min="8" max="64" value="34">
-          </label>
-          <label>Height
-            <input id="spriteHeight" type="number" min="8" max="64" value="34">
-          </label>
-        </div>
-        <div class="field-row">
-          <label>BPP
-            <select id="spriteBpp">
-              <option value="1">1</option>
-              <option value="2" selected>2</option>
-              <option value="4">4</option>
-            </select>
-          </label>
-          <label>Brush
-            <select id="spriteBrush">
-              <option value="0">0</option>
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-            </select>
-          </label>
-        </div>
-        <div class="actions">
-          <button id="newSprite">New</button>
-          <button id="newNpcSprite">New NPC</button>
-          <button id="mirrorSprite">Mirror</button>
-          <button id="invertSprite">Invert</button>
-          <button id="saveSprite" class="primary">Save Runtime Sprite</button>
-          <button id="saveSpriteLocal">Save Local Copy</button>
-          <button id="downloadSprite">Download IMG</button>
-        </div>
-      </section>
-
-      <section class="stage hidden" id="spriteStage" data-view-panel="sprite">
-        <div class="stage-head">
-          <strong id="spriteTitle">PLAYER_SPRITEUP</strong>
-          <span id="spriteReadout">12 x 14</span>
-        </div>
-        <div class="sprite-grid" id="spriteGrid"></div>
-        <textarea id="spriteCode" spellcheck="false"></textarea>
-      </section>
-
-      <section class="panel left hidden" id="battleScenePanel" data-view-panel="battleScene">
-        <div class="box">
-          <h2>Encounter Battle UI</h2>
-          <p class="hint">Pick an enemy, then edit only that enemy's command labels, prompts, pause labels, and videos. Player stats, weapon data, and confrontation sprites stay in their own systems.</p>
-          <label>Enemy
-            <select id="battleEnemySelect"></select>
-          </label>
-          <div class="field-row">
-            <label>Name
-              <input id="battleEnemyName" value="SOLOMON RAY">
-            </label>
-            <label>Folder
-              <input id="battleFolder" placeholder="Granny">
-            </label>
-          </div>
-          <div class="field-row">
-            <label>Level
-              <input id="battleLevel" type="number" min="1" max="99" value="7">
-            </label>
-            <label>Max HP
-              <input id="battleMaxHp" type="number" min="1" max="999" value="95">
-            </label>
-          </div>
-          <div class="field-row">
-            <label>XP
-              <input id="battleXp" type="number" min="0" max="999" value="55">
-            </label>
-            <label>Melee Power
-              <input id="battleMeleePower" type="number" min="0" max="99" value="0">
-            </label>
-          </div>
-          <div class="field-row">
-            <label>Rad Amount, Seconds
-              <input id="battleRad" placeholder="1,4">
-            </label>
-            <label>DOT Amount, Seconds
-              <input id="battleDot" placeholder="3,5">
-            </label>
-          </div>
-          <label class="check">
-            <input id="battleMelee" type="checkbox">
-            Force melee flow
-          </label>
-          <label class="check">
-            <input id="battleReload" type="checkbox">
-            Enemy reload choice
-          </label>
-          <label>Video Overrides: idle,start,enemyFaint,playerFaint,victory,defeat
-            <input id="battleVideos" placeholder="BATTLE_IDLE.avi,BATTLE_START.avi,ENEMY_FAINT.avi,PLAYER_FAINT.avi,VICTORY.avi,DEFEAT.avi">
-          </label>
-          <h3>Command UI</h3>
-          <div class="field-row">
-            <label>Menu Prompt
-              <input id="battlePrompt" value="CHOOSE AN ACTION">
-            </label>
-            <label>Reload Prompt
-              <input id="battleReloadPrompt" value="SLASH NOW">
-            </label>
-          </div>
-          <div class="field-row">
-            <label>Attack Button
-              <input id="battleAttackLabel" placeholder="leave blank for weapon move">
-            </label>
-            <label>Stim Button
-              <input id="battleStimLabel" value="STIMPAK">
-            </label>
-          </div>
-          <div class="field-row">
-            <label>Reload Attack
-              <input id="battleReloadAttackLabel" value="SLASH">
-            </label>
-            <label>Reload Stim
-              <input id="battleReloadStimLabel" value="STIMPAK">
-            </label>
-          </div>
-          <div class="field-row">
-            <label>Attack Detail
-              <input id="battleAttackDetail" value="DMG {dmg}">
-            </label>
-            <label>Stim Detail
-              <input id="battleStimDetail" value="HEAL {heal} x{st}">
-            </label>
-          </div>
-          <div class="field-row">
-            <label>Enemy Reload Text
-              <input id="battleEnemyReload" value="ENEMY RELOADS">
-            </label>
-            <label>Reload Attack Text
-              <input id="battleReloadAttackMsg" value="KEEP SLASHING">
-            </label>
-          </div>
-          <h3>Battle Pause</h3>
-          <div class="field-row">
-            <label>Resume
-              <input id="battlePauseResume" value="RESUME">
-            </label>
-            <label>Save
-              <input id="battlePauseSave" value="SAVE LOCATION">
-            </label>
-          </div>
-          <div class="field-row">
-            <label>Exit
-              <input id="battlePauseExit" value="EXIT GAME">
-            </label>
-            <label>Footer Note
-              <input id="battlePauseNote" value="TURN WHEEL / PRESS TO SELECT">
-            </label>
-          </div>
-          <pre id="battleUiPreview"></pre>
-          <div class="actions">
-            <button id="loadBattleEnemy">Load Enemy UI</button>
-            <button id="saveBattleEnemy" class="primary">Save Battle UI</button>
-          </div>
-        </div>
-
-      </section>
-
-      <section class="stage hidden" id="battleSceneStage" data-view-panel="battleScene">
-        <div class="stage-head">
-          <strong>Current Big Iron Battle UI Preview</strong>
-          <span>480 x 320 runtime layout</span>
-        </div>
-        <canvas id="battleRuntimeCanvas" width="480" height="320"></canvas>
-      </section>
-
-      <section class="panel left hidden" id="itemsPanel" data-view-panel="items">
-        <div class="box">
-          <h2>Object Window</h2>
-          <div class="field-row">
-            <label>Items
-              <select id="itemSelect"></select>
-            </label>
-            <button id="loadItem">Load</button>
-          </div>
-          <button id="newItem">New Item</button>
-        </div>
-
-        <div class="box">
-          <h2>Item Settings</h2>
-          <label>Name
-            <input id="itemName" value="Stimpak">
-          </label>
-          <div class="field-row">
-            <label>Kind
-              <select id="itemKind">
-                <option value="aid">Aid / Healing</option>
-                <option value="weapon">Weapon</option>
-                <option value="ammo">Ammo / Key</option>
-                <option value="misc">Misc Loot</option>
-              </select>
-            </label>
-            <label>Effect
-              <select id="itemEffect">
-                <option value="heal">Heal</option>
-                <option value="damage">Damage</option>
-                <option value="key">Story Key</option>
-                <option value="quest">Quest Item</option>
-                <option value="none">None</option>
-              </select>
-            </label>
-          </div>
-          <div class="field-row">
-            <label>Damage
-              <input id="itemDamage" type="number" min="0" value="0">
-            </label>
-            <label>Count
-              <input id="itemCount" type="number" min="1" value="1">
-            </label>
-          </div>
-          <label>Drop Chance
-            <input id="itemChance" type="number" min="0" max="1" step="0.05" value="1">
-          </label>
-        </div>
-
-        <div class="box">
-          <h2>Real Pip-Boy Write</h2>
-          <p class="hint">Leave Real Item ID blank for a new custom item. Use known Fallout IDs for real items like Stimpak.</p>
-          <div class="field-row">
-            <label>Category
-              <select id="itemCat">
-                <option value="">Auto</option>
-                <option value="AID">AID</option>
-                <option value="WEAPONS">WEAPONS</option>
-                <option value="AMMO">AMMO</option>
-                <option value="MISC">MISC</option>
-              </select>
-            </label>
-            <label>Real Item ID
-              <input id="itemRealId" placeholder="auto">
-            </label>
-          </div>
-          <label>Icon IMG/BMP/PNG
-            <input id="itemIcon" type="file" accept=".img,.bmp,.png,image/png,image/bmp,application/octet-stream">
-          </label>
-        </div>
-
-        <div class="actions">
-          <button id="saveItem" class="primary">Save Item</button>
-          <button id="downloadItems">Download ITEMS.JSON</button>
-        </div>
-      </section>
-
-      <section class="stage hidden" id="itemsStage" data-view-panel="items">
-        <div class="stage-head">
-          <strong id="itemTitle">ITEM</strong>
-          <span id="itemReadout">ready</span>
-        </div>
-        <div class="geck-board">
-          <div class="geck-card">
-            <strong>Preview</strong>
-            <div class="item-icon-preview" id="itemIconPreview">ICON</div>
-            <p id="itemPreviewText">Set a name and effect, then save.</p>
-          </div>
-          <div class="geck-card">
-            <strong>Reward Snippet</strong>
-            <textarea id="itemRewardSnippet" spellcheck="false" readonly></textarea>
-          </div>
-        </div>
-        <textarea id="itemJson" spellcheck="false"></textarea>
-      </section>
-
-      <section class="panel wide hidden" id="packagePanel" data-view-panel="media">
-        <h2>Media & Build</h2>
-        <p class="hint">Use this as the Big Iron build dock: upload paths, conversion targets, and media size checks in one place.</p>
-        <div class="geck-board">
-          <div class="geck-card">
-            <strong>Media Inventory</strong>
-            <div id="mediaReadout" class="media-list">Loading media...</div>
-          </div>
-          <div class="geck-card">
-            <strong>Conversion Targets</strong>
-            <pre id="converterNotes"></pre>
-          </div>
-        </div>
-        <pre id="packageNotes"></pre>
-      </section>
-    </main>
-  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="core.js"></script>
+  <script src="runtime-templates.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

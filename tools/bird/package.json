@@ -1,10 +1,11 @@
 {
   "name": "big-iron-render-dock",
-  "version": "0.1.0",
+  "version": "2.0.0",
   "private": true,
-  "description": "B.I.R.D. - Big Iron Render Dock for world, encounter, and sprite authoring.",
+  "description": "B.I.R.D. 2 - memory-aware Big Iron world, interior, NPC, dialogue, and asset editor.",
   "scripts": {
     "start": "node server.js",
-    "check": "node --check server.js && node --check public/app.js && node server.js --check"
+    "check": "node --check server.js && node --check public/app.js && node scripts/build.js && node server.js --check",
+    "build": "node scripts/build.js"
   }
 }

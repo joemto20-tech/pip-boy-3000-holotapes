@@ -1,2263 +1,1054 @@
-"use strict";
+(function () {
+  "use strict";
 
-const $ = (id) => document.getElementById(id);
-const state = {
-  info: null,
-  world: null,
-  painting: false,
-  sprite: null,
-  spritePainting: false,
-  items: {},
-  itemIconData: "",
-  itemIconName: "",
-  art: null,
-  artPainting: false,
-  artStart: null
-};
-
-const quickTools = [
-  ["G", "Grass"], ["P", "Path"], ["B", "Block"], ["H", "House"], ["D", "Door"], ["S", "Sand"],
-  ["spawn", "Spawn"], ["exit", "Exit"], ["regular", "Regular"], ["npcEncounter", "NPC Enc"], ["interior", "Interior"], ["boss", "Boss"], ["shoot", "Shoot"], ["shop", "Shop"], ["erase", "Erase"],
-  ["tree", "Tree"], ["npc", "NPC"], ["camp", "Camp"], ["sign", "Sign"], ["rocks", "Rocks"]
-];
-
-const PLAYER_SPRITE_WIDTH = 34;
-const PLAYER_SPRITE_HEIGHT = 34;
-const PLAYER_SPRITE_BPP = 2;
-const BATTLE_UI_DEFAULTS = {
-  prompt: "CHOOSE AN ACTION",
-  reloadPrompt: "SLASH NOW",
-  attack: "",
-  stim: "STIMPAK",
-  reloadAttack: "SLASH",
-  reloadStim: "STIMPAK",
-  attackDetail: "DMG {dmg}",
-  stimDetail: "HEAL {heal} x{st}",
-  enemyReload: "ENEMY RELOADS",
-  reloadAttackMsg: "KEEP SLASHING",
-  pauseResume: "RESUME",
-  pauseSave: "SAVE LOCATION",
-  pauseExit: "EXIT GAME",
-  pauseNote: "TURN WHEEL / PRESS TO SELECT"
-};
-const DEFAULT_LIMITS = {
-  worldJsonBytes: 2800,
-  rows: 32,
-  cols: 48,
-  interacts: 18,
-  decor: 36,
-  exits: 8,
-  artWidth: 255,
-  artHeight: 255,
-  playerSpriteBytes: 304,
-  spriteBytes: 1536,
-  videoBytes: 450000
-};
-const DEFAULT_WORLD_DEFINITIONS = [
-  { id: "WORLD_01", name: "Sunscar", miniboss: "Solomon Ray", round: "SCORCHED", unlocks: "WORLD_02" },
-  { id: "WORLD_02", name: "Dogtown Heights", miniboss: "Danner Cole", round: "HOUND", unlocks: "WORLD_03" },
-  { id: "WORLD_03", name: "Crown Junction", miniboss: "Odessa Crown", round: "CROWN", unlocks: "WORLD_04" },
-  { id: "WORLD_04", name: "The Broken Arch", miniboss: "Captain Mordecai Flint", round: "RIVER", unlocks: "WORLD_05" },
-  { id: "WORLD_05", name: "The Black Loop", miniboss: "Warden Elias Black", round: "BLACK", unlocks: "WORLD_06" },
-  { id: "WORLD_06", name: "Vale's World", miniboss: "Harlan Vale", round: "COURIER", unlocks: "" }
-];
-function worldFriendlyName(id) {
-  const key = cleanId(id || "WORLD_01");
-  if (key === "WORLD_01") return "Sunscar";
-  if (key === "WORLD_02") return "Dogtown Heights";
-  if (key === "WORLD_03") return "Crown Junction";
-  if (key === "WORLD_04") return "The Broken Arch";
-  if (key === "WORLD_05") return "The Black Loop";
-  if (key === "WORLD_06") return "Vale's World";
-  return key.replace(/_/g, " ");
-}
-
-const spritePresets = {
-  blank: { label: "Blank 34x34", width: PLAYER_SPRITE_WIDTH, height: PLAYER_SPRITE_HEIGHT, bpp: PLAYER_SPRITE_BPP, pixels: null },
-  pocketHero: { label: "Pocket RPG Hero", width: 16, height: 16, bpp: 4, rows: [
-    "0000008888000000", "000008AAAA800000", "00008ABBBBBA0000", "0008ABBBBBBA0000",
-    "0008FFFCCFFF0000", "000FDDDDDDDF0000", "000FDDCDCDDF0000", "0000FDDDDDF00000",
-    "000007EEEE700000", "000077E99E770000", "00077E9999E77000", "00070E9999E07000",
-    "00000EEEEEE00000", "0000066666600000", "0000660006600000", "0006600000660000"
-  ] },
-  vaultWanderer: { label: "Vault Wanderer", width: 16, height: 16, bpp: 4, rows: [
-    "0000008888000000", "000008AAAA800000", "00008AFFFFA80000", "0008FFCCCCFF0000",
-    "000FCDDDDDCF0000", "000FCD9D9DCF0000", "0000FCDDDCF00000", "000007FFFF700000",
-    "000077BBBB770000", "0007BB2222BB7000", "0007B25552B7000", "0000B25552B00000",
-    "0000025552000000", "0000066666000000", "0000660006600000", "0006600000660000"
-  ] },
-  courierDuster: { label: "Courier Duster", width: 16, height: 16, bpp: 4, rows: [
-    "0000008888000000", "000008AAAA800000", "00008AFFFFA80000", "0008FFCCCCFF0000",
-    "000FCDDDDDCF0000", "000FCD9D9DCF0000", "0000FCDDDCF00000", "0000077777000000",
-    "0000776666770000", "0007663333667000", "0007633333367000", "0007633E33367000",
-    "0000033333000000", "0000066666000000", "0000660006600000", "0006600000660000"
-  ] },
-  armoredCourier: { label: "Armored Courier", width: 16, height: 16, bpp: 4, rows: [
-    "0000008888000000", "000008AAAA800000", "00008AFFFFA80000", "0008FFCCCCFF0000",
-    "000FCDDDDDCF0000", "000FCD9D9DCF0000", "0000FCDDDCF00000", "000007BBBB700000",
-    "00007BEEEEB70000", "0007BEE44EEB7000", "0007BE4CC4EB7000", "0000BE4CC4EB0000",
-    "00000EEEEEE00000", "0000066666600000", "0000660006600000", "0006600000660000"
-  ] },
-  vaultScout: { label: "Vault Scout", width: 16, height: 16, bpp: 4, rows: [
-    "0000008888000000", "000008AAAA800000", "00008AFFFFA80000", "0008FFCCCCFF0000",
-    "000FCDDDDDCF0000", "000FCD9D9DCF0000", "0000FCDDDCF00000", "0000072227000000",
-    "0000772222770000", "0007225555227000", "0007225EE5227000", "0000725555270000",
-    "0000025552000000", "0000066666000000", "0000660006600000", "0006600000660000"
-  ] },
-  wastelandMedic: { label: "Wasteland Medic", width: 16, height: 16, bpp: 4, rows: [
-    "0000008888000000", "000008AAAA800000", "00008AFFFFA80000", "0008FFCCCCFF0000",
-    "000FCDDDDDCF0000", "000FCD9D9DCF0000", "0000FCDDDCF00000", "000007FFFF700000",
-    "0000777777770000", "0007FF7777FF7000", "0007F77DD77F7000", "0000F77DD77F0000",
-    "0000077777700000", "0000066666600000", "0000660006600000", "0006600000660000"
-  ] },
-  raiderRunner: { label: "Raider Runner", width: 16, height: 16, bpp: 4, rows: [
-    "0000008888000000", "000008AAAA800000", "00008AFFFFA80000", "0008FFCCCCFF0000",
-    "000FCDDDDDCF0000", "000FCD9D9DCF0000", "0000FCDDDCF00000", "0000073337000000",
-    "0000773BB3770000", "000733B33B37000", "00073BB33BB7000", "0000733333370000",
-    "0000033333000000", "0000066666000000", "0000660006600000", "0006600000660000"
-  ] },
-  ghoulDrifter: { label: "Ghoul Drifter", width: 16, height: 16, bpp: 4, rows: [
-    "0000007777000000", "0000079999700000", "000079AAAA970000", "0007AA9999AA0000",
-    "000A9666669A0000", "000A9696969A0000", "0000A96669A00000", "0000073337000000",
-    "0000776666770000", "0007663333667000", "0007633B33367000", "0000633333360000",
-    "0000033333000000", "0000066666000000", "0000660006600000", "0006600000660000"
-  ] },
-  brotherhoodSquire: { label: "Brotherhood Squire", width: 16, height: 16, bpp: 4, rows: [
-    "0000008888000000", "000008AAAA800000", "00008AFFFFA80000", "0008FFCCCCFF0000",
-    "000FCDDDDDCF0000", "000FCD9D9DCF0000", "0000FCDDDCF00000", "000007EEEE700000",
-    "00007E4444E70000", "0007E44BB44E7000", "0007E4BEEB4E7000", "0000E44BB44E0000",
-    "0000044444400000", "0000066666600000", "0000660006600000", "0006600000660000"
-  ] },
-  trailSheriff: { label: "Trail Sheriff", width: 16, height: 16, bpp: 4, rows: [
-    "0000008888000000", "000008AAAA800000", "00008AFFFFA80000", "0008FFCCCCFF0000",
-    "000FCDDDDDCF0000", "000FCD9D9DCF0000", "0000FCDDDCF00000", "0000077777000000",
-    "0000776666770000", "0007663333667000", "0007633E33367000", "0007633333367000",
-    "0000033E33000000", "0000066666000000", "0000660006600000", "0006600000660000"
-  ] },
-  ranger: { label: "Ranger", width: 16, height: 16, rows: [
-    "0003333333330000", "0032222222223000", "0322222222222300", "3222222222222230",
-    "3222211111222230", "3222110011222230", "3222110011222230", "0322111111222300",
-    "0032221111223000", "0032222222223000", "0322202222022300", "3222202200222230",
-    "3222022200222230", "0320022002202300", "0030022002203000", "0003330033330000"
-  ] },
-  radroach: { label: "Radroach", width: 16, height: 16, rows: [
-    "0000003300000000", "0000032233000000", "0003222222330000", "0032222222223000",
-    "0322202220222300", "3222022222202230", "3222223333222230", "0322233333322300",
-    "0032233333323000", "0322223333222300", "3222022222202230", "0322202220222300",
-    "0030022002203000", "0300200000220300", "3003000000030030", "0000000000000000"
-  ] },
-  tree: { label: "Tree", width: 16, height: 16, rows: [
-    "0000003300000000", "0000033333000000", "0000333333300000", "0003333333330000",
-    "0033333333333000", "0000333333300000", "0000333333300000", "0000033333000000",
-    "0000003330000000", "0000003230000000", "0000003230000000", "0000003230000000",
-    "0000003230000000", "0000033333000000", "0000000000000000", "0000000000000000"
-  ] },
-  camp: { label: "Camp", width: 16, height: 16, rows: [
-    "0000000000000000", "0000000300000000", "0000003330000000", "0000033233000000",
-    "0000332223300000", "0003322222330000", "0033222222233000", "0332222222223300",
-    "0033333333333000", "0000300300300000", "0003330033330000", "0033000000033000",
-    "0330000000003300", "0000000000000000", "0000000000000000", "0000000000000000"
-  ] }
-};
-
-const artPresets = {
-  blank: { label: "Blank", make: (w, h) => Array(w * h).fill(0) },
-  desertTrail: { label: "Desert Trail", make: (w, h) => landscapeArt(w, h, "desertTrail") },
-  ruinedTown: { label: "Ruined Town", make: (w, h) => landscapeArt(w, h, "ruinedTown") },
-  canyonPass: { label: "Canyon Pass", make: (w, h) => landscapeArt(w, h, "canyonPass") },
-  vaultRoad: { label: "Vault Road", make: (w, h) => landscapeArt(w, h, "vaultRoad") },
-  dryRiver: { label: "Dry River", make: (w, h) => landscapeArt(w, h, "dryRiver") },
-  railYard: { label: "Rail Yard", make: (w, h) => landscapeArt(w, h, "railYard") },
-  irradiatedPond: { label: "Irradiated Pond", make: (w, h) => landscapeArt(w, h, "irradiatedPond") },
-  nightCamp: { label: "Night Camp", make: (w, h) => landscapeArt(w, h, "nightCamp") },
-  caveMouth: { label: "Cave Mouth", make: (w, h) => landscapeArt(w, h, "caveMouth") }
-};
-
-function setStatus(text, bad) {
-  $("status").textContent = text;
-  $("status").style.color = bad ? "var(--red)" : "var(--amber)";
-}
-
-async function api(path, options) {
-  const response = await fetch(path, options);
-  const body = await response.json();
-  if (!body.ok) throw new Error(body.error || "B.I.R.D. request failed.");
-  return body;
-}
-
-function rows(width, height, fill) {
-  return Array.from({ length: height }, () => fill.repeat(width));
-}
-
-function newWorld(id = "WORLD_01", width = 42, height = 24) {
-  state.world = {
-    id,
-    name: $("worldName") && $("worldName").value ? $("worldName").value : worldFriendlyName(id),
-    tile: 16,
-    scale: 24,
-    spawn: [2, 2],
-    rows: rows(width, height, "G"),
-    interacts: [],
-    exits: [],
-    decor: []
+  var Core = window.BirdCore;
+  var Runtime = window.BirdRuntimeTemplates;
+  var state = {
+    project: null,
+    assets: [],
+    assetMap: {},
+    view: "world",
+    sceneKind: "world",
+    sceneId: "",
+    selectedEntityId: "",
+    npcRef: null,
+    dialogueId: "",
+    nodeId: "",
+    assetId: "",
+    tool: "select",
+    zoom: 60,
+    brush: 1,
+    dirty: false,
+    drawing: null,
+    backgroundCache: {},
+    backgroundErrors: {},
+    spriteCache: {},
+    collisionCache: {},
+    history: [],
+    redo: [],
+    importFiles: [],
+    convert: { preset: "npc", fit: "contain", low: 54, high: 126, bright: 205, height: 456, outputName: "" },
+    lastBuild: null,
+    toastTimer: 0
   };
-  renderWorld();
-}
 
-function selectedWorldFile() {
-  return `${cleanId($("worldId").value || state.world && state.world.id || "WORLD_NEW")}.JSON`;
-}
-
-function ensureOption(select, value, label) {
-  if (!select || !value) return;
-  if (![...select.options].some((option) => option.value === value)) {
-    select.insertAdjacentHTML("beforeend", `<option value="${value}">${label || value}</option>`);
+  function $(id) { return Core.byId(id); }
+  function html(value) { return Core.escapeHtml(value); }
+  function clone(value) { return Core.deepCopy(value); }
+  function currentCollection() { return state.sceneKind === "world" ? state.project.maps : state.project.interiors; }
+  function currentScene() { return currentCollection().find(function (item) { return item.id === state.sceneId; }) || currentCollection()[0] || null; }
+  function selectedEntity() {
+    var scene = currentScene();
+    return scene && (scene.entities || []).find(function (entity) { return entity.id === state.selectedEntityId; }) || null;
   }
-  select.value = value;
-}
-
-function showView(view) {
-  document.querySelectorAll(".tab").forEach((tab) => tab.classList.toggle("active", tab.dataset.view === view));
-  document.querySelectorAll("[data-view-panel]").forEach((panel) => panel.classList.toggle("hidden", panel.dataset.viewPanel !== view));
-}
-
-function artJsonForWorld(world) {
-  const id = cleanId(world && world.id || world && world.file || "WORLD_ART");
-  return world && world.image ? world.image.replace(/\.IMG$/i, ".JSON") : `${id}_ART.JSON`;
-}
-
-function worldFileForArt(name) {
-  const base = cleanId(String(name || "").replace(/\.JSON$/i, "").replace(/_ART$/i, ""));
-  return state.info && state.info.worlds && state.info.worlds.includes(`${base}.JSON`) ? `${base}.JSON` : "";
-}
-
-function worldWidth() {
-  return state.world && state.world.rows[0] ? state.world.rows[0].length : 42;
-}
-
-function worldHeight() {
-  return state.world && state.world.rows ? state.world.rows.length : 24;
-}
-
-function limits() {
-  return { ...DEFAULT_LIMITS, ...(state.info && state.info.limits || {}) };
-}
-
-function worldDefinitions() {
-  return state.info && state.info.worldDefinitions && state.info.worldDefinitions.length
-    ? state.info.worldDefinitions
-    : DEFAULT_WORLD_DEFINITIONS;
-}
-
-function compactWorldEstimate(world) {
-  if (!world) return "";
-  const copy = JSON.parse(JSON.stringify(world));
-  const clean = (item) => {
-    if (!item || typeof item !== "object") return item;
-    ["storyCity", "storyType", "lockedMsg", "bulletName", "miniboss", "finalBoss", "bullet", "requiresRound", "music"].forEach((key) => delete item[key]);
-    if (item.w === 1) delete item.w;
-    if (item.h === 1) delete item.h;
-    if (item.minRegular === 2) delete item.minRegular;
-    return item;
-  };
-  delete copy.tile;
-  delete copy.scale;
-  if (Array.isArray(copy.interacts)) copy.interacts = copy.interacts.map(clean);
-  if (Array.isArray(copy.exits)) copy.exits.forEach(clean);
-  if (Array.isArray(copy.decor)) copy.decor.forEach(clean);
-  return JSON.stringify(copy) + "\n";
-}
-
-function byteSize(text) {
-  return new Blob([text || ""]).size;
-}
-
-function budgetMetric(label, value, max) {
-  const pct = max ? Math.min(100, Math.round(value * 100 / max)) : 0;
-  const stateClass = pct >= 100 ? "bad" : pct >= 85 ? "warn" : "";
-  return `<div class="budget-line ${stateClass}">
-    <span>${label}</span><strong>${value}/${max}</strong>
-    <div class="meter"><i style="width:${pct}%"></i></div>
-  </div>`;
-}
-
-function worldBudget(world = state.world) {
-  const lim = limits();
-  return {
-    bytes: byteSize(compactWorldEstimate(world)),
-    cols: world && world.rows && world.rows[0] ? world.rows[0].length : 0,
-    rows: world && world.rows ? world.rows.length : 0,
-    interacts: world && world.interacts ? world.interacts.length : 0,
-    decor: world && world.decor ? world.decor.length : 0,
-    exits: world && world.exits ? world.exits.length : 0,
-    limits: lim
-  };
-}
-
-function budgetOk(world = state.world) {
-  const b = worldBudget(world);
-  return b.bytes <= b.limits.worldJsonBytes &&
-    b.cols <= b.limits.cols &&
-    b.rows <= b.limits.rows &&
-    b.interacts <= b.limits.interacts &&
-    b.decor <= b.limits.decor &&
-    b.exits <= b.limits.exits;
-}
-
-function renderWorldBudget() {
-  if (!$("worldBudgetBars") || !state.world) return;
-  const b = worldBudget();
-  $("worldBudgetBars").innerHTML = [
-    budgetMetric("Runtime JSON", b.bytes, b.limits.worldJsonBytes),
-    budgetMetric("Columns", b.cols, b.limits.cols),
-    budgetMetric("Rows", b.rows, b.limits.rows),
-    budgetMetric("Encounters", b.interacts, b.limits.interacts),
-    budgetMetric("Decor", b.decor, b.limits.decor),
-    budgetMetric("Exits", b.exits, b.limits.exits)
-  ].join("");
-  $("worldBudgetHint").textContent = budgetOk() ? "Good for the current low-memory build." : "Over budget. Remove encounters/decor or split this map into another world/interior.";
-}
-
-function renderWorldIndex() {
-  if (!$("worldCards")) return;
-  const lim = limits();
-  const details = new Map((state.info && state.info.worldDetails || []).map((world) => [world.id, world]));
-  $("limitReadout").innerHTML = [
-    `World JSON ${lim.worldJsonBytes} bytes`,
-    `Grid ${lim.cols} x ${lim.rows}`,
-    `${lim.interacts} encounters`,
-    `${lim.decor} decor`,
-    `${lim.exits} exits`,
-    `Player sprites 34x34 IMG`
-  ].map((line) => `<span>${line}</span>`).join("");
-  const cards = worldDefinitions().map((def) => {
-    const detail = details.get(def.id) || { id: def.id, file: `${def.id}.JSON`, name: def.name, size: 0, rows: 0, cols: 0, interacts: 0, decor: 0, exits: 0 };
-    const over = detail.size > lim.worldJsonBytes || detail.rows > lim.rows || detail.cols > lim.cols || detail.interacts > lim.interacts || detail.decor > lim.decor || detail.exits > lim.exits;
-    return `<button class="world-card ${over ? "bad" : ""}" data-world="${detail.file || `${def.id}.JSON`}">
-      <strong>${def.id} - ${detail.name || def.name}</strong>
-      <span>${def.miniboss || "Final"} / ${def.round || ""}</span>
-      <em>${detail.size || 0}/${lim.worldJsonBytes} bytes - ${detail.interacts || 0} enc - ${detail.decor || 0} decor</em>
-      <small>${def.unlocks ? `Unlocks ${def.unlocks}` : "Final world"}</small>
-    </button>`;
-  }).join("");
-  $("worldCards").innerHTML = cards;
-  $("worldIndexReadout").textContent = `${worldDefinitions().length} worlds`;
-}
-
-function objectAt(list, x, y) {
-  return (list || []).find((item) => item && item.x === x && item.y === y);
-}
-
-function decorMark(type) {
-  return { tree: "T", npc: "N", camp: "C", sign: "S", rocks: "R" }[type] || "?";
-}
-
-function encounterMark(item) {
-  if (!item) return "";
-  if (item.type === "shoot") return "SH";
-  if (item.boss) return "B!";
-  if (item.npc) return "N!";
-  return "E";
-}
-
-function renderWorld() {
-  const world = state.world;
-  if (!world) return;
-  const grid = $("worldGrid");
-  const width = worldWidth();
-  const height = worldHeight();
-  const cells = [];
-  grid.style.gridTemplateColumns = `repeat(${width}, 16px)`;
-  for (let y = 0; y < height; y += 1) {
-    for (let x = 0; x < width; x += 1) {
-      const tile = (world.rows[y][x] || "G").toLowerCase();
-      const interact = objectAt(world.interacts, x, y);
-      const exit = objectAt(world.exits, x, y);
-      const decor = objectAt(world.decor, x, y);
-      const isSpawn = world.spawn && world.spawn[0] === x && world.spawn[1] === y;
-      const mark = exit ? ">" : interact ? encounterMark(interact) : decor ? decorMark(decor.type) : "";
-      cells.push(`<div class="cell ${tile}${isSpawn ? " spawn" : ""}" data-x="${x}" data-y="${y}" data-mark="${mark}"></div>`);
+  function effectiveAsset(asset) {
+    if (!asset) return null;
+    var override = state.project.assetSettings && state.project.assetSettings[asset.id] || {};
+    return Object.assign({}, asset, override);
+  }
+  function assetById(id) { return effectiveAsset(state.assetMap[id]); }
+  function sceneKey(scene) { return (scene.kind === "interior" ? "interior:" : "world:") + scene.id; }
+  function markDirty() {
+    state.dirty = true;
+    $("saveState").textContent = "UNSAVED";
+    $("saveState").className = "save-state dirty";
+    updateBudgets();
+  }
+  function markSaved() {
+    state.dirty = false;
+    $("saveState").textContent = "SAVED";
+    $("saveState").className = "save-state saved";
+  }
+  function toast(message, error) {
+    var element = $("toast");
+    element.textContent = message;
+    element.className = "toast show" + (error ? " error" : "");
+    if (state.toastTimer) clearTimeout(state.toastTimer);
+    state.toastTimer = setTimeout(function () { element.className = "toast"; }, 3200);
+  }
+  function setPath(object, path, value) {
+    var parts = path.split(".");
+    var target = object;
+    for (var index = 0; index < parts.length - 1; index += 1) {
+      if (!target[parts[index]] || typeof target[parts[index]] !== "object") target[parts[index]] = {};
+      target = target[parts[index]];
     }
+    target[parts[parts.length - 1]] = value;
   }
-  grid.innerHTML = cells.join("");
-  $("worldTitle").textContent = world.id;
-  $("worldId").value = world.id;
-  $("worldName").value = world.name || worldFriendlyName(world.id);
-  $("worldCols").value = width;
-  $("worldRows").value = height;
-  $("worldReadout").textContent = `${width} x ${height} - ${world.interacts.length} encounters`;
-  $("worldJson").value = JSON.stringify(world, null, 2);
-  renderWorldBudget();
-}
-
-function cleanId(value) {
-  return String(value || "WORLD_01").replace(/[^a-z0-9_]+/gi, "_").replace(/^_+|_+$/g, "").toUpperCase() || "WORLD_01";
-}
-
-function itemKey(value) {
-  return cleanId(value || "ITEM");
-}
-
-function itemCat(kind, effect, selected) {
-  if (selected) return selected;
-  if (kind === "weapon") return "WEAPONS";
-  if (kind === "ammo" || effect === "key") return "AMMO";
-  if (kind === "aid" || effect === "heal") return "AID";
-  return "MISC";
-}
-
-function currentItemForm() {
-  const name = ($("itemName").value || "Item").trim();
-  const kind = $("itemKind").value || "misc";
-  const effect = $("itemEffect").value || (kind === "weapon" ? "damage" : "none");
-  const count = Math.max(1, Number($("itemCount").value) || 1);
-  const damage = Math.max(0, Number($("itemDamage").value) || 0);
-  const chance = Math.max(0, Math.min(1, Number($("itemChance").value || 1)));
-  const key = itemKey(name);
-  const item = {
-    key,
-    id: `BIGIRON_${key}`,
-    name,
-    kind,
-    effect,
-    cat: itemCat(kind, effect, $("itemCat").value),
-    realId: $("itemRealId").value.trim(),
-    cnt: count,
-    min: count,
-    max: count,
-    chance
-  };
-  if (kind === "weapon" || damage > 0) item.damage = damage;
-  return item;
-}
-
-function renderItem() {
-  if (!$("itemJson")) return;
-  const item = currentItemForm();
-  const preview = { ...item };
-  if (!preview.realId) preview.realId = "auto";
-  $("itemTitle").textContent = item.key;
-  $("itemReadout").textContent = `${item.kind.toUpperCase()} / ${item.effect.toUpperCase()}`;
-  $("itemPreviewText").textContent = item.kind === "weapon"
-    ? `${item.name} writes as ${item.cat} and deals ${item.damage || 0} damage.`
-    : `${item.name} writes as ${item.cat} with ${item.effect} effect.`;
-  $("itemRewardSnippet").value = JSON.stringify({ item: item.key, chance: item.chance }, null, 2);
-  $("itemJson").value = JSON.stringify(preview, null, 2);
-  const icon = $("itemIconPreview");
-  if (state.itemIconData && state.itemIconData.startsWith("data:image/")) {
-    icon.innerHTML = `<img alt="" src="${state.itemIconData}">`;
-  } else if (state.items[item.key] && state.items[item.key].icon) {
-    icon.textContent = state.items[item.key].icon;
-  } else {
-    icon.textContent = "ICON";
+  function inputValue(input) {
+    if (input.type === "checkbox") return input.checked;
+    if (input.type === "number" || input.dataset.number === "1") return Number(input.value) || 0;
+    return input.value;
   }
-}
-
-function enemyById(id) {
-  const key = cleanId(id || $("battleEnemySelect").value || "");
-  return (state.info && state.info.enemies || []).find((enemy) => cleanId(enemy.id || enemy.name) === key) || null;
-}
-
-function loadBattleEnemyForm(id) {
-  const enemy = enemyById(id) || (state.info && state.info.enemies && state.info.enemies[0]) || {};
-  const videos = enemy.videos || {};
-  const ui = { ...BATTLE_UI_DEFAULTS, ...(enemy.ui || {}) };
-  $("battleEnemySelect").value = enemy.id || "";
-  $("battleEnemyName").value = enemy.name || enemy.id || "ENEMY";
-  $("battleFolder").value = enemy.folder || "";
-  $("battleLevel").value = enemy.level || 1;
-  $("battleMaxHp").value = enemy.maxHP || 75;
-  $("battleXp").value = enemy.xp || 35;
-  $("battleMelee").checked = !!enemy.melee;
-  $("battleReload").checked = !!enemy.reload;
-  $("battleMeleePower").value = enemy.meleePower || 0;
-  $("battleRad").value = enemy.rad ? enemy.rad.join(",") : "";
-  $("battleDot").value = enemy.dot ? enemy.dot.join(",") : "";
-  $("battleVideos").value = ["idle", "start", "enemyFaint", "playerFaint", "victory", "defeat"].map((key) => videos[key] || "").join(",");
-  $("battlePrompt").value = ui.prompt;
-  $("battleReloadPrompt").value = ui.reloadPrompt;
-  $("battleAttackLabel").value = ui.attack;
-  $("battleStimLabel").value = ui.stim;
-  $("battleReloadAttackLabel").value = ui.reloadAttack;
-  $("battleReloadStimLabel").value = ui.reloadStim;
-  $("battleAttackDetail").value = ui.attackDetail;
-  $("battleStimDetail").value = ui.stimDetail;
-  $("battleEnemyReload").value = ui.enemyReload;
-  $("battleReloadAttackMsg").value = ui.reloadAttackMsg;
-  $("battlePauseResume").value = ui.pauseResume;
-  $("battlePauseSave").value = ui.pauseSave;
-  $("battlePauseExit").value = ui.pauseExit;
-  $("battlePauseNote").value = ui.pauseNote;
-  previewBattleUi();
-}
-
-function pairInput(value) {
-  const parts = String(value || "").split(",").map((part) => Number(part.trim())).filter((part) => Number.isFinite(part));
-  return parts.length ? parts : [0, 0];
-}
-
-function currentBattleEnemy() {
-  const selected = enemyById();
-  const rad = pairInput($("battleRad").value);
-  const dot = pairInput($("battleDot").value);
-  const videoValues = String($("battleVideos").value || "").split(",").map((part) => part.trim());
-  const videos = {};
-  ["idle", "start", "enemyFaint", "playerFaint", "victory", "defeat"].forEach((key, index) => {
-    if (videoValues[index]) videos[key] = videoValues[index];
-  });
-  return {
-    id: selected && selected.id || cleanId($("battleEnemyName").value),
-    name: $("battleEnemyName").value,
-    folder: $("battleFolder").value,
-    level: Number($("battleLevel").value) || 1,
-    maxHP: Number($("battleMaxHp").value) || 75,
-    xp: Number($("battleXp").value) || 35,
-    melee: $("battleMelee").checked,
-    reload: $("battleReload").checked,
-    meleePower: Number($("battleMeleePower").value) || 0,
-    radAmount: rad[0] || 0,
-    radSeconds: rad[1] || 0,
-    dotAmount: dot[0] || 0,
-    dotSeconds: dot[1] || 0,
-    videos,
-    ui: currentBattleUi()
-  };
-}
-
-function currentBattleUi() {
-  return {
-    prompt: $("battlePrompt").value,
-    reloadPrompt: $("battleReloadPrompt").value,
-    attack: $("battleAttackLabel").value,
-    stim: $("battleStimLabel").value,
-    reloadAttack: $("battleReloadAttackLabel").value,
-    reloadStim: $("battleReloadStimLabel").value,
-    attackDetail: $("battleAttackDetail").value,
-    stimDetail: $("battleStimDetail").value,
-    enemyReload: $("battleEnemyReload").value,
-    reloadAttackMsg: $("battleReloadAttackMsg").value,
-    pauseResume: $("battlePauseResume").value,
-    pauseSave: $("battlePauseSave").value,
-    pauseExit: $("battlePauseExit").value,
-    pauseNote: $("battlePauseNote").value
-  };
-}
-
-function previewBattleUi() {
-  if (!$("battleUiPreview")) return;
-  const ui = { ...BATTLE_UI_DEFAULTS, ...currentBattleUi() };
-  const attack = ui.attack || "runtime weapon move";
-  $("battleUiPreview").textContent = [
-    "Menu:",
-    `> ${attack}       ${ui.attackDetail.replace("{dmg}", "12")}`,
-    `  ${ui.stim}      ${ui.stimDetail.replace("{heal}", "35").replace("{st}", "2")}`,
-    "",
-    ui.prompt,
-    "",
-    "Reload:",
-    `> ${ui.reloadStim}      ${ui.stimDetail.replace("{heal}", "35").replace("{st}", "2")}`,
-    `  ${ui.reloadAttack}    ${ui.attackDetail.replace("{dmg}", "12")}`,
-    ui.reloadPrompt
-  ].join("\n");
-  renderBattleRuntimePreview();
-}
-
-function drawRuntimeBar(ctx, x, y, w, value, max) {
-  const pct = max ? Math.max(0, Math.min(1, value / max)) : 0;
-  ctx.strokeStyle = "#78ff6d";
-  ctx.strokeRect(x, y, w, 8);
-  ctx.fillStyle = "#0b1509";
-  ctx.fillRect(x + 2, y + 2, w - 4, 4);
-  ctx.fillStyle = "#a8ffa0";
-  ctx.fillRect(x + 2, y + 2, Math.round((w - 4) * pct), 4);
-}
-
-function runtimeUiText(text, fallback, data) {
-  return String(text || fallback || "")
-    .replace("{dmg}", data.dmg)
-    .replace("{heal}", data.heal)
-    .replace("{st}", data.st);
-}
-
-function renderBattleRuntimePreview() {
-  const canvas = $("battleRuntimeCanvas");
-  if (!canvas) return;
-  const ctx = canvas.getContext("2d");
-  const enemy = enemyById() || {};
-  const ui = { ...BATTLE_UI_DEFAULTS, ...currentBattleUi() };
-  const videos = String($("battleVideos").value || "").split(",").map((part) => part.trim());
-  const data = { dmg: 12, heal: 35, st: 2 };
-  const reloadMode = $("battleReload") && $("battleReload").checked;
-  const commandLabels = reloadMode
-    ? [ui.reloadStim || "STIMPAK", ui.reloadAttack || "SLASH"]
-    : [ui.attack || "PLAYER WEAPON", ui.stim || "STIMPAK"];
-  const commandDetails = reloadMode
-    ? [runtimeUiText(ui.stimDetail, "HEAL {heal} x{st}", data), runtimeUiText(ui.attackDetail, "DMG {dmg}", data)]
-    : [runtimeUiText(ui.attackDetail, "DMG {dmg}", data), runtimeUiText(ui.stimDetail, "HEAL {heal} x{st}", data)];
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.clearRect(0, 0, 480, 320);
-  ctx.fillStyle = "#020502";
-  ctx.fillRect(0, 0, 480, 320);
-  ctx.fillStyle = "#071607";
-  ctx.fillRect(0, 0, 480, 192);
-  ctx.strokeStyle = "#2f6d2d";
-  ctx.strokeRect(6, 6, 468, 180);
-  ctx.fillStyle = "#78ff6d";
-  ctx.font = "16px Consolas, monospace";
-  ctx.textAlign = "center";
-  ctx.fillText(videos[1] || "BATTLE_START.avi / IDLE LOOP", 240, 84);
-  ctx.font = "11px Consolas, monospace";
-  ctx.fillStyle = "#a8ffa0";
-  ctx.fillText("AVI PLAYBACK AREA - BATTLE.JS DOES NOT DRAW SPRITES HERE", 240, 110);
-  ctx.strokeStyle = "#78ff6d";
-  ctx.beginPath();
-  ctx.moveTo(0, 192);
-  ctx.lineTo(480, 192);
-  ctx.stroke();
-  ctx.textAlign = "left";
-  ctx.font = "12px Consolas, monospace";
-  ctx.fillStyle = "#d9ffd4";
-  ctx.fillText("WANDERER  LV12", 8, 205);
-  ctx.fillText(`${(enemy.name || $("battleEnemyName").value || "ENEMY").slice(0, 15)}  LV${$("battleLevel").value || 1}`, 250, 205);
-  drawRuntimeBar(ctx, 8, 210, 210, 86, 120);
-  drawRuntimeBar(ctx, 250, 210, 222, 72, 95);
-  ctx.fillStyle = "#78ff6d";
-  ctx.fillText("HP 86/120 DT 4", 8, 230);
-  ctx.fillText("HP 72/95", 250, 230);
-  ctx.textAlign = "center";
-  ctx.fillStyle = "#d9ffd4";
-  ctx.fillText((reloadMode ? ui.reloadPrompt : ui.prompt).slice(0, 54), 240, 240);
-  for (let i = 0; i < commandLabels.length; i += 1) {
-    const x = 5 + (i % 3) * 158;
-    const y = 249 + Math.floor(i / 3) * 39;
-    if (i === 0) {
-      ctx.fillStyle = "#78ff6d";
-      ctx.fillRect(x, y, 154, 35);
-      ctx.fillStyle = "#020502";
-    } else {
-      ctx.strokeStyle = "#78ff6d";
-      ctx.strokeRect(x, y, 154, 35);
-      ctx.fillStyle = "#d9ffd4";
+  function field(label, value, path, options) {
+    options = options || {};
+    var full = options.full ? " full" : "";
+    var source = options.source || "scene";
+    var attribute = "data-" + source + "=\"" + html(path) + "\"";
+    var disabled = source === "readonly" ? " disabled" : "";
+    if (options.type === "textarea") return '<label class="field' + full + '"><span>' + html(label) + '</span><textarea ' + attribute + ' maxlength="' + (options.max || 160) + '">' + html(value) + "</textarea></label>";
+    if (options.options) {
+      return '<label class="field' + full + '"><span>' + html(label) + '</span><select ' + attribute + disabled + ">" + options.options.map(function (option) {
+        var item = typeof option === "string" ? { value: option, label: option } : option;
+        return '<option value="' + html(item.value) + '"' + (String(item.value) === String(value) ? " selected" : "") + ">" + html(item.label) + "</option>";
+      }).join("") + "</select></label>";
     }
-    ctx.textAlign = "left";
-    ctx.font = "12px Consolas, monospace";
-    ctx.fillText(`${i === 0 ? "> " : "  "}${String(commandLabels[i] || "").slice(0, 16)}`, x + 5, y + 13);
-    ctx.font = "10px Consolas, monospace";
-    ctx.fillText(String(commandDetails[i] || "").slice(0, 20), x + 12, y + 28);
+    if (options.type === "checkbox") return '<label class="check-row"><input type="checkbox" ' + attribute + (value ? " checked" : "") + "> " + html(label) + "</label>";
+    return '<label class="field' + full + '"><span>' + html(label) + '</span><input type="' + (options.type || "text") + '" ' + attribute + ' value="' + html(value) + '"' + disabled + (options.type === "number" ? ' data-number="1" min="' + (options.min == null ? 0 : options.min) + '" max="' + (options.max == null ? 99999 : options.max) + '"' : "") + "></label>";
   }
-}
-
-async function saveBattleEnemy() {
-  const body = await api("/api/battle", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ enemy: currentBattleEnemy() })
-  });
-  state.info.enemies = body.enemies || state.info.enemies;
-  setStatus(`Saved battle UI for ${body.enemy.name}`);
-  await loadInfo();
-  $("battleEnemySelect").value = body.enemy.id;
-  loadBattleEnemyForm(body.enemy.id);
-}
-
-function previewInteriorData() {
-  const enemy = $("interiorEnemy").value || $("encEnemy").value || "RANDOM";
-  const npcSprite = cleanSpriteRef($("interiorNpcSprite").value, "");
-  const dialogue = cleanScreenText($("interiorDialogue").value, "HOW YOU ENJOYING THE RADS?", 54);
-  const fightText = cleanScreenText($("interiorFightText").value, "FIGHT", 10);
-  const fleeText = cleanScreenText($("interiorFleeText").value, "FLEE", 10);
-  const item = {
-    id: `${cleanId($("worldId").value || "WORLD_01").toLowerCase()}_interior_x_y`,
-    type: "interior",
-    x: "click",
-    y: "click",
-    prompt: $("interiorPrompt").value || "ENTER?",
-    room: cleanScreenText($("interiorRoom").value, "INTERIOR", 22),
-    enemy,
-    once: $("interiorOnce").checked
-  };
-  if (npcSprite) item.ns = npcSprite;
-  if (dialogue) item.dlg = dialogue;
-  if (fightText && fightText !== "FIGHT") item.ft = fightText;
-  if (fleeText && fleeText !== "FLEE") item.fl = fleeText;
-  $("interiorTitle").textContent = item.room;
-  $("interiorNpcPreview").textContent = npcSprite || enemy || "NPC";
-  $("interiorDialoguePreview").textContent = dialogue;
-  $("interiorJson").value = JSON.stringify(item, null, 2);
-}
-
-async function saveInteriorEnemySprite() {
-  const file = $("interiorSpriteImage").files && $("interiorSpriteImage").files[0];
-  if (!file) throw new Error("Pick an enemy image first.");
-  const bpp = Number($("interiorSpriteBpp").value) || 2;
-  const enemy = cleanId($("interiorEnemy").value || $("encEnemy").value || imageName(file) || "ENEMY");
-  const name = cleanSpriteRef(`${enemy}_SPRITE`, "ENEMY_SPRITE");
-  const pixels = await imageToPixels(file, PLAYER_SPRITE_WIDTH, PLAYER_SPRITE_HEIGHT, bpp, "fit");
-  const body = await api("/api/sprite", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      name,
-      width: PLAYER_SPRITE_WIDTH,
-      height: PLAYER_SPRITE_HEIGHT,
-      bpp,
-      pixels,
-      scope: "npc",
-      runtime: "img"
-    })
-  });
-  await loadInfo();
-  ensureOption($("interiorNpcSprite"), body.ref, body.name);
-  $("interiorNpcSprite").value = body.ref;
-  previewInteriorData();
-  setStatus(`Saved ${body.name} for NPC/interior use`);
-}
-
-function enemySpriteName(enemy) {
-  return `${cleanId(enemy && (enemy.id || enemy.name) || "ENEMY")}_SPRITE`;
-}
-
-function spriteExists(ref) {
-  const wanted = `${cleanSpriteRef(ref, "")}.IMG`.toUpperCase();
-  return (state.info && state.info.sprites || []).some((name) => String(name).toUpperCase() === wanted);
-}
-
-function useEnemySpriteSlot(id, assignInterior) {
-  const enemy = enemyById(id) || (state.info.enemies || []).find((item) => cleanId(item.id || item.name) === cleanId(id));
-  const slot = enemySpriteName(enemy || { id });
-  $("spriteScope").value = "npc";
-  $("spriteName").value = slot;
-  $("spriteWidth").value = PLAYER_SPRITE_WIDTH;
-  $("spriteHeight").value = PLAYER_SPRITE_HEIGHT;
-  $("spriteBpp").value = "2";
-  if (assignInterior) {
-    ensureOption($("interiorEnemy"), enemy && enemy.id || id, enemy && enemy.name || id);
-    $("interiorEnemy").value = enemy && enemy.id || id;
-    ensureOption($("interiorNpcSprite"), slot, `${slot}.IMG`);
-    $("interiorNpcSprite").value = slot;
-    previewInteriorData();
+  function assetOptions(filter) {
+    var options = [{ value: "", label: "None" }];
+    state.assets.filter(filter || function () { return true; }).forEach(function (asset) { options.push({ value: asset.id, label: asset.name + "  [" + asset.source + "]" }); });
+    return options;
   }
-  makeSprite(PLAYER_SPRITE_WIDTH, PLAYER_SPRITE_HEIGHT, 0);
-  setStatus(`${slot}.IMG slot ready. Upload art or draw, then Save Runtime Sprite.`);
-}
-
-function renderEnemySpriteSlots() {
-  const box = $("enemySpriteSlots");
-  if (!box || !state.info) return;
-  const enemies = state.info.enemies || [];
-  if (!enemies.length) {
-    box.innerHTML = '<p class="hint">No enemies in battle.json yet. Use New NPC to make the first slot.</p>';
-    return;
+  function dialogueOptions() {
+    return [{ value: "", label: "None" }].concat((state.project.dialogues || []).map(function (dialogue) { return { value: dialogue.id, label: dialogue.name }; }));
   }
-  box.innerHTML = enemies.map((enemy) => {
-    const slot = enemySpriteName(enemy);
-    const hasSprite = spriteExists(slot);
-    return `
-      <div class="enemy-slot ${hasSprite ? "ready" : "missing"}">
-        <strong>${enemy.name || enemy.id}</strong>
-        <span>${slot}.IMG</span>
-        <em>${hasSprite ? "ready" : "empty slot"}</em>
-        <button data-enemy-slot="${enemy.id}">Use Slot</button>
-        <button data-enemy-interior="${enemy.id}">Assign Interior</button>
-      </div>
-    `;
-  }).join("");
-}
 
-async function newNpcSprite() {
-  const rawName = cleanScreenText(prompt("NPC enemy name?", "NEW NPC"), "NEW NPC", 20);
-  if (!rawName) return;
-  const id = cleanId(rawName);
-  const body = await api("/api/battle", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      enemy: {
-        id,
-        name: rawName,
-        level: 1,
-        maxHP: 50,
-        xp: 10
-      }
-    })
-  });
-  state.info.enemies = body.enemies || state.info.enemies || [];
-  await loadInfo();
-  ensureOption($("battleEnemySelect"), id, rawName);
-  $("battleEnemySelect").value = id;
-  loadBattleEnemyForm(id);
-  useEnemySpriteSlot(id, true);
-}
-
-function renderMediaInfo() {
-  if (!$("mediaReadout") || !state.info) return;
-  const lim = limits();
-  const groups = state.info.media || {};
-  const lines = [];
-  Object.entries(groups).forEach(([group, files]) => {
-    const total = (files || []).reduce((sum, item) => sum + (item.size || 0), 0);
-    lines.push(`<strong>${group.toUpperCase()} ${files.length} files / ${formatBytes(total)}</strong>`);
-    (files || []).slice(0, 12).forEach((item) => {
-      const over = item.kind === "AVI" && item.size > lim.videoBytes;
-      lines.push(`<span class="${over ? "bad" : ""}">${item.path} - ${formatBytes(item.size)}</span>`);
+  function normalizeProject(project) {
+    project.assetSettings = project.assetSettings || {};
+    project.maps = project.maps || [];
+    project.interiors = project.interiors || [];
+    project.dialogues = project.dialogues || [];
+    project.maps.forEach(function (map) {
+      map.kind = "world";
+      map.width = 1440;
+      map.height = 1080;
+      map.gridSize = 12;
+      map.entities = map.entities || [];
+      map.spawn = map.spawn || { x: 704, y: 255, facing: "down" };
+      if (!map.collisionData) map.collisionData = Core.toBase64(new Uint8Array(1350));
     });
-    if ((files || []).length > 12) lines.push(`<em>+${files.length - 12} more</em>`);
-  });
-  $("mediaReadout").innerHTML = lines.join("");
-  $("converterNotes").textContent = [
-    "Video encounters: AVI, 480x192 battle-safe area when using current battle layout.",
-    `Keep individual AVI clips near ${formatBytes(lim.videoBytes)} or smaller when possible.`,
-    "Start/menu: 480x320 BIN screen assets.",
-    "Player movement sprites: 34x34 IMG, 2 bpp, transparent shade 0.",
-    "World art: IMG from World Art tab, max 255x255, 1 or 2 bpp.",
-    "NPC/interior sprites: 34x34 IMG, 2 bpp, saved through Sprite Creator scope NPC IMG.",
-    "Map scenery decor sprites: JS snippets only when they are small and reused.",
-    "Battle JSON edits save to both root battle.json and Assets/battle.json."
-  ].join("\n");
-}
-
-function formatBytes(value) {
-  const n = Number(value) || 0;
-  if (n > 1024 * 1024) return `${(n / 1024 / 1024).toFixed(1)} MB`;
-  if (n > 1024) return `${Math.round(n / 1024)} KB`;
-  return `${n} B`;
-}
-
-function fillItemForm(key) {
-  const clean = itemKey(key || $("itemSelect").value || "STIMPAK");
-  const item = state.items[clean] || {};
-  $("itemName").value = item.name || clean.replace(/_/g, " ");
-  $("itemKind").value = item.kind || item.type || "misc";
-  $("itemEffect").value = item.effect || ($("itemKind").value === "weapon" ? "damage" : "none");
-  $("itemDamage").value = item.dmg || item.damage || 0;
-  $("itemCount").value = item.cnt || item.min || 1;
-  $("itemChance").value = item.chance === undefined ? 1 : item.chance;
-  $("itemCat").value = item.cat || item.realCat || "";
-  $("itemRealId").value = item.realId || item.formId || item.itemId || "";
-  state.itemIconData = "";
-  state.itemIconName = "";
-  if ($("itemIcon")) $("itemIcon").value = "";
-  renderItem();
-}
-
-function newItem() {
-  $("itemName").value = "New Item";
-  $("itemKind").value = "misc";
-  $("itemEffect").value = "none";
-  $("itemDamage").value = 0;
-  $("itemCount").value = 1;
-  $("itemChance").value = 1;
-  $("itemCat").value = "";
-  $("itemRealId").value = "";
-  state.itemIconData = "";
-  state.itemIconName = "";
-  if ($("itemIcon")) $("itemIcon").value = "";
-  renderItem();
-}
-
-function readDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    if (!file) return resolve("");
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result || "");
-    reader.onerror = () => reject(new Error("That icon file could not be read."));
-    reader.readAsDataURL(file);
-  });
-}
-
-async function saveItem() {
-  const item = currentItemForm();
-  const icon = state.itemIconData ? { name: state.itemIconName || `${item.key}.IMG`, data: state.itemIconData } : null;
-  const body = await api("/api/items", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ item, icon })
-  });
-  state.items = body.items || state.items;
-  setStatus(`Saved item ${body.key}`);
-  await loadInfo();
-  ensureOption($("itemSelect"), body.key, body.item.name || body.key);
-  $("itemSelect").value = body.key;
-  fillItemForm(body.key);
-}
-
-function cleanOptionalId(value) {
-  return String(value || "").replace(/[^a-z0-9_]+/gi, "_").replace(/^_+|_+$/g, "").toUpperCase();
-}
-
-function cleanLabel(value, fallback, max = 14) {
-  return String(value || fallback)
-    .replace(/[^a-z0-9 ._'-]+/gi, "")
-    .trim()
-    .slice(0, max)
-    .toUpperCase() || fallback;
-}
-
-function cleanSpriteRef(value, fallback) {
-  const parts = String(value || fallback)
-    .replace(/\.(JS|IMG)$/i, "")
-    .split(/[\\/]+/)
-    .map((part) => cleanOptionalId(part))
-    .filter(Boolean);
-  return (parts.length ? parts : [fallback]).join("/");
-}
-
-function numberList(value, fallback, length) {
-  const parsed = String(value || "")
-    .split(",")
-    .map((part) => Math.round(Number(part.trim())))
-    .filter((number) => Number.isFinite(number));
-  const base = parsed.length >= length ? parsed : fallback;
-  return base.slice(0, length).map((number) => Math.max(0, Math.min(320, Math.round(Number(number) || 0))));
-}
-
-function boxList(value) {
-  const fallback = [
-    [8, 8, 154, 52],
-    [158, 111, 154, 58],
-    [178, 171, 134, 42],
-    [4, 203, 312, 33],
-    [4, 171, 174, 42]
-  ];
-  return String(value || "")
-    .split(";")
-    .map((item, index) => numberList(item, fallback[index] || [0, 0, 10, 10], 4))
-    .slice(0, 5);
-}
-
-function messageList(value) {
-  const fallback = ["ATTACK!", "POWER!", "DEFEND!", "FLEE!"];
-  const parts = String(value || "").split(";").map((part, index) => cleanLabel(part, fallback[index] || "ACTION", 18));
-  while (parts.length < 4) parts.push(fallback[parts.length]);
-  return parts.slice(0, 4);
-}
-
-function cleanScreenText(value, fallback, max = 24) {
-  return String(value || fallback || "")
-    .replace(/[^a-z0-9 ._!?'-]+/gi, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, max)
-    .toUpperCase();
-}
-
-function addLaunchText(item, fallbackTitle, fallbackSubtitle) {
-  const rawTitle = cleanScreenText($("encLaunchTitle").value, "", 22);
-  const title = cleanScreenText(rawTitle && rawTitle !== "ENCOUNTER" ? rawTitle : fallbackTitle, "ENCOUNTER", 22);
-  const subtitle = cleanScreenText($("encLaunchSubtitle").value, fallbackSubtitle || "", 24);
-  if (title && title !== "ENCOUNTER") item.lt = title;
-  if (subtitle) item.ls = subtitle;
-  return item;
-}
-
-function artIndex(art, x, y) {
-  return y * art.width + x;
-}
-
-function setPixel(pixels, width, height, x, y, value, size = 1) {
-  const half = Math.floor(size / 2);
-  for (let yy = y - half; yy <= y + half; yy += 1) {
-    for (let xx = x - half; xx <= x + half; xx += 1) {
-      if (xx >= 0 && yy >= 0 && xx < width && yy < height) pixels[yy * width + xx] = value;
-    }
-  }
-}
-
-function drawLinePixels(pixels, width, height, x0, y0, x1, y1, value, size = 1) {
-  let dx = Math.abs(x1 - x0);
-  let sx = x0 < x1 ? 1 : -1;
-  let dy = -Math.abs(y1 - y0);
-  let sy = y0 < y1 ? 1 : -1;
-  let err = dx + dy;
-  while (true) {
-    setPixel(pixels, width, height, x0, y0, value, size);
-    if (x0 === x1 && y0 === y1) break;
-    const e2 = 2 * err;
-    if (e2 >= dy) { err += dy; x0 += sx; }
-    if (e2 <= dx) { err += dx; y0 += sy; }
-  }
-}
-
-function drawRectPixels(pixels, width, height, x0, y0, x1, y1, value, size = 1, fill = false) {
-  const left = Math.max(0, Math.min(x0, x1));
-  const right = Math.min(width - 1, Math.max(x0, x1));
-  const top = Math.max(0, Math.min(y0, y1));
-  const bottom = Math.min(height - 1, Math.max(y0, y1));
-  if (fill) {
-    for (let y = top; y <= bottom; y += 1) for (let x = left; x <= right; x += 1) pixels[y * width + x] = value;
-    return;
-  }
-  drawLinePixels(pixels, width, height, left, top, right, top, value, size);
-  drawLinePixels(pixels, width, height, right, top, right, bottom, value, size);
-  drawLinePixels(pixels, width, height, right, bottom, left, bottom, value, size);
-  drawLinePixels(pixels, width, height, left, bottom, left, top, value, size);
-}
-
-function fillPixels(pixels, width, height, x, y, value) {
-  const start = pixels[y * width + x];
-  const stack = [[x, y]];
-  let guard = width * height;
-  if (start === value) return;
-  while (stack.length && guard-- > 0) {
-    const point = stack.pop();
-    const px = point[0];
-    const py = point[1];
-    const idx = py * width + px;
-    if (px < 0 || py < 0 || px >= width || py >= height || pixels[idx] !== start) continue;
-    pixels[idx] = value;
-    stack.push([px + 1, py], [px - 1, py], [px, py + 1], [px, py - 1]);
-  }
-}
-
-function landscapeArt(width, height, kind) {
-  const pixels = Array(width * height).fill(0);
-  const horizon = Math.floor(height * 0.38);
-  const roadCenter = Math.floor(width * 0.5);
-  const roadBottom = Math.floor(width * 0.42);
-  const roadTop = Math.max(8, Math.floor(width * 0.08));
-  const put = (x, y, value, size = 1) => setPixel(pixels, width, height, Math.round(x), Math.round(y), value, size);
-  const line = (x0, y0, x1, y1, value, size = 1) => drawLinePixels(pixels, width, height, Math.round(x0), Math.round(y0), Math.round(x1), Math.round(y1), value, size);
-  const rect = (x0, y0, x1, y1, value, fill = true) => drawRectPixels(pixels, width, height, Math.round(x0), Math.round(y0), Math.round(x1), Math.round(y1), value, 1, fill);
-
-  for (let y = 0; y < height; y += 1) {
-    const v = y < horizon ? (y % 7 === 0 ? 1 : 0) : (y % 5 === 0 ? 1 : 2);
-    for (let x = 0; x < width; x += 1) pixels[y * width + x] = v;
+    project.interiors.forEach(function (interior) {
+      interior.kind = "interior";
+      interior.width = 480;
+      interior.height = Math.max(320, Number(interior.height) || 456);
+      interior.entities = interior.entities || [];
+      interior.collisionRects = interior.collisionRects || [];
+      interior.spawn = interior.spawn || { x: 220, y: interior.height - 80, facing: "up" };
+    });
+    if (!project.maps.length) project.maps.push(newWorld());
+    if (!project.dialogues.length) project.dialogues.push(newDialogueData("dialogue_1", "Dialogue 1"));
   }
 
-  if (kind !== "caveMouth") {
-    line(0, horizon, width - 1, horizon + 4, 2, 2);
-    line(roadCenter - roadTop, horizon, roadCenter - roadBottom, height - 1, 3, 2);
-    line(roadCenter + roadTop, horizon, roadCenter + roadBottom, height - 1, 3, 2);
-    drawRectPixels(pixels, width, height, roadCenter - roadBottom, horizon, roadCenter + roadBottom, height - 1, 1, 1, true);
+  function newWorld() {
+    var count = state.project ? state.project.maps.length + 1 : 1;
+    return { id: "WORLD_" + String(count).padStart(2, "0"), name: "New World", kind: "world", width: 1440, height: 1080, gridSize: 12, backgroundAssetId: "", collisionData: Core.toBase64(new Uint8Array(1350)), spawn: { x: 704, y: 255, facing: "down" }, entities: [] };
+  }
+  function newInterior() {
+    var count = state.project ? state.project.interiors.length + 1 : 1;
+    return { id: "INTERIOR_" + String(count).padStart(2, "0"), name: "New Interior", kind: "interior", width: 480, height: 456, backgroundAssetId: "", spawn: { x: 223, y: 376, facing: "up" }, collisionRects: [], entities: [] };
+  }
+  function newDialogueData(id, name) {
+    return { id: id, name: name, startNode: "start", nodes: [{ id: "start", text: "DIALOGUE", choices: [{ label: "CONTINUE", action: "close", target: "", next: "" }] }] };
+  }
+  function newEntity(type, x, y) {
+    var id = Core.uid(type);
+    if (type === "npc") return { id: id, type: "npc", name: "New NPC", x: Math.round(x), y: Math.round(y), width: 34, height: 34, solid: true, spriteAssetId: "", facing: "down", interactionRange: 44, movement: { type: "static", axis: "x", distance: 24, speed: 1 }, dialogueId: "" };
+    var action = type === "exit" ? "world" : "battle";
+    return { id: id, type: type, name: type === "exit" ? "Exit" : "Encounter", x: Math.round(x), y: Math.round(y), width: 72, height: 60, solid: false, prompt: type === "exit" ? "LEAVE?" : "ENTER?", action: { type: action, target: type === "exit" ? "WORLD_01" : "RANDOM", bullet: "", miniboss: false }, once: false, dialogueId: "" };
   }
 
-  if (kind === "desertTrail") {
-    for (let i = 0; i < 20; i += 1) put((i * 37) % width, horizon + 8 + ((i * 19) % (height - horizon - 12)), i % 2 ? 2 : 3, 2);
-    line(width * .08, horizon + 8, width * .22, horizon - 12, 2, 2);
-    line(width * .22, horizon - 12, width * .35, horizon + 6, 2, 2);
-    line(width * .70, horizon + 4, width * .84, horizon - 16, 2, 2);
-    line(width * .84, horizon - 16, width * .98, horizon + 6, 2, 2);
-  } else if (kind === "ruinedTown") {
-    for (let i = 0; i < 7; i += 1) {
-      const x = 8 + i * Math.floor(width / 8);
-      const y = horizon - 8 - (i % 3) * 5;
-      rect(x, y, x + 18, horizon + 20, i % 2 ? 1 : 2, true);
-      rect(x + 4, y + 6, x + 8, y + 12, 0, true);
-      rect(x + 11, y + 5, x + 15, y + 14, 0, true);
-    }
-  } else if (kind === "canyonPass") {
-    rect(0, horizon - 8, width * .25, height - 1, 1, true);
-    rect(width * .76, horizon - 14, width - 1, height - 1, 1, true);
-    line(width * .25, horizon - 8, width * .36, height - 1, 3, 3);
-    line(width * .76, horizon - 14, width * .62, height - 1, 3, 3);
-  } else if (kind === "vaultRoad") {
-    rect(width * .38, horizon - 16, width * .62, horizon + 28, 1, true);
-    rect(width * .44, horizon - 5, width * .56, horizon + 28, 0, true);
-    line(width * .41, horizon - 16, width * .59, horizon - 16, 3, 2);
-    line(width * .5, horizon - 22, width * .5, horizon + 32, 2, 1);
-  } else if (kind === "dryRiver") {
-    drawRectPixels(pixels, width, height, width * .1, horizon + 14, width * .82, height - 1, 0, 1, true);
-    line(width * .1, horizon + 14, width * .38, height - 1, 3, 2);
-    line(width * .82, horizon + 14, width * .60, height - 1, 3, 2);
-    for (let i = 0; i < 12; i += 1) line(i * 21, height - 10 - (i % 5) * 7, i * 21 + 24, height - 18 - (i % 4) * 5, 1, 1);
-  } else if (kind === "railYard") {
-    for (let r = -2; r <= 2; r += 1) {
-      line(width * .5 + r * 16, horizon, width * .5 + r * 44, height - 1, 3, 1);
-      line(width * .5 + r * 16 + 8, horizon, width * .5 + r * 44 + 30, height - 1, 2, 1);
-    }
-    for (let y = horizon + 8; y < height; y += 11) line(width * .18, y, width * .82, y + 2, 1, 1);
-  } else if (kind === "irradiatedPond") {
-    drawRectPixels(pixels, width, height, width * .28, horizon + 18, width * .72, height - 18, 3, 1, true);
-    for (let i = 0; i < 7; i += 1) line(width * .28, horizon + 22 + i * 10, width * .72, horizon + 18 + i * 9, i % 2 ? 2 : 0, 1);
-    put(width * .75, horizon + 12, 3, 3);
-    put(width * .78, horizon + 4, 2, 2);
-  } else if (kind === "nightCamp") {
-    for (let y = 0; y < horizon; y += 1) for (let x = 0; x < width; x += 1) pixels[y * width + x] = (x + y) % 19 === 0 ? 3 : 0;
-    rect(width * .44, horizon + 28, width * .56, horizon + 38, 3, true);
-    line(width * .47, horizon + 27, width * .5, horizon + 10, 2, 2);
-    line(width * .53, horizon + 27, width * .5, horizon + 10, 2, 2);
-    rect(width * .43, horizon + 39, width * .57, horizon + 42, 1, true);
-  } else if (kind === "caveMouth") {
-    for (let y = horizon; y < height; y += 1) for (let x = 0; x < width; x += 1) pixels[y * width + x] = 1;
-    drawRectPixels(pixels, width, height, width * .25, horizon - 8, width * .75, height - 1, 0, 1, true);
-    line(width * .25, horizon - 8, width * .5, horizon - 32, 3, 3);
-    line(width * .75, horizon - 8, width * .5, horizon - 32, 3, 3);
-    line(width * .35, height - 1, width * .45, horizon + 25, 2, 2);
-    line(width * .65, height - 1, width * .55, horizon + 25, 2, 2);
+  function collisionFor(scene) {
+    var key = sceneKey(scene);
+    var cache = state.collisionCache[key];
+    if (cache && cache.source === scene.collisionData) return cache.data;
+    var bytes = Core.fromBase64(scene.collisionData || "");
+    if (bytes.length !== 1350) bytes = new Uint8Array(1350);
+    var data = Core.unpackCollision(bytes, 120, 90);
+    state.collisionCache[key] = { source: scene.collisionData, data: data };
+    return data;
   }
-  return pixels;
-}
-
-function makeArt(width = 240, height = 148, fill = 0) {
-  state.art = { name: cleanId($("artName").value || "WORLD_ART"), width, height, bpp: 2, pixels: Array(width * height).fill(fill) };
-  renderArt();
-}
-
-function makeArtForWorld(presetKey) {
-  const preset = artPresets[presetKey || $("worldArtPreset").value] || artPresets.blank;
-  const width = Math.max(32, Math.min(255, Number($("artWidth").value) || 240));
-  const height = Math.max(32, Math.min(255, Number($("artHeight").value) || 148));
-  const worldId = cleanId($("worldId").value || state.world && state.world.id || "WORLD_NEW");
-  state.art = { name: `${worldId}_ART`, width, height, bpp: 2, pixels: preset.make(width, height) };
-  $("artName").value = state.art.name;
-  ensureOption($("artWorld"), selectedWorldFile(), worldId);
-  renderArt();
-}
-
-function imageName(file) {
-  return cleanId(String(file && file.name || "IMPORTED_ART").replace(/\.[^.]+$/g, ""));
-}
-
-function imageDrawRect(image, width, height, mode) {
-  if (mode === "stretch") return { sx: 0, sy: 0, sw: image.width, sh: image.height, dx: 0, dy: 0, dw: width, dh: height };
-  const sourceRatio = image.width / image.height;
-  const targetRatio = width / height;
-  if (mode === "crop") {
-    const sw = sourceRatio > targetRatio ? image.height * targetRatio : image.width;
-    const sh = sourceRatio > targetRatio ? image.height : image.width / targetRatio;
-    return { sx: (image.width - sw) / 2, sy: (image.height - sh) / 2, sw, sh, dx: 0, dy: 0, dw: width, dh: height };
+  function commitCollision(scene) {
+    if (!scene || scene.kind !== "world") return;
+    var cache = state.collisionCache[sceneKey(scene)];
+    if (!cache) return;
+    scene.collisionData = Core.toBase64(Core.packCollision(cache.data));
+    cache.source = scene.collisionData;
   }
-  const dw = sourceRatio > targetRatio ? width : height * sourceRatio;
-  const dh = sourceRatio > targetRatio ? width / sourceRatio : height;
-  return { sx: 0, sy: 0, sw: image.width, sh: image.height, dx: (width - dw) / 2, dy: (height - dh) / 2, dw, dh };
-}
+  function commitAllCollisions() { state.project.maps.forEach(commitCollision); }
 
-function loadImageFile(file) {
-  return new Promise((resolve, reject) => {
-    if (!file) {
-      reject(new Error("Pick an image first."));
+  async function loadBackground(scene, force) {
+    if (!scene) return;
+    var key = sceneKey(scene) + "|" + scene.backgroundAssetId;
+    if (!force && Object.prototype.hasOwnProperty.call(state.backgroundCache, key)) return;
+    state.backgroundErrors[sceneKey(scene)] = "";
+    if (!scene.backgroundAssetId) {
+      state.backgroundCache[key] = null;
+      state.backgroundErrors[sceneKey(scene)] = "BACKGROUND NOT ASSIGNED";
+      renderScene();
       return;
     }
-    const image = new Image();
-    const url = URL.createObjectURL(file);
-    image.onload = () => {
-      URL.revokeObjectURL(url);
-      resolve(image);
-    };
-    image.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error("That image could not be loaded."));
-    };
-    image.src = url;
-  });
-}
-
-function readBinaryFile(file) {
-  return new Promise((resolve, reject) => {
-    if (!file) {
-      reject(new Error("Pick an IMG file first."));
+    var asset = assetById(scene.backgroundAssetId);
+    if (!asset) {
+      state.backgroundCache[key] = null;
+      state.backgroundErrors[sceneKey(scene)] = "BACKGROUND ASSET MISSING";
+      renderScene();
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error("That IMG file could not be read."));
-    reader.readAsArrayBuffer(file);
-  });
-}
-
-async function imageToPixels(file, width, height, bpp, mode = "fit") {
-  const image = await loadImageFile(file);
-  const max = (1 << bpp) - 1;
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d", { willReadFrequently: true });
-  const rect = imageDrawRect(image, width, height, mode);
-  canvas.width = width;
-  canvas.height = height;
-  ctx.imageSmoothingEnabled = true;
-  ctx.fillStyle = "#000";
-  ctx.fillRect(0, 0, width, height);
-  ctx.drawImage(image, rect.sx, rect.sy, rect.sw, rect.sh, rect.dx, rect.dy, rect.dw, rect.dh);
-  const rgba = ctx.getImageData(0, 0, width, height).data;
-  const pixels = [];
-  for (let index = 0; index < rgba.length; index += 4) {
-    const alpha = rgba[index + 3] / 255;
-    const luma = (rgba[index] * 0.299 + rgba[index + 1] * 0.587 + rgba[index + 2] * 0.114) * alpha;
-    pixels.push(Math.max(0, Math.min(max, Math.round(luma * max / 255))));
-  }
-  return pixels;
-}
-
-async function convertImageToArt() {
-  const file = $("imageImport").files && $("imageImport").files[0];
-  const image = await loadImageFile(file);
-  const width = Math.max(32, Math.min(255, Number($("artWidth").value) || 240));
-  const height = Math.max(32, Math.min(255, Number($("artHeight").value) || 148));
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d", { willReadFrequently: true });
-  const rect = imageDrawRect(image, width, height, $("imageImportMode").value);
-  canvas.width = width;
-  canvas.height = height;
-  ctx.imageSmoothingEnabled = true;
-  ctx.fillStyle = "#000";
-  ctx.fillRect(0, 0, width, height);
-  ctx.drawImage(image, rect.sx, rect.sy, rect.sw, rect.sh, rect.dx, rect.dy, rect.dw, rect.dh);
-  const rgba = ctx.getImageData(0, 0, width, height).data;
-  const pixels = [];
-  for (let index = 0; index < rgba.length; index += 4) {
-    const alpha = rgba[index + 3] / 255;
-    const luma = (rgba[index] * 0.299 + rgba[index + 1] * 0.587 + rgba[index + 2] * 0.114) * alpha;
-    pixels.push(Math.max(0, Math.min(3, Math.round(luma / 85))));
-  }
-  const baseName = imageName(file);
-  const worldId = state.world ? state.world.id : cleanId($("worldId").value || "WORLD");
-  const currentName = cleanId($("artName").value || "");
-  const defaultName = !currentName || currentName === `${worldId}_ART` || currentName === "WORLD_ART";
-  state.art = { name: defaultName ? `${worldId}_${baseName}` : currentName, width, height, bpp: 2, pixels };
-  $("artName").value = state.art.name;
-  ensureOption($("artWorld"), selectedWorldFile(), worldId);
-  renderArt();
-  setStatus(`Converted ${file.name} to art JSON`);
-}
-
-function renderArt() {
-  const art = state.art;
-  if (!art) return;
-  const canvas = $("artCanvas");
-  const ctx = canvas.getContext("2d");
-  const scale = Math.max(1, Math.floor(Math.min(960 / art.width, 560 / art.height)));
-  const colors = ["#031003", "#315e2b", "#83d45e", "#dcff9d"];
-  canvas.width = art.width * scale;
-  canvas.height = art.height * scale;
-  canvas.style.width = `${art.width * scale}px`;
-  canvas.style.height = `${art.height * scale}px`;
-  ctx.imageSmoothingEnabled = false;
-  for (let y = 0; y < art.height; y += 1) {
-    for (let x = 0; x < art.width; x += 1) {
-      ctx.fillStyle = colors[art.pixels[artIndex(art, x, y)] || 0];
-      ctx.fillRect(x * scale, y * scale, scale, scale);
+    try {
+      if (scene.kind === "world" && asset.extension === ".bin" && (asset.format !== "world-pages-2bpp" || asset.bytes !== 888000)) throw new Error(asset.name + " is " + asset.bytes + " bytes; a compiled world page BIN is 888000 bytes");
+      if (scene.kind === "interior" && asset.extension === ".bin" && (asset.format !== "raw-2bpp" || asset.width !== 480 || asset.height !== scene.height)) throw new Error(asset.name + " does not match the 480 x " + scene.height + " interior");
+      var decoded = await Core.decodeAsset(asset);
+      state.backgroundCache[key] = decoded.canvas.width === scene.width && decoded.canvas.height === scene.height ? decoded.canvas : Core.fittedCanvas(decoded.canvas, scene.width, scene.height, "stretch");
+    } catch (error) {
+      state.backgroundCache[key] = null;
+      state.backgroundErrors[sceneKey(scene)] = error.message;
     }
+    renderScene();
   }
-  $("artName").value = art.name;
-  $("artWidth").value = art.width;
-  $("artHeight").value = art.height;
-  $("artTitle").textContent = art.name;
-  $("artReadout").textContent = `${art.width} x ${art.height} - 2 bpp`;
-  $("artJson").value = JSON.stringify(art, null, 2);
-}
-
-function artPoint(event) {
-  const canvas = $("artCanvas");
-  const art = state.art;
-  const rect = canvas.getBoundingClientRect();
-  return {
-    x: Math.max(0, Math.min(art.width - 1, Math.floor((event.clientX - rect.left) * art.width / rect.width))),
-    y: Math.max(0, Math.min(art.height - 1, Math.floor((event.clientY - rect.top) * art.height / rect.height)))
-  };
-}
-
-function paintArtPoint(point, fillRect) {
-  const art = state.art;
-  const value = Number($("artBrush").value) || 0;
-  const size = Math.max(1, Math.min(16, Number($("artBrushSize").value) || 1));
-  const tool = $("artTool").value;
-  if (!art) return;
-  if (tool === "fill") {
-    fillPixels(art.pixels, art.width, art.height, point.x, point.y, value);
-  } else if (tool === "line" && state.artStart) {
-    drawLinePixels(art.pixels, art.width, art.height, state.artStart.x, state.artStart.y, point.x, point.y, value, size);
-  } else if (tool === "rect" && state.artStart) {
-    drawRectPixels(art.pixels, art.width, art.height, state.artStart.x, state.artStart.y, point.x, point.y, value, size, !!fillRect);
-  } else if (tool === "brush") {
-    setPixel(art.pixels, art.width, art.height, point.x, point.y, value, size);
+  function backgroundFor(scene) {
+    return state.backgroundCache[sceneKey(scene) + "|" + scene.backgroundAssetId];
   }
-  renderArt();
-}
-
-function placeEncounter(tool, x, y) {
-  const world = state.world;
-  const enemy = $("encEnemy").value || "RANDOM";
-  const prompt = $("encPrompt").value || (tool === "finalBoss" ? "FINAL BOSS?" : tool === "miniboss" ? "MINIBOSS?" : tool === "forge" ? "FORGE FINAL ROUND?" : tool === "boss" ? "BOSS?" : tool === "shop" ? "TRADE?" : tool === "shoot" ? "TAKE SHOT?" : tool === "npcEncounter" ? "TALK?" : "ENCOUNTER?");
-  const once = $("encOnce").checked;
-  const pickedSprite = $("decorSprite").value;
-  const minRegular = Math.max(0, Math.min(20, Number($("minRegular").value) || 0));
-  const bullet = cleanOptionalId($("bulletId").value || "");
-  world.interacts = (world.interacts || []).filter((item) => !(item.x === x && item.y === y));
-  if (tool === "npcEncounter") {
-    world.decor = (world.decor || []).filter((item) => !(item.x === x && item.y === y));
-    world.decor.push({ id: `${world.id.toLowerCase()}_npc_${x}_${y}`, type: "npc", x, y, sprite: pickedSprite || "NPC_SPRITE", facing: $("npcFacing").value || "right" });
+  async function loadSprite(entity) {
+    if (!entity || !entity.spriteAssetId || state.spriteCache[entity.spriteAssetId]) return;
+    var asset = assetById(entity.spriteAssetId);
+    if (!asset) return;
+    state.spriteCache[entity.spriteAssetId] = { loading: true };
+    try { state.spriteCache[entity.spriteAssetId] = await Core.decodeAsset(asset); }
+    catch (error) { state.spriteCache[entity.spriteAssetId] = { error: error.message }; }
+    renderScene();
+    renderNpcPreview();
   }
-  const base = {
-    id: `${world.id.toLowerCase()}_${tool}_${x}_${y}`,
-    x,
-    y,
-    prompt,
-    once
-  };
-  if (tool === "shoot") {
-    world.interacts.push(addLaunchText({ ...base, type: "shoot", target: $("shootTarget").value || "RADROACH", enemy: $("shootTarget").value || "RADROACH" }, "TAKE SHOT", $("shootTarget").value || "RADROACH"));
-  } else if (tool === "shop") {
-    const shopSprite = cleanSpriteRef($("shopSprite").value || "SHOP_SPRITE", "SHOP_SPRITE");
-    world.decor = (world.decor || []).filter((item) => !(item.x === x && item.y === y));
-    world.decor.push({ type: "shop", x, y, sprite: shopSprite });
-    world.interacts.push(addLaunchText({
-      ...base,
-      type: "shop",
-      once: false,
-      vendor: "SUNSCAR TRADER",
-      folder: "Shop"
-    }, "SHOP", "SUNSCAR TRADER"));
-  } else if (tool === "interior") {
-    const room = cleanScreenText($("interiorRoom").value, "INTERIOR", 22);
-    const intEnemy = $("interiorEnemy").value || enemy;
-    const npcSprite = cleanSpriteRef($("interiorNpcSprite").value, "");
-    const dialogue = cleanScreenText($("interiorDialogue").value, "HOW YOU ENJOYING THE RADS?", 54);
-    const fightText = cleanScreenText($("interiorFightText").value, "FIGHT", 10);
-    const fleeText = cleanScreenText($("interiorFleeText").value, "FLEE", 10);
-    const interact = {
-      ...base,
-      type: "interior",
-      prompt: $("interiorPrompt").value || prompt,
-      room,
-      name: room,
-      enemy: intEnemy,
-      once: $("interiorOnce").checked
-    };
-    if (npcSprite) interact.ns = npcSprite;
-    if (dialogue) interact.dlg = dialogue;
-    if (fightText && fightText !== "FIGHT") interact.ft = fightText;
-    if (fleeText && fleeText !== "FLEE") interact.fl = fleeText;
-    const oldTitle = $("encLaunchTitle").value;
-    const oldSubtitle = $("encLaunchSubtitle").value;
-    $("encLaunchTitle").value = $("interiorLaunchTitle").value || "INTERIOR";
-    $("encLaunchSubtitle").value = $("interiorLaunchSubtitle").value || intEnemy;
-    addLaunchText(interact, "INTERIOR", intEnemy);
-    $("encLaunchTitle").value = oldTitle;
-    $("encLaunchSubtitle").value = oldSubtitle;
-    world.interacts.push(interact);
-  } else if (tool === "forge") {
-    world.interacts.push({ ...base, type: "forge", once: false });
-  } else if (tool === "miniboss") {
-    const music = $("encMusic").value;
-    const interact = {
-      ...base,
-      type: "battle",
-      boss: true,
-      miniboss: true,
-      enemy,
-      music: music === "false" ? false : (music || "NVTH")
-    };
-    if (minRegular > 2) interact.minRegular = minRegular;
-    if (bullet) interact.bullet = bullet;
-    addLaunchText(interact, "MINIBOSS", enemy);
-    world.interacts.push(interact);
-  } else if (tool === "finalBoss") {
-    const music = $("encMusic").value;
-    world.interacts.push(addLaunchText({
-      ...base,
-      type: "battle",
-      boss: true,
-      finalBoss: true,
-      enemy,
-      music: music === "false" ? false : (music || "NVTH")
-    }, "FINAL BOSS", enemy));
-  } else if (tool === "boss") {
-    const music = $("encMusic").value;
-    world.interacts.push(addLaunchText({
-      ...base,
-      type: "battle",
-      boss: true,
-      enemy,
-      music: music === "false" ? false : (music || "NVTH")
-    }, "BOSS", enemy));
-  } else {
-    const music = $("encMusic").value;
-    const interact = {
-      ...base,
-      type: "battle",
-      npc: tool === "npcEncounter",
-      enemy,
-      music: music === "false" ? false : (music || undefined)
-    };
-    if (tool === "npcEncounter") {
-      interact.decorId = `${world.id.toLowerCase()}_npc_${x}_${y}`;
-      interact.patrol = $("npcPatrol").value || "horizontal";
-      interact.dir = $("npcFacing").value || "right";
-      interact.range = Math.max(0, Math.min(12, Number($("npcRange").value) || 0));
-      interact.sight = 6;
+
+  function renderSceneList() {
+    var scenes = currentCollection();
+    $("sceneListTitle").textContent = state.sceneKind === "world" ? "Worlds" : "Interiors";
+    $("sceneList").innerHTML = scenes.map(function (scene) {
+      return '<button class="list-item' + (scene.id === state.sceneId ? " selected" : "") + '" type="button" data-scene-id="' + html(scene.id) + '"><span><strong>' + html(scene.name) + "</strong><small>" + html(scene.id) + '</small></span><span class="badge">' + (scene.entities || []).length + "</span></button>";
+    }).join("");
+  }
+  function renderSceneInspector() {
+    var scene = currentScene();
+    var entity = selectedEntity();
+    if (!scene) { $("sceneInspector").innerHTML = '<div class="empty">No map selected</div>'; return; }
+    if (!entity) {
+      $("sceneInspector").innerHTML = '<div class="property-grid">' +
+        field("ID", scene.id, "id", { full: true }) + field("Name", scene.name, "name", { full: true }) +
+        field("Background", scene.backgroundAssetId || "", "backgroundAssetId", { full: true, options: assetOptions(function (asset) { return asset.type === "image"; }) }) +
+        field("Width", scene.width, "width", { type: "number", min: 1, max: 4096 }) + field("Height", scene.height, "height", { type: "number", min: 1, max: 4096 }) +
+        '<div class="form-section full"><h3>Player Spawn</h3><div class="property-grid">' +
+        field("X", scene.spawn.x, "spawn.x", { type: "number" }) + field("Y", scene.spawn.y, "spawn.y", { type: "number" }) +
+        field("Facing", scene.spawn.facing, "spawn.facing", { full: true, options: ["down", "left", "right", "up"] }) +
+        "</div></div>" +
+        '<div class="form-section full"><h3>Limits</h3><div class="validation-row"><span class="validation-mark">#</span><span>Entities</span><b>' + (scene.entities || []).length + " / " + (scene.kind === "world" ? state.project.runtime.budgets.worldNpcs : state.project.runtime.budgets.interiorNpcs) + '</b></div><div class="validation-row"><span class="validation-mark">#</span><span>Collision</span><b>' + (scene.kind === "world" ? "1350 B" : (scene.collisionRects || []).length + " RECT") + "</b></div></div>" +
+        '<div class="form-actions full"><button id="duplicateScene" class="button quiet" type="button">Duplicate</button><button id="deleteScene" class="button quiet danger" type="button">Delete</button></div>' +
+        "</div>";
+      return;
     }
-    addLaunchText(interact, tool === "npcEncounter" ? "TALK" : "ENCOUNTER", enemy);
-    world.interacts.push(interact);
+    var isNpc = entity.type === "npc" || entity.type === "companion";
+    var action = entity.action || {};
+    $("sceneInspector").innerHTML = '<div class="property-grid">' +
+      field("ID", entity.id, "id", { source: "entity", full: true }) + field("Name", entity.name, "name", { source: "entity", full: true }) +
+      field("Type", entity.type, "type", { source: "entity", options: ["npc", "trigger", "exit"] }) + field("Facing", entity.facing || "down", "facing", { source: "entity", options: ["down", "left", "right", "up"] }) +
+      field("X", entity.x, "x", { source: "entity", type: "number" }) + field("Y", entity.y, "y", { source: "entity", type: "number" }) +
+      field("Width", entity.width, "width", { source: "entity", type: "number", min: 1 }) + field("Height", entity.height, "height", { source: "entity", type: "number", min: 1 }) +
+      field("Solid Collision", entity.solid !== false, "solid", { source: "entity", type: "checkbox" }) +
+      (isNpc ? field("Sprite", entity.spriteAssetId || "", "spriteAssetId", { source: "entity", full: true, options: assetOptions(function (asset) { return asset.extension === ".img"; }) }) +
+        field("Dialogue", entity.dialogueId || "", "dialogueId", { source: "entity", full: true, options: dialogueOptions() }) +
+        field("Interaction Range", entity.interactionRange || 44, "interactionRange", { source: "entity", type: "number", min: 12, max: 200 }) +
+        field("Movement", entity.movement && entity.movement.type || "static", "movement.type", { source: "entity", options: ["static", "patrol", "wander", "follow"] }) +
+        field("Axis", entity.movement && entity.movement.axis || "x", "movement.axis", { source: "entity", options: ["x", "y"] }) +
+        field("Distance", entity.movement && entity.movement.distance || 24, "movement.distance", { source: "entity", type: "number", min: 0, max: 240 }) +
+        field("Speed", entity.movement && entity.movement.speed || 1, "movement.speed", { source: "entity", type: "number", min: 1, max: 4 }) :
+        field("Prompt", entity.prompt || "INTERACT?", "prompt", { source: "entity", full: true }) +
+        field("Dialogue", entity.dialogueId || "", "dialogueId", { source: "entity", full: true, options: dialogueOptions() }) +
+        field("Action", action.type || "battle", "action.type", { source: "entity", options: ["battle", "shop", "confrontation", "interior", "world", "exit", "close"] }) +
+        field("Target", action.target || "", "action.target", { source: "entity" }) +
+        field("Round Reward", action.bullet || "", "action.bullet", { source: "entity" }) +
+        field("Once", !!entity.once, "once", { source: "entity", type: "checkbox" }) +
+        field("Miniboss", !!action.miniboss, "action.miniboss", { source: "entity", type: "checkbox" })) +
+      '<div class="form-actions full"><button id="duplicateEntity" class="button quiet" type="button">Duplicate</button><button id="deleteEntity" class="button quiet danger" type="button">Delete</button></div>' +
+      "</div>";
   }
-}
 
-function applyWorldTool(x, y) {
-  const world = state.world;
-  const tool = $("worldTool").value;
-  if (!world) return;
-  if ("GPBHDSX".includes(tool)) {
-    const row = world.rows[y].split("");
-    row[x] = tool;
-    world.rows[y] = row.join("");
-  } else if (tool === "spawn") {
-    world.spawn = [x, y];
-  } else if (tool === "exit") {
-    const requiredRound = cleanOptionalId($("exitRequiredRound").value || "");
-    const exit = {
-      id: `${world.id.toLowerCase()}_exit_${x}_${y}`,
-      x,
-      y,
-      to: cleanId($("exitTo").value || "WORLD_02"),
-      spawn: [Number($("exitX").value) || 2, Number($("exitY").value) || 2],
-      facing: $("exitFacing").value || "down"
-    };
-    if (requiredRound) exit.requiresRound = requiredRound;
-    const travelTitle = cleanScreenText($("exitTravelTitle").value, "TRAVELLING", 22);
-    const travelSubtitle = cleanScreenText($("exitTravelSubtitle").value, exit.to, 24);
-    if (travelTitle && travelTitle !== "TRAVELLING") exit.tt = travelTitle;
-    if (travelSubtitle && travelSubtitle !== exit.to) exit.ts = travelSubtitle;
-    world.exits = (world.exits || []).filter((item) => !(item.x === x && item.y === y));
-    world.exits.push(exit);
-  } else if (tool === "regular" || tool === "boss" || tool === "shoot" || tool === "shop" || tool === "npcEncounter" || tool === "interior" || tool === "miniboss" || tool === "forge" || tool === "finalBoss") {
-    placeEncounter(tool, x, y);
-  } else if (["tree", "npc", "camp", "sign", "rocks"].includes(tool)) {
-    world.decor = (world.decor || []).filter((item) => !(item.x === x && item.y === y));
-    world.decor.push({ id: `${world.id.toLowerCase()}_${tool}_${x}_${y}`, type: tool, x, y, sprite: $("decorSprite").value || `${tool.toUpperCase()}_SPRITE` });
-  } else if (tool === "erase") {
-    world.interacts = (world.interacts || []).filter((item) => !(item.x === x && item.y === y));
-    world.exits = (world.exits || []).filter((item) => !(item.x === x && item.y === y));
-    world.decor = (world.decor || []).filter((item) => !(item.x === x && item.y === y));
+  function drawGrid(context, scene) {
+    var grid = scene.kind === "world" ? 12 : 24;
+    context.save();
+    context.strokeStyle = "rgba(194,238,148,.18)";
+    context.lineWidth = Math.max(1, 1 / (state.zoom / 100));
+    context.beginPath();
+    for (var x = 0; x <= scene.width; x += grid) { context.moveTo(x, 0); context.lineTo(x, scene.height); }
+    for (var y = 0; y <= scene.height; y += grid) { context.moveTo(0, y); context.lineTo(scene.width, y); }
+    context.stroke();
+    context.restore();
   }
-  renderWorld();
-}
-
-function worldCell(event) {
-  return event.target.closest(".cell");
-}
-
-function rowsToPixels(rowList) {
-  return rowList.join("").split("").map((value) => {
-    const parsed = parseInt(value, 16);
-    return Number.isFinite(parsed) ? parsed : 0;
-  });
-}
-
-function rowsToPlayerPresetPixels(preset) {
-  const rowList = preset.rows || [];
-  const srcHeight = rowList.length;
-  const srcWidth = Math.max(1, ...rowList.map((row) => row.length));
-  const scale = Math.max(1, Math.floor(Math.min(PLAYER_SPRITE_WIDTH / srcWidth, PLAYER_SPRITE_HEIGHT / srcHeight)));
-  const offsetX = Math.floor((PLAYER_SPRITE_WIDTH - srcWidth * scale) / 2);
-  const offsetY = Math.floor((PLAYER_SPRITE_HEIGHT - srcHeight * scale) / 2);
-  const sourceMax = (1 << normalizeSpriteBpp(preset.bpp || PLAYER_SPRITE_BPP)) - 1;
-  const pixels = Array(PLAYER_SPRITE_WIDTH * PLAYER_SPRITE_HEIGHT).fill(0);
-  for (let sy = 0; sy < srcHeight; sy += 1) {
-    const row = rowList[sy] || "";
-    for (let sx = 0; sx < srcWidth; sx += 1) {
-      const raw = parseInt(row[sx] || "0", 16);
-      const value = Number.isFinite(raw) ? Math.max(0, Math.min(PLAYER_SPRITE_BPP === 2 ? 3 : raw, Math.round(raw * 3 / sourceMax))) : 0;
-      for (let yy = 0; yy < scale; yy += 1) {
-        for (let xx = 0; xx < scale; xx += 1) {
-          const x = offsetX + sx * scale + xx;
-          const y = offsetY + sy * scale + yy;
-          if (x >= 0 && y >= 0 && x < PLAYER_SPRITE_WIDTH && y < PLAYER_SPRITE_HEIGHT) pixels[y * PLAYER_SPRITE_WIDTH + x] = value;
-        }
+  function drawCollision(context, scene) {
+    context.save();
+    context.fillStyle = "rgba(219,121,111,.38)";
+    context.strokeStyle = "rgba(255,171,155,.7)";
+    if (scene.kind === "world") {
+      var collision = collisionFor(scene);
+      for (var index = 0; index < collision.length; index += 1) if (collision[index]) context.fillRect((index % 120) * 12, Math.floor(index / 120) * 12, 12, 12);
+    } else {
+      (scene.collisionRects || []).forEach(function (rect) { context.fillRect(rect.x, rect.y, rect.width, rect.height); context.strokeRect(rect.x + .5, rect.y + .5, rect.width - 1, rect.height - 1); });
+    }
+    context.restore();
+  }
+  function drawEntity(context, entity, selected) {
+    var sprite = entity.spriteAssetId && state.spriteCache[entity.spriteAssetId];
+    if (sprite && sprite.canvas) {
+      var sourceWidth = sprite.width === 102 ? 34 : sprite.width;
+      context.drawImage(sprite.canvas, 0, 0, sourceWidth, sprite.height, entity.x, entity.y, entity.width, entity.height);
+    } else {
+      var colors = { npc: "#9fca72", trigger: "#e1b765", exit: "#78aeb7", companion: "#c6ee94" };
+      context.fillStyle = colors[entity.type] || "#e1b765";
+      context.globalAlpha = .72;
+      context.fillRect(entity.x, entity.y, entity.width, entity.height);
+      context.globalAlpha = 1;
+      if (entity.spriteAssetId) loadSprite(entity);
+    }
+    context.strokeStyle = selected ? "#ffffff" : entity.solid ? "#db796f" : "rgba(255,255,255,.55)";
+    context.lineWidth = selected ? 3 : 1;
+    context.strokeRect(entity.x + .5, entity.y + .5, entity.width - 1, entity.height - 1);
+    context.fillStyle = "rgba(0,0,0,.78)";
+    context.fillRect(entity.x, entity.y - 15, Math.max(entity.width, Math.min(160, (entity.name || entity.id).length * 7 + 8)), 15);
+    context.fillStyle = "#edf1e8";
+    context.font = "10px Segoe UI";
+    context.fillText(entity.name || entity.id, entity.x + 4, entity.y - 4);
+  }
+  function renderScene() {
+    var scene = currentScene();
+    if (!scene) return;
+    var canvas = $("sceneCanvas");
+    if (canvas.width !== scene.width || canvas.height !== scene.height) { canvas.width = scene.width; canvas.height = scene.height; }
+    var context = canvas.getContext("2d");
+    context.imageSmoothingEnabled = false;
+    context.fillStyle = "#061008";
+    context.fillRect(0, 0, scene.width, scene.height);
+    if ($("showBackground").checked) {
+      var background = backgroundFor(scene);
+      if (background) context.drawImage(background, 0, 0, scene.width, scene.height);
+      else {
+        context.fillStyle = "#172019";
+        context.fillRect(0, 0, scene.width, scene.height);
+        context.fillStyle = "#71806d";
+        context.font = "bold " + Math.max(20, Math.floor(scene.width / 35)) + "px Segoe UI";
+        context.textAlign = "center";
+        context.fillText(scene.name, scene.width / 2, scene.height / 2);
+        context.textAlign = "left";
       }
     }
-  }
-  return pixels;
-}
-
-function selectedSpriteBpp() {
-  const bpp = Number($("spriteBpp").value);
-  return bpp === 1 || bpp === 2 || bpp === 4 ? bpp : 2;
-}
-
-function spriteBaseName(value) {
-  return cleanId(String(value || "SPRITE").replace(/\.(JS|IMG)$/i, ""));
-}
-
-function isPlayerSpriteName(value) {
-  return /^PLAYER_SPRITE/i.test(spriteBaseName(value));
-}
-
-function isInteriorSpriteMode() {
-  return $("spriteScope") && $("spriteScope").value === "interior";
-}
-
-function isNpcSpriteMode() {
-  return $("spriteScope") && ($("spriteScope").value === "npc" || $("spriteScope").value === "interior");
-}
-
-function spriteRuntimeExt(value) {
-  return isPlayerSpriteName(value) || isNpcSpriteMode() ? ".IMG" : ".JS";
-}
-
-function refreshSpriteBrush() {
-  const brush = $("spriteBrush");
-  const current = Number(brush.value) || 0;
-  const max = (1 << selectedSpriteBpp()) - 1;
-  brush.innerHTML = Array.from({ length: max + 1 }, (_, value) => `<option value="${value}">${value}</option>`).join("");
-  brush.value = String(Math.min(current, max));
-}
-
-function normalizeSpriteBpp(value) {
-  const bpp = Number(value);
-  return bpp === 1 || bpp === 2 || bpp === 4 ? bpp : 2;
-}
-
-function normalizeSpriteData(input, fallbackName) {
-  const raw = input && input.sprite ? input.sprite : input;
-  if (!raw || typeof raw !== "object") throw new Error("Sprite data must be an object.");
-  const width = Math.max(1, Math.min(64, Number(raw.width) || Number(raw.w) || 12));
-  const height = Math.max(1, Math.min(64, Number(raw.height) || Number(raw.h) || 14));
-  const bpp = normalizeSpriteBpp(raw.bpp);
-  const max = (1 << bpp) - 1;
-  let pixels = Array.isArray(raw.pixels) ? raw.pixels.slice() : null;
-  if (!pixels && Array.isArray(raw.rows)) pixels = rowsToPixels(raw.rows);
-  if (!pixels && typeof raw.rows === "string") pixels = rowsToPixels(raw.rows.split(/\r?\n/).filter(Boolean));
-  if (!pixels) throw new Error("Sprite data needs pixels or rows.");
-  pixels = pixels.slice(0, width * height).map((value) => Math.max(0, Math.min(max, Number(value) || 0)));
-  while (pixels.length < width * height) pixels.push(0);
-  return {
-    name: cleanId(raw.name || raw.id || fallbackName || "IMPORTED_SPRITE"),
-    width,
-    height,
-    bpp,
-    pixels
-  };
-}
-
-function applySprite(sprite) {
-  state.sprite = normalizeSpriteData(sprite, $("spriteName").value || "IMPORTED_SPRITE");
-  $("spriteName").value = state.sprite.name;
-  $("spriteWidth").value = state.sprite.width;
-  $("spriteHeight").value = state.sprite.height;
-  $("spriteBpp").value = String(state.sprite.bpp);
-  renderSprite();
-}
-
-function makeSprite(width = PLAYER_SPRITE_WIDTH, height = PLAYER_SPRITE_HEIGHT, fill = 0) {
-  state.sprite = { name: $("spriteName").value || "PLAYER_SPRITEUP", width, height, bpp: selectedSpriteBpp(), pixels: Array(width * height).fill(fill) };
-  renderSprite();
-}
-
-function renderSprite() {
-  const sprite = state.sprite;
-  if (!sprite) return;
-  const grid = $("spriteGrid");
-  const bpp = selectedSpriteBpp();
-  grid.className = `sprite-grid bpp${bpp}`;
-  grid.style.gridTemplateColumns = `repeat(${sprite.width}, 22px)`;
-  grid.innerHTML = sprite.pixels.map((value, index) => {
-    const x = index % sprite.width;
-    const y = Math.floor(index / sprite.width);
-    return `<div class="pixel v${value || 0}" data-x="${x}" data-y="${y}"></div>`;
-  }).join("");
-  sprite.name = cleanId($("spriteName").value || sprite.name || "PLAYER_SPRITE");
-  sprite.bpp = bpp;
-  refreshSpriteBrush();
-  $("spriteTitle").textContent = sprite.name;
-  $("spriteReadout").textContent = `${sprite.width} x ${sprite.height} - ${sprite.bpp} bpp - runtime ${spriteRuntimeExt(sprite.name)}`;
-  $("spriteCode").value = spriteOutputText();
-  if ($("downloadSprite")) $("downloadSprite").textContent = isPlayerSpriteName(sprite.name) || isNpcSpriteMode() ? "Download IMG" : "Download JS";
-  if (isPlayerSpriteName(sprite.name)) $("spriteScope").value = "global";
-}
-
-function paintSprite(x, y) {
-  const sprite = state.sprite;
-  if (!sprite) return;
-  sprite.pixels[y * sprite.width + x] = Number($("spriteBrush").value) || 0;
-  renderSprite();
-}
-
-function packSpritePixelBytes(sprite) {
-  const bpp = normalizeSpriteBpp(sprite.bpp);
-  const max = (1 << bpp) - 1;
-  const bytes = new Uint8Array(Math.ceil(sprite.width * sprite.height * bpp / 8));
-  for (let index = 0; index < sprite.width * sprite.height; index += 1) {
-    const value = Math.max(0, Math.min(max, Number(sprite.pixels[index]) || 0));
-    let remaining = bpp;
-    let bit = index * bpp;
-    while (remaining > 0) {
-      const byteIndex = Math.floor(bit / 8);
-      const bitOffset = bit % 8;
-      const writable = Math.min(remaining, 8 - bitOffset);
-      const shift = 8 - bitOffset - writable;
-      bytes[byteIndex] |= ((value >> (remaining - writable)) & ((1 << writable) - 1)) << shift;
-      remaining -= writable;
-      bit += writable;
+    if ($("showCollision").checked) drawCollision(context, scene);
+    if ($("showGrid").checked) drawGrid(context, scene);
+    if ($("showEntities").checked) (scene.entities || []).forEach(function (entity) { drawEntity(context, entity, entity.id === state.selectedEntityId); });
+    context.fillStyle = "#ffffff";
+    context.strokeStyle = "#101410";
+    context.lineWidth = 2;
+    context.beginPath();
+    context.moveTo(scene.spawn.x, scene.spawn.y - 11);
+    context.lineTo(scene.spawn.x - 8, scene.spawn.y + 8);
+    context.lineTo(scene.spawn.x + 8, scene.spawn.y + 8);
+    context.closePath();
+    context.fill();
+    context.stroke();
+    if (state.drawing && state.drawing.mode === "rect" && state.drawing.scene === scene) {
+      var rectangle = normalizedRect(state.drawing.start, state.drawing.end || state.drawing.start);
+      context.fillStyle = "rgba(219,121,111,.35)";
+      context.strokeStyle = "#ff9f92";
+      context.fillRect(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
+      context.strokeRect(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
     }
+    var scale = state.zoom / 100;
+    $("canvasWrap").style.width = Math.max(1, Math.round(scene.width * scale)) + "px";
+    $("canvasWrap").style.height = Math.max(1, Math.round(scene.height * scale)) + "px";
+    $("sceneDimensions").textContent = scene.width + " x " + scene.height;
+    $("selectionReadout").textContent = selectedEntity() ? selectedEntity().name.toUpperCase() : "NO SELECTION";
+    $("sceneWarning").textContent = state.backgroundErrors[sceneKey(scene)] || "";
   }
-  return bytes;
-}
+  function renderSceneWorkspace() {
+    renderSceneList();
+    renderSceneInspector();
+    renderScene();
+    loadBackground(currentScene());
+    updateUndoButtons();
+  }
 
-function unpackSpritePixelBytes(buffer, width, height, bpp) {
-  const input = new Uint8Array(buffer);
-  const pixels = [];
-  const mask = (1 << bpp) - 1;
-  for (let index = 0; index < width * height; index += 1) {
-    let remaining = bpp;
-    let bit = index * bpp;
-    let value = 0;
-    while (remaining > 0) {
-      const byteIndex = Math.floor(bit / 8);
-      const bitOffset = bit % 8;
-      const readable = Math.min(remaining, 8 - bitOffset);
-      const shift = 8 - bitOffset - readable;
-      value = (value << readable) | (((input[byteIndex] || 0) >> shift) & ((1 << readable) - 1));
-      remaining -= readable;
-      bit += readable;
+  function normalizedRect(a, b) {
+    return { x: Math.min(a.x, b.x), y: Math.min(a.y, b.y), width: Math.max(1, Math.abs(b.x - a.x)), height: Math.max(1, Math.abs(b.y - a.y)) };
+  }
+  function pointFromEvent(event) {
+    var canvas = $("sceneCanvas");
+    var rect = canvas.getBoundingClientRect();
+    return { x: Core.clamp(Math.round((event.clientX - rect.left) / rect.width * canvas.width), 0, canvas.width - 1), y: Core.clamp(Math.round((event.clientY - rect.top) / rect.height * canvas.height), 0, canvas.height - 1) };
+  }
+  function entityAt(scene, point) {
+    for (var index = scene.entities.length - 1; index >= 0; index -= 1) {
+      var entity = scene.entities[index];
+      if (point.x >= entity.x && point.x <= entity.x + entity.width && point.y >= entity.y && point.y <= entity.y + entity.height) return entity;
     }
-    pixels.push(value & mask);
+    return null;
   }
-  return pixels;
-}
-
-function packSpritePixels(sprite) {
-  const bytes = packSpritePixelBytes(sprite);
-  let binary = "";
-  bytes.forEach((byte) => { binary += String.fromCharCode(byte); });
-  return btoa(binary);
-}
-
-function spriteSnippet() {
-  const sprite = state.sprite;
-  const name = cleanId($("spriteName").value || sprite.name || "PLAYER_SPRITE");
-  const bpp = selectedSpriteBpp();
-  return `var ${name}={width:${sprite.width},height:${sprite.height},bpp:${bpp},transparent:0,buffer:atob("${packSpritePixels({ ...sprite, bpp })}")};`;
-}
-
-function spriteOutputText() {
-  const sprite = state.sprite;
-  const name = spriteBaseName($("spriteName").value || sprite && sprite.name || "SPRITE");
-  if (!isPlayerSpriteName(name) && !isNpcSpriteMode()) return spriteSnippet();
-  return [
-    `Runtime output: ${name}.IMG`,
-    `Upload path: Assets/DATA/${name}.IMG -> HOLO/BIGIRON/DATA/${name}.IMG`,
-    "",
-    isNpcSpriteMode() ? "NPC sprites use 34x34 IMG files so world and interior modules can load them cheaply." : "Player direction sprites use IMG in the current low-memory Big Iron build.",
-    "Use Download IMG or Save Runtime Sprite for the Pip-Boy file."
-  ].join("\n");
-}
-
-function spritePixel(event) {
-  return event.target.closest(".pixel");
-}
-
-async function importSpriteImg() {
-  const file = $("spriteImgImport").files && $("spriteImgImport").files[0];
-  const bytes = new Uint8Array(await readBinaryFile(file));
-  const width = bytes[0];
-  const height = bytes[1];
-  const bpp = normalizeSpriteBpp(bytes[2] & 15);
-  if (!width || !height || !bpp || bytes.length < 4) throw new Error("Sprite IMG is incomplete.");
-  applySprite({
-    name: imageName(file),
-    width,
-    height,
-    bpp,
-    pixels: unpackSpritePixelBytes(bytes.slice(4), width, height, bpp)
-  });
-  setStatus(`Imported ${file.name}`);
-}
-
-async function convertImageToSprite() {
-  const file = $("spriteImageImport").files && $("spriteImageImport").files[0];
-  const image = await loadImageFile(file);
-  const width = Math.max(1, Math.min(64, Number($("spriteWidth").value) || state.sprite && state.sprite.width || 12));
-  const height = Math.max(1, Math.min(64, Number($("spriteHeight").value) || state.sprite && state.sprite.height || 14));
-  const bpp = selectedSpriteBpp();
-  const max = (1 << bpp) - 1;
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d", { willReadFrequently: true });
-  const rect = imageDrawRect(image, width, height, $("spriteImageMode").value);
-  canvas.width = width;
-  canvas.height = height;
-  ctx.imageSmoothingEnabled = true;
-  ctx.fillStyle = "#000";
-  ctx.fillRect(0, 0, width, height);
-  ctx.drawImage(image, rect.sx, rect.sy, rect.sw, rect.sh, rect.dx, rect.dy, rect.dw, rect.dh);
-  const rgba = ctx.getImageData(0, 0, width, height).data;
-  const pixels = [];
-  for (let index = 0; index < rgba.length; index += 4) {
-    const alpha = rgba[index + 3] / 255;
-    const luma = (rgba[index] * 0.299 + rgba[index + 1] * 0.587 + rgba[index + 2] * 0.114) * alpha;
-    pixels.push(Math.max(0, Math.min(max, Math.round(luma * max / 255))));
+  function pushHistory(scene) {
+    commitCollision(scene);
+    state.history.push({ kind: scene.kind, id: scene.id, data: clone(scene) });
+    if (state.history.length > 30) state.history.shift();
+    state.redo = [];
+    updateUndoButtons();
   }
-  const currentName = cleanId($("spriteName").value || "");
-  const name = currentName && !/^PLAYER_SPRITEUP$/i.test(currentName) ? currentName : `${imageName(file)}_SPRITE`;
-  applySprite({ name, width, height, bpp, pixels });
-  setStatus(`Converted ${file.name} to sprite`);
-}
-
-function download(name, text, type) {
-  const blob = new Blob([text], { type: type || "text/plain" });
-  downloadBlob(name, blob);
-}
-
-function downloadBlob(name, blob) {
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = name;
-  link.click();
-  URL.revokeObjectURL(url);
-}
-
-function spriteImageBlob() {
-  const sprite = state.sprite;
-  const bpp = isNpcSpriteMode() ? 2 : selectedSpriteBpp();
-  const pixelBytes = packSpritePixelBytes({ ...sprite, bpp });
-  const bytes = new Uint8Array(pixelBytes.length + 4);
-  bytes[0] = sprite.width;
-  bytes[1] = sprite.height;
-  bytes[2] = 128 | bpp;
-  bytes[3] = 0;
-  bytes.set(pixelBytes, 4);
-  return new Blob([bytes], { type: "application/octet-stream" });
-}
-
-function downloadSpriteRuntime() {
-  if (!state.sprite) return;
-  const name = spriteBaseName($("spriteName").value || state.sprite.name || "SPRITE");
-  if (isPlayerSpriteName(name) || isNpcSpriteMode()) {
-    downloadBlob(`${name}.IMG`, spriteImageBlob());
-    return;
+  function replaceScene(snapshot) {
+    var collection = snapshot.kind === "world" ? state.project.maps : state.project.interiors;
+    var index = collection.findIndex(function (scene) { return scene.id === snapshot.id; });
+    if (index < 0) return;
+    collection[index] = clone(snapshot.data);
+    state.sceneKind = snapshot.kind;
+    state.sceneId = snapshot.data.id;
+    delete state.collisionCache[(snapshot.kind === "interior" ? "interior:" : "world:") + snapshot.id];
   }
-  download(`${name}.JS`, spriteSnippet() + "\n", "application/javascript");
-}
-
-async function loadInfo() {
-  const keep = {};
-  ["decorSprite", "shopSprite", "encEnemy", "interiorEnemy", "interiorNpcSprite", "battleEnemySelect", "itemSelect"].forEach((id) => {
-    if ($(id)) keep[id] = $(id).value;
-  });
-  state.info = await api("/api/info");
-  state.items = state.info.itemMap || {};
-  const worldDetails = state.info.worldDetails && state.info.worldDetails.length
-    ? state.info.worldDetails
-    : state.info.worlds.map((file) => ({ file, id: file.replace(/\.JSON$/i, ""), image: "" }));
-  const worldOptions = state.info.worlds.length
-    ? ['<option value="">Choose existing world to edit</option>'].concat(worldDetails.map((world) => `<option value="${world.file}">${world.name || world.id} (${world.file})</option>`)).join("")
-    : '<option value="">No existing worlds found</option>';
-  $("worldSelect").innerHTML = worldOptions;
-  $("artWorld").innerHTML = state.info.worlds.length
-    ? state.info.worlds.map((name) => `<option value="${name}">${name.replace(/\.JSON$/i, "")}</option>`).join("")
-    : '<option value="WORLD_NEW.JSON">WORLD_NEW - save world first</option>';
-  const linkedArt = new Set(worldDetails.map((world) => artJsonForWorld(world).toUpperCase()));
-  const worldArtOptions = worldDetails.map((world) => {
-    const label = world.image ? `${world.name || world.id} - ${world.image}` : `${world.name || world.id} - new art`;
-    return `<option value="world:${world.file}">${label}</option>`;
-  });
-  const looseArtOptions = (state.info.worldArt || [])
-    .filter((name) => !linkedArt.has(String(name).toUpperCase()))
-    .map((name) => `<option value="art:${name}">${name}</option>`);
-  $("artSelect").innerHTML = worldArtOptions.concat(looseArtOptions).join("") || '<option value="world:WORLD_NEW.JSON">WORLD_NEW - save world first</option>';
-  $("worldArtPreset").innerHTML = Object.entries(artPresets).map(([key, preset]) => `<option value="${key}">${preset.label}</option>`).join("");
-  $("spriteSelect").innerHTML = state.info.sprites.map((name) => `<option value="${name}">${name}</option>`).join("");
-  const decorSprites = state.info.sprites.filter((name) => !isPlayerSpriteName(name));
-  $("decorSprite").innerHTML = ['<option value="">Auto</option>']
-    .concat(decorSprites.map((name) => `<option value="${name.replace(/\.(JS|IMG)$/i, "")}">${name}</option>`))
-    .join("");
-  const imgSprites = state.info.sprites.filter((name) => /\.IMG$/i.test(name));
-  if ($("shopSprite")) {
-    $("shopSprite").innerHTML = ['<option value="SHOP_SPRITE">SHOP_SPRITE.IMG</option>']
-      .concat(imgSprites.map((name) => `<option value="${name.replace(/\.IMG$/i, "")}">${name}</option>`))
-      .join("");
+  function undo() {
+    var entry = state.history.pop();
+    var scene = currentScene();
+    if (!entry || !scene) return;
+    commitCollision(scene);
+    state.redo.push({ kind: scene.kind, id: scene.id, data: clone(scene) });
+    replaceScene(entry);
+    markDirty();
+    renderSceneWorkspace();
   }
-  const spriteOptions = (placeholder) => [`<option value="">${placeholder}</option>`]
-    .concat(state.info.sprites.map((name) => `<option value="${name.replace(/\.(JS|IMG)$/i, "")}">${name}</option>`))
-    .join("");
-  if ($("interiorNpcSprite")) $("interiorNpcSprite").innerHTML = spriteOptions("Auto stick NPC");
-  const enemyOptions = ['<option value="RANDOM">RANDOM</option>'].concat(state.info.enemies.map((enemy) => `<option value="${enemy.id}">${enemy.name} LV${enemy.level}</option>`));
-  $("encEnemy").innerHTML = enemyOptions.join("");
-  if ($("interiorEnemy")) $("interiorEnemy").innerHTML = enemyOptions.join("");
-  if ($("battleEnemySelect")) {
-    $("battleEnemySelect").innerHTML = state.info.enemies.map((enemy) => `<option value="${enemy.id}">${enemy.name} LV${enemy.level}</option>`).join("");
+  function redo() {
+    var entry = state.redo.pop();
+    var scene = currentScene();
+    if (!entry || !scene) return;
+    commitCollision(scene);
+    state.history.push({ kind: scene.kind, id: scene.id, data: clone(scene) });
+    replaceScene(entry);
+    markDirty();
+    renderSceneWorkspace();
   }
-  if ($("itemSelect")) {
-    const itemKeys = Object.keys(state.items).sort((a, b) => a.localeCompare(b));
-    $("itemSelect").innerHTML = itemKeys.length
-      ? itemKeys.map((key) => `<option value="${key}">${state.items[key].name || key}</option>`).join("")
-      : '<option value="ITEM">No items saved yet</option>';
-  }
-  Object.entries(keep).forEach(([id, value]) => {
-    if (value && $(id)) ensureOption($(id), value, value);
-    if (value && $(id)) $(id).value = value;
-  });
-  $("packageNotes").textContent = [
-    `Big Iron version: ${state.info.version}`,
-    "",
-    "Start/menu boot files:",
-    "APP.MIN.JS -> HOLO/BIGIRON/APP.JS",
-    "IMAGE.BIN -> HOLO/BIGIRON/IMAGE.BIN",
-    "MENU.BIN -> HOLO/BIGIRON/MENU.BIN",
-    "Start/load options are drawn by APP.JS over MENU.BIN",
-    "Assets/CODE/SHOP.JS -> HOLO/BIGIRON/CODE/SHOP.JS (or SHOP.MIN.JS after minify)",
-    "BIGIRON.IMG -> HOLO/BIGIRON/BIGIRON.IMG",
-    "Assets/CODE/SELECTER.IMG -> HOLO/BIGIRON/CODE/SELECTER.IMG",
-    "",
-    "Runtime code:",
-    "Assets/CODE/WORLD.MIN.JS -> HOLO/BIGIRON/CODE/WORLD.JS",
-    "Assets/CODE/BATTLE.MIN.JS -> HOLO/BIGIRON/CODE/BATTLE.JS",
-    "Assets/CODE/INTERIOR.MIN.JS -> HOLO/BIGIRON/CODE/INTERIOR.JS",
-    "Assets/CODE/SHOOT.MIN.JS -> HOLO/BIGIRON/CODE/SHOOT.JS",
-    "",
-    "Battle data:",
-    "battle.json -> HOLO/BIGIRON/battle.json",
-    "Assets/battle.json -> HOLO/BIGIRON/Assets/battle.json if that folder is mirrored",
-    "Assets/DATA/ITEMS.JSON -> HOLO/BIGIRON/DATA/ITEMS.JSON",
-    "Assets/ITEMS/*.IMG or *.BMP -> HOLO/BIGIRON/ITEMS/ when item icons are added",
-    "",
-    "World JSON files:",
-    "Assets/DATA/WORLD_01.JSON -> HOLO/BIGIRON/DATA/WORLD_01.JSON",
-    "Assets/DATA/WORLD_02.JSON -> HOLO/BIGIRON/DATA/WORLD_02.JSON",
-    "Assets/DATA/WORLD_03.JSON -> HOLO/BIGIRON/DATA/WORLD_03.JSON",
-    "Assets/DATA/WORLD_04.JSON -> HOLO/BIGIRON/DATA/WORLD_04.JSON",
-    "Assets/DATA/WORLD_05.JSON -> HOLO/BIGIRON/DATA/WORLD_05.JSON",
-    "Assets/DATA/WORLD_06.JSON -> HOLO/BIGIRON/DATA/WORLD_06.JSON",
-    "",
-    "World art files:",
-    "Assets/WORLD/*.IMG -> HOLO/BIGIRON/WORLD/*.IMG",
-    "",
-    "Player movement sprites:",
-    "Assets/DATA/PLAYER_SPRITEUP.IMG -> HOLO/BIGIRON/DATA/PLAYER_SPRITEUP.IMG",
-    "Assets/DATA/PLAYER_SPRITEDOWN.IMG -> HOLO/BIGIRON/DATA/PLAYER_SPRITEDOWN.IMG",
-    "Assets/DATA/PLAYER_SPRITEL.IMG -> HOLO/BIGIRON/DATA/PLAYER_SPRITEL.IMG",
-    "Assets/DATA/PLAYER_SPRITER.IMG -> HOLO/BIGIRON/DATA/PLAYER_SPRITER.IMG",
-    "Do not upload the old PLAYER_SPRITE*.JS files for the player.",
-    "",
-    "Interior enemy sprites:",
-    "Assets/DATA/<ENEMY>_SPRITE.IMG -> HOLO/BIGIRON/DATA/<ENEMY>_SPRITE.IMG",
-    "",
-    "NPC sprite slots:",
-    "Assets/DATA/<NPC>_SPRITE.IMG -> HOLO/BIGIRON/DATA/<NPC>_SPRITE.IMG",
-    "",
-    "Shop sprite:",
-    "Assets/DATA/SHOP_SPRITE.IMG -> HOLO/BIGIRON/DATA/SHOP_SPRITE.IMG",
-    "",
-    "Decor sprite snippets:",
-    "Assets/DATA/*SPRITE*.JS -> HOLO/BIGIRON/DATA/*SPRITE*.JS",
-    "Assets/DATA/WORLD_XX/*SPRITE*.JS -> HOLO/BIGIRON/DATA/WORLD_XX/*SPRITE*.JS",
-    "",
-    "Local sprite copies saved by the Sprite Creator:",
-    state.info.spriteExportRoot || "tools/bird/exports/sprites",
-    "",
-    "Battle/shoot encounter types emitted by B.I.R.D.:",
-    'regular -> { type:"battle", enemy:"..." }',
-    'npc encounter -> { type:"battle", npc:true, patrol:"horizontal", dir:"right", range:3 } plus visible NPC decor',
-    'miniboss -> { type:"battle", miniboss:true, bullet:"..." }',
-    'forge -> { type:"forge" } for the Courier round press',
-    'final boss -> { type:"battle", finalBoss:true }',
-    'round-locked exit -> { requiresRound:"SCORCHED" }',
-    'boss -> { type:"battle", boss:true, enemy:"...", music:"NVTH" }',
-    'shoot -> { type:"shoot", target:"RADROACH" }',
-    'shop -> { type:"shop", vendor:"..." }; stock defaults live in SHOP.JS to keep world JSON small',
-    'item reward -> { item:"STIMPAK", chance:1 }',
-    'custom launch screen -> encounter lt:"TITLE", ls:"SUBTITLE"',
-    'custom travel screen -> exit tt:"TITLE", ts:"SUBTITLE"',
-    "",
-    "Other DATA snippets:",
-    "Assets/DATA/EYEBOT.JS and similar visual snippets go in HOLO/BIGIRON/DATA/"
-  ].join("\n");
-  if ($("itemSelect") && Object.keys(state.items).length) fillItemForm($("itemSelect").value || Object.keys(state.items)[0]);
-  renderWorldIndex();
-  renderEnemySpriteSlots();
-  renderMediaInfo();
-  if ($("battleEnemySelect") && state.info.enemies.length) loadBattleEnemyForm($("battleEnemySelect").value || state.info.enemies[0].id);
-  previewInteriorData();
-}
-
-async function loadWorld(name) {
-  const selected = name || $("worldSelect").value;
-  if (!selected) throw new Error("Select an existing world before editing it.");
-  const body = await api(`/api/world?name=${encodeURIComponent(selected)}`);
-  state.world = body.world;
-  renderWorld();
-  ensureOption($("artWorld"), `${state.world.id}.JSON`, state.world.id);
-  if (state.world.image) {
-    $("artName").value = state.world.image.replace(/\.IMG$/i, "");
-  }
-  setStatus(`Loaded ${body.name}`);
-}
-
-async function saveWorld() {
-  state.world.id = cleanId($("worldId").value || state.world.id);
-  state.world.name = ($("worldName").value || worldFriendlyName(state.world.id)).trim();
-  renderWorldBudget();
-  if (!budgetOk()) throw new Error("World is over the Big Iron memory budget. Trim encounters/decor/exits or split it into an interior/world.");
-  const body = await api("/api/world", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name: state.world.id, world: state.world })
-  });
-  setStatus(`Saved ${body.name}`);
-  await loadInfo();
-}
-
-async function loadArtFile(name) {
-  const body = await api(`/api/art?name=${encodeURIComponent(name || $("artName").value || "WORLD_ART")}`);
-  state.art = { ...body.art, pixels: body.art.pixels.slice() };
-  $("artName").value = body.art.name || body.name.replace(/\.JSON$/i, "");
-  renderArt();
-  return body;
-}
-
-async function loadArt(name) {
-  const selection = name || $("artSelect").value || $("artName").value || "WORLD_ART";
-  if (String(selection).startsWith("world:")) {
-    const worldFile = selection.slice(6);
-    await loadWorld(worldFile);
-    const artFile = artJsonForWorld(state.world);
-    ensureOption($("artWorld"), `${state.world.id}.JSON`, state.world.id);
-    $("artName").value = artFile.replace(/\.JSON$/i, "");
-    if (state.world.image || (state.info.worldArt || []).some((item) => item.toUpperCase() === artFile.toUpperCase())) {
-      const body = await loadArtFile(artFile);
-      setStatus(`Loaded ${state.world.id} with ${body.name}`);
+  function updateUndoButtons() { $("undoButton").disabled = !state.history.length; $("redoButton").disabled = !state.redo.length; }
+  function paintCollision(scene, point, value) {
+    if (scene.kind === "world") {
+      var collision = collisionFor(scene);
+      var cellX = Math.floor(point.x / 12);
+      var cellY = Math.floor(point.y / 12);
+      var radius = Math.max(1, state.brush);
+      for (var y = cellY - radius + 1; y <= cellY + radius - 1; y += 1) for (var x = cellX - radius + 1; x <= cellX + radius - 1; x += 1) if (x >= 0 && x < 120 && y >= 0 && y < 90) collision[y * 120 + x] = value;
+    } else if (value) {
+      var size = Math.max(12, state.brush * 12);
+      scene.collisionRects.push({ x: Math.floor(point.x / 12) * 12, y: Math.floor(point.y / 12) * 12, width: size, height: size });
     } else {
-      makeArtForWorld($("artPreset").value || $("worldArtPreset").value);
-      setStatus(`Prepared new art for ${state.world.id}`);
+      scene.collisionRects = scene.collisionRects.filter(function (rect) { return !(point.x >= rect.x && point.x <= rect.x + rect.width && point.y >= rect.y && point.y <= rect.y + rect.height); });
     }
-    return;
   }
-  const artFile = String(selection).startsWith("art:") ? selection.slice(4) : selection;
-  const worldFile = worldFileForArt(artFile);
-  if (worldFile) {
-    await loadWorld(worldFile).catch(() => {});
-    ensureOption($("artWorld"), worldFile, worldFile.replace(/\.JSON$/i, ""));
+  function pointerDown(event) {
+    var scene = currentScene();
+    if (!scene) return;
+    var point = pointFromEvent(event);
+    $("sceneCanvas").setPointerCapture(event.pointerId);
+    if (state.tool === "select") {
+      var entity = entityAt(scene, point);
+      state.selectedEntityId = entity ? entity.id : "";
+      if (entity) { pushHistory(scene); state.drawing = { mode: "move", scene: scene, entity: entity, offsetX: point.x - entity.x, offsetY: point.y - entity.y }; }
+      renderSceneInspector();
+      renderScene();
+      return;
+    }
+    pushHistory(scene);
+    if (state.tool === "collision" || state.tool === "erase") {
+      state.drawing = { mode: "paint", scene: scene, value: state.tool === "collision" ? 1 : 0 };
+      paintCollision(scene, point, state.drawing.value);
+    } else if (state.tool === "rect") {
+      state.drawing = { mode: "rect", scene: scene, start: point, end: point };
+    } else if (state.tool === "spawn") {
+      scene.spawn.x = point.x;
+      scene.spawn.y = point.y;
+      state.drawing = null;
+    } else {
+      var type = state.tool === "npc" ? "npc" : state.tool === "exit" ? "exit" : "trigger";
+      var created = newEntity(type, point.x - 17, point.y - 17);
+      scene.entities.push(created);
+      state.selectedEntityId = created.id;
+      state.tool = "select";
+      syncToolButtons();
+      state.drawing = null;
+      renderSceneList();
+      renderSceneInspector();
+    }
+    markDirty();
+    renderScene();
   }
-  const body = await loadArtFile(artFile);
-  setStatus(`Loaded ${body.name}`);
-}
-
-async function saveArt() {
-  state.art.name = cleanId($("artName").value || state.art.name || "WORLD_ART");
-  state.art.width = Math.max(8, Math.min(255, Number($("artWidth").value) || state.art.width));
-  state.art.height = Math.max(8, Math.min(255, Number($("artHeight").value) || state.art.height));
-  if (state.world && $("artWorld").value === selectedWorldFile()) {
-    await saveWorld();
-    ensureOption($("artWorld"), selectedWorldFile(), state.world.id);
+  function pointerMove(event) {
+    var point = pointFromEvent(event);
+    $("cursorReadout").textContent = "X " + point.x + " Y " + point.y;
+    if (!state.drawing) return;
+    if (state.drawing.mode === "paint") paintCollision(state.drawing.scene, point, state.drawing.value);
+    else if (state.drawing.mode === "rect") state.drawing.end = point;
+    else if (state.drawing.mode === "move") {
+      var entity = state.drawing.entity;
+      entity.x = Core.clamp(point.x - state.drawing.offsetX, 0, state.drawing.scene.width - entity.width);
+      entity.y = Core.clamp(point.y - state.drawing.offsetY, 0, state.drawing.scene.height - entity.height);
+    }
+    renderScene();
   }
-  const body = await api("/api/art", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      name: state.art.name,
-      world: $("artWorld").value,
-      imageDraw: "patch",
-      imgScale: 2,
-      art: state.art
-    })
-  });
-  state.art = { ...body.art, pixels: body.art.pixels.slice() };
-  renderArt();
-  setStatus(`Saved ${body.name} and linked world`);
-  await loadInfo();
-  await loadWorld($("artWorld").value).catch(() => {});
-}
-
-async function loadSprite(name) {
-  const body = await api(`/api/sprite?name=${encodeURIComponent(name || $("spriteSelect").value)}`);
-  const sprite = body.sprite;
-  state.sprite = { ...sprite, pixels: sprite.pixels.slice() };
-  $("spriteName").value = sprite.name;
-  $("spriteWidth").value = sprite.width;
-  $("spriteHeight").value = sprite.height;
-  $("spriteBpp").value = String(sprite.bpp);
-  renderSprite();
-  setStatus(`Loaded ${body.name}`);
-}
-
-async function saveSprite() {
-  state.sprite.name = cleanId($("spriteName").value || state.sprite.name);
-  state.sprite.bpp = selectedSpriteBpp();
-  const playerSprite = /^PLAYER_SPRITE/i.test(state.sprite.name);
-  const npcSprite = isNpcSpriteMode();
-  if (npcSprite && (state.sprite.width !== PLAYER_SPRITE_WIDTH || state.sprite.height !== PLAYER_SPRITE_HEIGHT)) {
-    throw new Error("NPC sprites must be 34x34. Set width/height to 34 before saving.");
+  function pointerUp(event) {
+    if (!state.drawing) return;
+    var drawing = state.drawing;
+    if (drawing.mode === "rect") {
+      var end = drawing.end || pointFromEvent(event);
+      var rect = normalizedRect(drawing.start, end);
+      if (drawing.scene.kind === "world") {
+        var collision = collisionFor(drawing.scene);
+        var x0 = Math.floor(rect.x / 12), y0 = Math.floor(rect.y / 12), x1 = Math.ceil((rect.x + rect.width) / 12), y1 = Math.ceil((rect.y + rect.height) / 12);
+        for (var y = y0; y < y1; y += 1) for (var x = x0; x < x1; x += 1) if (x >= 0 && x < 120 && y >= 0 && y < 90) collision[y * 120 + x] = 1;
+      } else drawing.scene.collisionRects.push({ x: Math.round(rect.x), y: Math.round(rect.y), width: Math.round(rect.width), height: Math.round(rect.height) });
+    }
+    commitCollision(drawing.scene);
+    state.drawing = null;
+    markDirty();
+    renderSceneInspector();
+    renderScene();
   }
-  const body = await api("/api/sprite", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      ...state.sprite,
-      scope: playerSprite ? "global" : $("spriteScope").value,
-      runtime: npcSprite ? "img" : "",
-      world: state.world ? state.world.id : cleanId($("worldId").value || "WORLD_01")
-    })
-  });
-  $("spriteCode").value = body.snippet;
-  setStatus(`Saved ${body.name}`);
-  await loadInfo();
-  if (body.ref && !body.global) $("decorSprite").value = body.ref;
-  if (body.ref && npcSprite) {
-    ensureOption($("interiorNpcSprite"), body.ref, body.name);
-    $("interiorNpcSprite").value = body.ref;
-    previewInteriorData();
+
+  function renderNpcView() {
+    var allScenes = state.project.maps.concat(state.project.interiors);
+    var filter = $("npcMapFilter").value;
+    if (!filter) {
+      $("npcMapFilter").innerHTML = allScenes.map(function (scene) { return '<option value="' + (scene.kind === "interior" ? "interior:" : "world:") + html(scene.id) + '">' + html(scene.name) + "</option>"; }).join("");
+      filter = $("npcMapFilter").value;
+    }
+    var parts = filter.split(":");
+    var collection = parts[0] === "interior" ? state.project.interiors : state.project.maps;
+    var scene = collection.find(function (item) { return item.id === parts[1]; }) || collection[0];
+    var npcs = scene ? scene.entities.filter(function (entity) { return entity.type === "npc" || entity.type === "companion"; }) : [];
+    if (!state.npcRef || state.npcRef.sceneId !== (scene && scene.id) || !npcs.some(function (npc) { return npc.id === state.npcRef.entityId; })) state.npcRef = npcs[0] ? { kind: scene.kind, sceneId: scene.id, entityId: npcs[0].id } : null;
+    $("npcList").innerHTML = npcs.length ? npcs.map(function (npc) { return '<button class="list-item' + (state.npcRef && npc.id === state.npcRef.entityId ? " selected" : "") + '" data-npc-id="' + html(npc.id) + '"><span><strong>' + html(npc.name) + "</strong><small>" + html(npc.id) + '</small></span><span class="badge">' + (npc.solid === false ? "G" : "S") + "</span></button>"; }).join("") : '<div class="empty">No NPCs</div>';
+    var npc = npcFromRef();
+    $("npcHeading").textContent = npc ? npc.name : "No NPC selected";
+    $("placeNpc").disabled = !npc;
+    if (!npc) {
+      $("npcForm").innerHTML = "";
+      $("npcCollisionPanel").innerHTML = '<div class="empty">Select an NPC</div>';
+      clearCanvas($("npcPreview"));
+      return;
+    }
+    $("npcForm").innerHTML = field("ID", npc.id, "id", { source: "npc", full: true }) + field("Name", npc.name, "name", { source: "npc", full: true }) +
+      field("Sprite", npc.spriteAssetId || "", "spriteAssetId", { source: "npc", full: true, options: assetOptions(function (asset) { return asset.extension === ".img"; }) }) +
+      field("Facing", npc.facing || "down", "facing", { source: "npc", options: ["down", "left", "right", "up"] }) +
+      field("Dialogue", npc.dialogueId || "", "dialogueId", { source: "npc", options: dialogueOptions() }) +
+      field("Movement", npc.movement && npc.movement.type || "static", "movement.type", { source: "npc", options: ["static", "patrol", "wander", "follow"] }) +
+      field("Axis", npc.movement && npc.movement.axis || "x", "movement.axis", { source: "npc", options: ["x", "y"] }) +
+      field("Distance", npc.movement && npc.movement.distance || 24, "movement.distance", { source: "npc", type: "number" }) +
+      field("Speed", npc.movement && npc.movement.speed || 1, "movement.speed", { source: "npc", type: "number", min: 1, max: 4 }) +
+      '<div class="form-actions full"><button id="deleteNpc" class="button quiet danger" type="button">Delete NPC</button></div>';
+    $("npcCollisionPanel").innerHTML = '<div class="property-grid">' + field("Solid", npc.solid !== false, "solid", { source: "npc", type: "checkbox" }) +
+      field("X", npc.x, "x", { source: "npc", type: "number" }) + field("Y", npc.y, "y", { source: "npc", type: "number" }) +
+      field("Width", npc.width, "width", { source: "npc", type: "number", min: 1 }) + field("Height", npc.height, "height", { source: "npc", type: "number", min: 1 }) +
+      field("Interaction", npc.interactionRange || 44, "interactionRange", { source: "npc", type: "number", min: 12, max: 200 }) + "</div>";
+    renderNpcPreview();
   }
-}
+  function npcFromRef() {
+    if (!state.npcRef) return null;
+    var collection = state.npcRef.kind === "interior" ? state.project.interiors : state.project.maps;
+    var scene = collection.find(function (item) { return item.id === state.npcRef.sceneId; });
+    return scene && scene.entities.find(function (entity) { return entity.id === state.npcRef.entityId; }) || null;
+  }
+  function sceneFromNpcRef() {
+    if (!state.npcRef) return null;
+    return (state.npcRef.kind === "interior" ? state.project.interiors : state.project.maps).find(function (item) { return item.id === state.npcRef.sceneId; }) || null;
+  }
+  function clearCanvas(canvas) { var context = canvas.getContext("2d"); context.clearRect(0, 0, canvas.width, canvas.height); }
+  async function renderNpcPreview() {
+    var npc = npcFromRef();
+    var canvas = $("npcPreview");
+    var context = canvas.getContext("2d");
+    context.imageSmoothingEnabled = false;
+    context.fillStyle = "#071008";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    if (!npc || !npc.spriteAssetId) return;
+    await loadSprite(npc);
+    var sprite = state.spriteCache[npc.spriteAssetId];
+    if (!sprite || !sprite.canvas) return;
+    var sourceWidth = sprite.width === 102 ? 34 : sprite.width;
+    context.drawImage(sprite.canvas, 0, 0, sourceWidth, sprite.height, 0, 0, canvas.width, canvas.height);
+  }
 
-async function saveSpriteLocal() {
-  state.sprite.name = cleanId($("spriteName").value || state.sprite.name);
-  state.sprite.bpp = selectedSpriteBpp();
-  const playerSprite = /^PLAYER_SPRITE/i.test(state.sprite.name);
-  const npcSprite = isNpcSpriteMode();
-  const body = await api("/api/sprite-local", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      ...state.sprite,
-      scope: playerSprite ? "global" : $("spriteScope").value,
-      runtime: npcSprite ? "img" : "",
-      world: state.world ? state.world.id : cleanId($("worldId").value || "WORLD_01")
-    })
-  });
-  $("spriteCode").value = body.snippet;
-  setStatus(`Saved local copy ${body.name}`);
-}
+  function currentDialogue() { return state.project.dialogues.find(function (dialogue) { return dialogue.id === state.dialogueId; }) || state.project.dialogues[0] || null; }
+  function currentNode() { var dialogue = currentDialogue(); return dialogue && dialogue.nodes.find(function (node) { return node.id === state.nodeId; }) || dialogue && dialogue.nodes[0] || null; }
+  function renderDialogueView() {
+    var dialogue = currentDialogue();
+    if (!state.dialogueId && dialogue) state.dialogueId = dialogue.id;
+    $("dialogueList").innerHTML = state.project.dialogues.map(function (item) { return '<button class="list-item' + (item.id === state.dialogueId ? " selected" : "") + '" data-dialogue-id="' + html(item.id) + '"><span><strong>' + html(item.name) + "</strong><small>" + html(item.id) + '</small></span><span class="badge">' + item.nodes.length + "</span></button>"; }).join("");
+    dialogue = currentDialogue();
+    if (!dialogue) return;
+    if (!state.nodeId || !dialogue.nodes.some(function (node) { return node.id === state.nodeId; })) state.nodeId = dialogue.startNode || dialogue.nodes[0].id;
+    $("dialogueHeading").textContent = dialogue.name;
+    $("nodeList").innerHTML = dialogue.nodes.map(function (node) {
+      return '<article class="node' + (node.id === state.nodeId ? " selected" : "") + '" data-node-id="' + html(node.id) + '"><div class="node-head"><strong>' + html(node.id) + '</strong><span class="badge">' + (node.choices || []).length + '</span></div><p>' + html(node.text) + '</p>' + (node.choices || []).map(function (choice) { return '<div class="node-choice"><span>' + html(choice.label) + '</span><b>' + html(choice.action) + '</b></div>'; }).join("") + '</article>';
+    }).join("");
+    renderDialogueInspector();
+  }
+  function renderDialogueInspector() {
+    var dialogue = currentDialogue();
+    var node = currentNode();
+    if (!dialogue || !node) { $("dialogueInspector").innerHTML = '<div class="empty">Select a node</div>'; return; }
+    var actions = ["close", "continue", "next", "battle", "shop", "confrontation", "interior", "world", "exit"];
+    $("dialogueInspector").innerHTML = '<div class="property-grid">' + field("Dialogue ID", dialogue.id, "id", { source: "dialogue", full: true }) + field("Dialogue Name", dialogue.name, "name", { source: "dialogue", full: true }) +
+      '<div class="form-section full"><h3>Selected Node</h3></div>' + field("Node ID", node.id, "id", { source: "node", full: true }) + field("Text", node.text, "text", { source: "node", type: "textarea", full: true, max: 160 }) +
+      '<div class="form-section full"><h3>Choices</h3></div>' + (node.choices || []).map(function (choice, index) {
+        return '<div class="full form-section" data-choice-block="' + index + '"><div class="property-grid">' + field("Label", choice.label, index + ".label", { source: "choice", full: true }) +
+          field("Action", choice.action, index + ".action", { source: "choice", options: actions }) + field("Target", choice.target || "", index + ".target", { source: "choice" }) +
+          field("Next Node", choice.next || "", index + ".next", { source: "choice", options: [{ value: "", label: "None" }].concat(dialogue.nodes.map(function (item) { return { value: item.id, label: item.id }; })) }) +
+          field("Encounter ID", choice.interact || "", index + ".interact", { source: "choice" }) + field("Round Reward", choice.bullet || "", index + ".bullet", { source: "choice" }) +
+          field("Once", !!choice.once, index + ".once", { source: "choice", type: "checkbox" }) + field("Miniboss", !!choice.miniboss, index + ".miniboss", { source: "choice", type: "checkbox" }) +
+          '<button class="button quiet danger" data-remove-choice="' + index + '" type="button">Remove Choice</button></div></div>';
+      }).join("") + '<div class="form-actions full"><button id="addChoice" class="button secondary" type="button">Add Choice</button><button id="deleteNode" class="button quiet danger" type="button">Delete Node</button></div></div>';
+  }
 
-function wireEvents() {
-  document.querySelectorAll(".tab").forEach((button) => {
-    button.addEventListener("click", () => {
-      showView(button.dataset.view);
-      if (button.dataset.view === "worlds") renderWorldIndex();
-      if (button.dataset.view === "media") renderMediaInfo();
-      if (button.dataset.view === "battleScene") previewBattleUi();
+  function renderAssetList() {
+    var type = $("assetTypeFilter").value;
+    var source = $("assetSourceFilter").value;
+    var search = $("assetSearch").value.toLowerCase();
+    var assets = state.assets.filter(function (asset) { return (type === "all" || asset.type === type) && (source === "all" || asset.source === source) && (!search || asset.name.toLowerCase().includes(search) || asset.path.toLowerCase().includes(search)); });
+    $("assetList").innerHTML = assets.map(function (asset) { return '<button class="list-item' + (asset.id === state.assetId ? " selected" : "") + '" data-asset-id="' + html(asset.id) + '"><span><strong>' + html(asset.name) + '</strong><small>' + html(asset.format || asset.extension.slice(1)) + '</small></span><span class="badge">' + Core.formatBytes(asset.bytes) + '</span></button>'; }).join("") || '<div class="empty">No assets</div>';
+  }
+  function renderAssetForm() {
+    var asset = assetById(state.assetId);
+    $("assetHeading").textContent = asset ? asset.name : "Select an asset";
+    $("convertAsset").disabled = !asset || asset.type !== "image";
+    if (!asset) { $("assetForm").innerHTML = ""; clearCanvas($("assetPreview")); return; }
+    var presets = [
+      { value: "npc", label: "NPC IMG 34 x 34" },
+      { value: "strip", label: "Animation IMG 102 x 34" },
+      { value: "strip-bin", label: "Animation BIN 102 x 34" },
+      { value: "world", label: "World pages 1440 x 1080" },
+      { value: "interior", label: "Interior BIN 480 wide" },
+      { value: "screen", label: "Screen BIN 480 x 320" },
+      { value: "collision", label: "Collision BIN 120 x 90" }
+    ];
+    var formatOptions = ["binary", "raw-2bpp", "world-pages-2bpp", "collision-1bpp"];
+    $("assetForm").innerHTML = field("Source", asset.source, "source", { source: "readonly", full: true }) + field("Path", asset.path, "path", { source: "readonly", full: true }) +
+      field("Bytes", Core.formatBytes(asset.bytes), "bytes", { source: "readonly" }) + field("Format", asset.format || asset.extension.slice(1), "format", { source: asset.extension === ".bin" ? "asset" : "readonly", options: asset.extension === ".bin" ? formatOptions : null }) +
+      (asset.extension === ".bin" ? field("Source Width", asset.width || 0, "width", { source: "asset", type: "number" }) + field("Source Height", asset.height || 0, "height", { source: "asset", type: "number" }) : "") +
+      '<div class="form-section full"><h3>Converter</h3></div>' + field("Preset", state.convert.preset, "preset", { source: "convert", full: true, options: presets }) +
+      field("Fit", state.convert.fit, "fit", { source: "convert", options: ["contain", "cover", "stretch"] }) + field("Interior Height", state.convert.height, "height", { source: "convert", type: "number", min: 320, max: 1200 }) +
+      field("Dark", state.convert.low, "low", { source: "convert", type: "number", min: 0, max: 255 }) + field("Mid", state.convert.high, "high", { source: "convert", type: "number", min: 0, max: 255 }) +
+      field("Bright", state.convert.bright, "bright", { source: "convert", type: "number", min: 0, max: 255 }) + field("Output Name", state.convert.outputName || asset.name.replace(/\.[^.]+$/, ""), "outputName", { source: "convert", full: true });
+    previewAsset();
+  }
+  async function previewAsset() {
+    var asset = assetById(state.assetId);
+    var canvas = $("assetPreview");
+    var context = canvas.getContext("2d");
+    context.fillStyle = "#071008";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    if (!asset || asset.type !== "image") return;
+    try {
+      var decoded = await Core.decodeAsset(asset);
+      var fit = Core.fittedCanvas(decoded.canvas, canvas.width, canvas.height, "contain");
+      context.imageSmoothingEnabled = false;
+      context.drawImage(fit, 0, 0);
+    } catch (error) {
+      context.fillStyle = "#db796f";
+      context.font = "16px Segoe UI";
+      context.textAlign = "center";
+      wrapCanvasText(context, error.message, canvas.width / 2, 140, 42, 20);
+      context.textAlign = "left";
+    }
+  }
+  function wrapCanvasText(context, value, x, y, size, lineHeight) {
+    var words = String(value).split(" "), line = "", lines = [];
+    words.forEach(function (word) { var next = line ? line + " " + word : word; if (next.length > size && line) { lines.push(line); line = word; } else line = next; });
+    if (line) lines.push(line);
+    lines.slice(0, 4).forEach(function (item, index) { context.fillText(item, x, y + index * lineHeight); });
+  }
+
+  async function importFiles() {
+    if (!state.importFiles.length) return;
+    $("confirmImport").disabled = true;
+    try {
+      for (var index = 0; index < state.importFiles.length; index += 1) {
+        var file = state.importFiles[index];
+        var bytes = new Uint8Array(await file.arrayBuffer());
+        var response = await Core.post("/api/import", { name: file.name, folder: $("assetFolder").value, data: Core.toBase64(bytes) });
+        state.assets.push(response.asset);
+        state.assetMap[response.asset.id] = response.asset;
+        state.assetId = response.asset.id;
+      }
+      state.importFiles = [];
+      $("assetDialog").close();
+      renderAssetList();
+      renderAssetForm();
+      markDirty();
+      toast("Assets imported");
+    } catch (error) { toast(error.message, true); }
+    finally { $("confirmImport").disabled = false; }
+  }
+  async function convertAsset() {
+    var asset = assetById(state.assetId);
+    if (!asset) return;
+    $("convertAsset").disabled = true;
+    try {
+      var decoded = await Core.decodeAsset(asset);
+      var preset = state.convert.preset;
+      var width = preset === "npc" ? 34 : preset === "strip" || preset === "strip-bin" ? 102 : preset === "world" ? 1440 : 480;
+      var height = preset === "npc" || preset === "strip" || preset === "strip-bin" ? 34 : preset === "world" ? 1080 : preset === "screen" ? 320 : preset === "collision" ? 90 : Math.max(320, Number(state.convert.height) || 456);
+      if (preset === "collision") width = 120;
+      var converted = Core.quantizeCanvas(decoded.canvas, width, height, { fit: state.convert.fit, low: state.convert.low, high: state.convert.high, bright: state.convert.bright, opaqueFloor: preset === "npc" || preset === "strip" || preset === "strip-bin", transparent: preset === "npc" || preset === "strip" || preset === "strip-bin" });
+      var output;
+      var extension;
+      if (preset === "npc" || preset === "strip") { output = Core.encodeImg(converted.indexed, width, height, true); extension = ".IMG"; }
+      else if (preset === "world") { output = Core.encodeWorldPages(converted.indexed, width, height); extension = ".BIN"; }
+      else if (preset === "collision") { output = Core.packCollision(Uint8Array.from(converted.indexed, function (value) { return value > 0 ? 1 : 0; })); extension = ".BIN"; }
+      else { output = Core.packIndexed(converted.indexed, 2); extension = ".BIN"; }
+      var base = Core.slug(state.convert.outputName || asset.name.replace(/\.[^.]+$/, ""), "ASSET");
+      var response = await Core.post("/api/import", { name: base + extension, folder: "converted", data: Core.toBase64(output) });
+      if (preset === "world") Object.assign(response.asset, { width: 1440, height: 1080, bpp: 2, format: "world-pages-2bpp" });
+      else if (preset === "interior") Object.assign(response.asset, { width: 480, height: height, bpp: 2, format: "raw-2bpp" });
+      else if (preset === "screen") Object.assign(response.asset, { width: 480, height: 320, bpp: 2, format: "raw-2bpp" });
+      else if (preset === "strip-bin") Object.assign(response.asset, { width: 102, height: 34, bpp: 2, format: "raw-2bpp" });
+      else if (preset === "collision") Object.assign(response.asset, { width: 120, height: 90, bpp: 1, format: "collision-1bpp" });
+      state.assets.push(response.asset);
+      state.assetMap[response.asset.id] = response.asset;
+      state.project.assetSettings[response.asset.id] = { width: response.asset.width, height: response.asset.height, bpp: response.asset.bpp, format: response.asset.format };
+      state.assetId = response.asset.id;
+      markDirty();
+      renderAssetList();
+      renderAssetForm();
+      toast("Created " + response.asset.name);
+    } catch (error) { toast(error.message, true); }
+    finally { $("convertAsset").disabled = false; }
+  }
+
+  function validation() {
+    var rows = [];
+    var budgets = state.project.runtime.budgets;
+    function add(level, label, detail) { rows.push({ level: level, label: label, detail: detail }); }
+    state.project.maps.forEach(function (scene) {
+      var asset = assetById(scene.backgroundAssetId);
+      if (!asset) add("warn", scene.id + " background", "Placeholder will be generated");
+      else if (asset.extension === ".bin" && (asset.format !== "world-pages-2bpp" || asset.bytes !== budgets.worldPagesBytes)) add("warn", scene.id + " background", Core.formatBytes(asset.bytes) + "; build uses a placeholder until replaced");
+      else add("ok", scene.id + " background", asset.name);
+      var collision = Core.packCollision(collisionFor(scene));
+      add(collision.length === budgets.collisionBytes ? "ok" : "error", scene.id + " collision", Core.formatBytes(collision.length));
+      var npcs = scene.entities.filter(function (entity) { return entity.type === "npc" || entity.type === "companion"; });
+      add(npcs.length <= budgets.worldNpcs ? "ok" : "error", scene.id + " NPCs", npcs.length + " / " + budgets.worldNpcs);
+      npcs.forEach(function (npc) {
+        var sprite = assetById(npc.spriteAssetId);
+        if (!sprite) add("warn", npc.name + " sprite", "Fallback figure will draw");
+        else if (sprite.extension !== ".img" || ![34, 102].includes(Number(sprite.width)) || Number(sprite.height) !== 34) add("error", npc.name + " sprite", "Convert to 34x34 or 102x34 IMG");
+      });
+      var moduleBytes = Core.textBytes(Core.compactSource(Runtime.worldModule(scene, state.project, state.assets))).length;
+      add(moduleBytes <= budgets.worldModule ? "ok" : "error", scene.id + " module", Core.formatBytes(moduleBytes) + " / " + Core.formatBytes(budgets.worldModule));
     });
-  });
-
-  $("worldCards").addEventListener("click", (event) => {
-    const card = event.target.closest("[data-world]");
-    if (!card) return;
-    ensureOption($("worldSelect"), card.dataset.world, card.dataset.world);
-    $("worldSelect").value = card.dataset.world;
-    loadWorld(card.dataset.world).then(() => showView("world")).catch((error) => setStatus(error.message, true));
-  });
-  $("refreshWorldIndex").onclick = () => loadInfo().catch((error) => setStatus(error.message, true));
-  $("openSelectedWorld").onclick = () => {
-    const selected = $("worldSelect").value;
-    if (selected) loadWorld(selected).then(() => showView("world")).catch((error) => setStatus(error.message, true));
-    else setStatus("Select a world first.", true);
-  };
-
-  $("quickTools").innerHTML = quickTools.map(([value, label]) => `<button data-tool="${value}">${label}</button>`).join("");
-  $("quickTools").addEventListener("click", (event) => {
-    const button = event.target.closest("button[data-tool]");
-    if (button) $("worldTool").value = button.dataset.tool;
-  });
-
-  $("worldGrid").addEventListener("pointerdown", (event) => {
-    const cell = worldCell(event);
-    if (!cell) return;
-    state.painting = true;
-    $("worldGrid").setPointerCapture(event.pointerId);
-    applyWorldTool(Number(cell.dataset.x), Number(cell.dataset.y));
-  });
-  $("worldGrid").addEventListener("pointerover", (event) => {
-    const cell = worldCell(event);
-    if (!cell) return;
-    if (!state.painting || event.buttons === 0) { state.painting = false; return; }
-    applyWorldTool(Number(cell.dataset.x), Number(cell.dataset.y));
-  });
-  document.addEventListener("pointerup", () => { state.painting = false; }, true);
-  window.addEventListener("blur", () => { state.painting = false; });
-
-  $("spriteGrid").addEventListener("pointerdown", (event) => {
-    const cell = spritePixel(event);
-    if (!cell) return;
-    state.spritePainting = true;
-    $("spriteGrid").setPointerCapture(event.pointerId);
-    paintSprite(Number(cell.dataset.x), Number(cell.dataset.y));
-  });
-  $("spriteGrid").addEventListener("pointerover", (event) => {
-    const cell = spritePixel(event);
-    if (!cell) return;
-    if (!state.spritePainting || event.buttons === 0) { state.spritePainting = false; return; }
-    paintSprite(Number(cell.dataset.x), Number(cell.dataset.y));
-  });
-  $("enemySpriteSlots").addEventListener("click", (event) => {
-    const slotButton = event.target.closest("button[data-enemy-slot]");
-    const interiorButton = event.target.closest("button[data-enemy-interior]");
-    if (slotButton) useEnemySpriteSlot(slotButton.dataset.enemySlot, false);
-    if (interiorButton) useEnemySpriteSlot(interiorButton.dataset.enemyInterior, true);
-  });
-  document.addEventListener("pointerup", () => { state.spritePainting = false; }, true);
-  window.addEventListener("blur", () => { state.spritePainting = false; state.artPainting = false; state.artStart = null; });
-  $("loadBattleEnemy").onclick = () => loadBattleEnemyForm();
-  $("saveBattleEnemy").onclick = () => saveBattleEnemy().catch((error) => setStatus(error.message, true));
-  $("battleEnemySelect").onchange = () => loadBattleEnemyForm();
-  ["battleEnemyName", "battleLevel", "battleReload", "battleVideos", "battlePrompt", "battleReloadPrompt", "battleAttackLabel", "battleStimLabel", "battleReloadAttackLabel", "battleReloadStimLabel", "battleAttackDetail", "battleStimDetail", "battleEnemyReload", "battleReloadAttackMsg", "battlePauseResume", "battlePauseSave", "battlePauseExit", "battlePauseNote"].forEach((id) => {
-    $(id).addEventListener("input", previewBattleUi);
-    $(id).addEventListener("change", previewBattleUi);
-  });
-  $("useInteriorTool").onclick = () => {
-    $("worldTool").value = "interior";
-    $("encEnemy").value = $("interiorEnemy").value || $("encEnemy").value;
-    showView("world");
-    setStatus("Interior Door tool armed on the World Builder.");
-  };
-  $("editShopSprite").onclick = () => {
-    $("spriteScope").value = "npc";
-    $("spriteName").value = cleanSpriteRef($("shopSprite").value || "SHOP_SPRITE", "SHOP_SPRITE");
-    $("spriteWidth").value = PLAYER_SPRITE_WIDTH;
-    $("spriteHeight").value = PLAYER_SPRITE_HEIGHT;
-    $("spriteBpp").value = "2";
-    makeSprite(PLAYER_SPRITE_WIDTH, PLAYER_SPRITE_HEIGHT, 0);
-    showView("sprite");
-    setStatus("SHOP_SPRITE.IMG slot ready. Upload art or draw, then Save Runtime Sprite.");
-  };
-  $("previewInterior").onclick = previewInteriorData;
-  $("saveInteriorEnemySprite").onclick = () => saveInteriorEnemySprite().catch((error) => setStatus(error.message, true));
-  ["interiorRoom", "interiorPrompt", "interiorEnemy", "interiorNpcSprite", "interiorDialogue", "interiorFightText", "interiorFleeText", "interiorLaunchTitle", "interiorLaunchSubtitle", "interiorOnce"].forEach((id) => {
-    $(id).addEventListener("input", previewInteriorData);
-    $(id).addEventListener("change", previewInteriorData);
-  });
-
-  $("loadItem").onclick = () => fillItemForm();
-  $("newItem").onclick = () => newItem();
-  $("saveItem").onclick = () => saveItem().catch((error) => setStatus(error.message, true));
-  $("downloadItems").onclick = () => download("ITEMS.JSON", JSON.stringify(state.items || {}, null, 2) + "\n", "application/json");
-  $("itemSelect").onchange = () => fillItemForm();
-  ["itemName", "itemKind", "itemEffect", "itemDamage", "itemCount", "itemChance", "itemCat", "itemRealId"].forEach((id) => {
-    $(id).addEventListener("input", renderItem);
-    $(id).addEventListener("change", renderItem);
-  });
-  $("itemIcon").onchange = async () => {
-    const file = $("itemIcon").files && $("itemIcon").files[0];
-    state.itemIconName = file ? file.name : "";
-    state.itemIconData = await readDataUrl(file);
-    renderItem();
-  };
-
-  $("loadWorld").onclick = () => loadWorld().catch((error) => setStatus(error.message, true));
-  $("newWorld").onclick = () => newWorld(cleanId($("worldId").value || "WORLD_NEW"), Number($("worldCols").value) || 42, Number($("worldRows").value) || 24);
-  $("newWorldBuild").onclick = () => {
-    newWorld(cleanId($("worldId").value || "WORLD_NEW"), Number($("worldCols").value) || 42, Number($("worldRows").value) || 24);
-    makeArtForWorld($("worldArtPreset").value);
-    ensureOption($("worldSelect"), selectedWorldFile(), state.world.id);
-    ensureOption($("artWorld"), selectedWorldFile(), state.world.id);
-  };
-  $("presetWorldArt").onclick = () => {
-    makeArtForWorld($("worldArtPreset").value);
-    setStatus(`Prepared art for ${state.world ? state.world.id : cleanId($("worldId").value)}`);
-  };
-  $("editWorldArt").onclick = async () => {
-    if (state.world && state.world.image) {
-      await loadArt(state.world.image.replace(/\.IMG$/i, ".JSON")).catch(() => makeArtForWorld($("worldArtPreset").value));
-    } else if (!state.art) {
-      makeArtForWorld($("worldArtPreset").value);
-    }
-    ensureOption($("artWorld"), selectedWorldFile(), state.world ? state.world.id : cleanId($("worldId").value));
-    showView("art");
-  };
-  $("saveWorld").onclick = () => saveWorld().catch((error) => setStatus(error.message, true));
-  $("downloadWorld").onclick = () => download(`${cleanId($("worldId").value)}.JSON`, JSON.stringify(state.world, null, 2) + "\n", "application/json");
-  $("worldId").oninput = () => { if (state.world) { state.world.id = cleanId($("worldId").value); renderWorld(); } };
-  $("worldName").oninput = () => { if (state.world) { state.world.name = $("worldName").value; renderWorld(); } };
-
-  $("artCanvas").addEventListener("pointerdown", (event) => {
-    if (!state.art) return;
-    const point = artPoint(event);
-    state.artPainting = true;
-    state.artStart = point;
-    $("artCanvas").setPointerCapture(event.pointerId);
-    if ($("artTool").value === "brush" || $("artTool").value === "fill") paintArtPoint(point, event.shiftKey);
-  });
-  $("artCanvas").addEventListener("pointermove", (event) => {
-    if (!state.artPainting || event.buttons === 0) { state.artPainting = false; return; }
-    if ($("artTool").value === "brush") paintArtPoint(artPoint(event), event.shiftKey);
-  });
-  $("artCanvas").addEventListener("pointerup", (event) => {
-    if (!state.artPainting) return;
-    const tool = $("artTool").value;
-    if (tool === "line" || tool === "rect") paintArtPoint(artPoint(event), event.shiftKey);
-    state.artPainting = false;
-    state.artStart = null;
-  });
-  $("artCanvas").addEventListener("pointercancel", () => { state.artPainting = false; state.artStart = null; });
-  $("loadArt").onclick = () => loadArt().catch((error) => setStatus(error.message, true));
-  $("newArt").onclick = () => makeArt(Number($("artWidth").value) || 240, Number($("artHeight").value) || 148, 0);
-  $("clearArt").onclick = () => { if (state.art) { state.art.pixels.fill(0); renderArt(); } };
-  $("convertImage").onclick = () => convertImageToArt().catch((error) => setStatus(error.message, true));
-  $("imageImport").onchange = () => {
-    const file = $("imageImport").files && $("imageImport").files[0];
-    const worldId = state.world ? state.world.id : cleanId($("worldId").value || "WORLD");
-    const currentName = cleanId($("artName").value || "");
-    if (file && (!currentName || currentName === `${worldId}_ART` || currentName === "WORLD_ART")) $("artName").value = `${worldId}_${imageName(file)}`;
-  };
-  $("saveArt").onclick = () => saveArt().catch((error) => setStatus(error.message, true));
-  $("downloadArtJson").onclick = () => download(`${cleanId($("artName").value)}.JSON`, JSON.stringify(state.art, null, 2) + "\n", "application/json");
-  $("artPreset").innerHTML = Object.entries(artPresets).map(([key, preset]) => `<option value="${key}">${preset.label}</option>`).join("");
-  $("loadArtPreset").onclick = () => {
-    const preset = artPresets[$("artPreset").value];
-    const width = Math.max(32, Math.min(255, Number($("artWidth").value) || 240));
-    const height = Math.max(32, Math.min(255, Number($("artHeight").value) || 148));
-    state.art = { name: cleanId($("artName").value || "WORLD_ART"), width, height, bpp: 2, pixels: preset.make(width, height) };
-    renderArt();
-  };
-
-  $("loadSprite").onclick = () => loadSprite().catch((error) => setStatus(error.message, true));
-  $("newSprite").onclick = () => makeSprite(Number($("spriteWidth").value) || 12, Number($("spriteHeight").value) || 14, 0);
-  $("newNpcSprite").onclick = () => newNpcSprite().catch((error) => setStatus(error.message, true));
-  $("importSpriteImg").onclick = () => importSpriteImg().catch((error) => setStatus(error.message, true));
-  $("convertSpriteImage").onclick = () => convertImageToSprite().catch((error) => setStatus(error.message, true));
-  $("spriteImageImport").onchange = () => {
-    const file = $("spriteImageImport").files && $("spriteImageImport").files[0];
-    const currentName = cleanId($("spriteName").value || "");
-    if (file && (!currentName || /^PLAYER_SPRITEUP$/i.test(currentName))) $("spriteName").value = `${imageName(file)}_SPRITE`;
-  };
-  $("saveSprite").onclick = () => saveSprite().catch((error) => setStatus(error.message, true));
-  $("saveSpriteLocal").onclick = () => saveSpriteLocal().catch((error) => setStatus(error.message, true));
-  $("downloadSprite").onclick = downloadSpriteRuntime;
-  $("spriteBpp").onchange = () => {
-    refreshSpriteBrush();
-    if (state.sprite) renderSprite();
-  };
-  $("spriteScope").onchange = () => {
-    if (isNpcSpriteMode()) {
-      $("spriteWidth").value = PLAYER_SPRITE_WIDTH;
-      $("spriteHeight").value = PLAYER_SPRITE_HEIGHT;
-      if (!state.sprite) makeSprite(PLAYER_SPRITE_WIDTH, PLAYER_SPRITE_HEIGHT, 0);
-      else if (state.sprite.width !== PLAYER_SPRITE_WIDTH || state.sprite.height !== PLAYER_SPRITE_HEIGHT) makeSprite(PLAYER_SPRITE_WIDTH, PLAYER_SPRITE_HEIGHT, 0);
-    }
-    if (state.sprite) renderSprite();
-  };
-  $("mirrorSprite").onclick = () => {
-    const sprite = state.sprite;
-    const pixels = [];
-    for (let y = 0; y < sprite.height; y += 1) for (let x = sprite.width - 1; x >= 0; x -= 1) pixels.push(sprite.pixels[y * sprite.width + x]);
-    sprite.pixels = pixels;
-    renderSprite();
-  };
-  $("invertSprite").onclick = () => {
-    const max = (1 << selectedSpriteBpp()) - 1;
-    state.sprite.pixels = state.sprite.pixels.map((value) => max - value);
-    renderSprite();
-  };
-  $("spritePreset").innerHTML = Object.entries(spritePresets).map(([key, preset]) => `<option value="${key}">${preset.label}</option>`).join("");
-  $("loadPreset").onclick = () => {
-    const preset = spritePresets[$("spritePreset").value];
-    const width = preset.rows ? PLAYER_SPRITE_WIDTH : (preset.width || PLAYER_SPRITE_WIDTH);
-    const height = preset.rows ? PLAYER_SPRITE_HEIGHT : (preset.height || PLAYER_SPRITE_HEIGHT);
-    const bpp = preset.rows ? PLAYER_SPRITE_BPP : normalizeSpriteBpp(preset.bpp || $("spriteBpp").value);
-    const pixels = preset.pixels || (preset.rows ? rowsToPlayerPresetPixels(preset) : Array(width * height).fill(0));
-    state.sprite = { name: cleanId($("spriteName").value || "PLAYER_SPRITE"), width, height, bpp, pixels };
-    $("spriteWidth").value = state.sprite.width;
-    $("spriteHeight").value = state.sprite.height;
-    $("spriteBpp").value = String(bpp);
-    renderSprite();
-  };
-  refreshSpriteBrush();
-}
-
-async function start() {
-  wireEvents();
-  await loadInfo();
-  newWorld(cleanId($("worldId").value || "WORLD_NEW"), Number($("worldCols").value) || 42, Number($("worldRows").value) || 24);
-  try {
-    if (state.info.sprites.length) await loadSprite(state.info.sprites[0]);
-    else makeSprite();
-  } catch (error) {
-    makeSprite();
-    setStatus(`Sprite load skipped: ${error.message}`, true);
+    state.project.interiors.forEach(function (scene) {
+      var asset = assetById(scene.backgroundAssetId);
+      add(asset && (asset.extension !== ".bin" || asset.format === "raw-2bpp" && asset.width === 480 && asset.height === scene.height) ? "ok" : "warn", scene.id + " background", asset ? asset.name : "Placeholder will be generated");
+      var npcs = scene.entities.filter(function (entity) { return entity.type === "npc" || entity.type === "companion"; });
+      add(npcs.length <= budgets.interiorNpcs ? "ok" : "error", scene.id + " NPCs", npcs.length + " / " + budgets.interiorNpcs);
+      var moduleBytes = Core.textBytes(Core.compactSource(Runtime.interiorModule(scene, state.project, state.assets))).length;
+      add(moduleBytes <= budgets.interiorModule ? "ok" : "error", scene.id + " module", Core.formatBytes(moduleBytes) + " / " + Core.formatBytes(budgets.interiorModule));
+    });
+    var nodes = state.project.dialogues.reduce(function (sum, dialogue) { return sum + dialogue.nodes.length; }, 0);
+    add(nodes <= budgets.dialogueNodes ? "ok" : "error", "Dialogue nodes", nodes + " / " + budgets.dialogueNodes);
+    state.project.dialogues.forEach(function (dialogue) {
+      dialogue.nodes.forEach(function (node) {
+        if (!node.choices || !node.choices.length) add("warn", dialogue.name + ": " + node.id, "No choices; press closes dialogue");
+        if ((node.choices || []).length > 3) add("error", dialogue.name + ": " + node.id, "Maximum 3 choices");
+      });
+    });
+    return rows;
   }
-  try {
-    makeArt();
-  } catch (error) {
-    makeArt();
-    setStatus(`World art load skipped: ${error.message}`, true);
+  function renderValidation() {
+    var rows = validation();
+    $("validationList").innerHTML = rows.map(function (row) { return '<div class="validation-row ' + row.level + '"><b class="validation-mark">' + (row.level === "ok" ? "OK" : row.level === "warn" ? "!" : "X") + "</b><span>" + html(row.label) + "</span><small>" + html(row.detail) + "</small></div>"; }).join("");
+    return rows;
   }
-  setStatus("Ready - new world. Use Load/Open Selected World to edit an existing map.");
-}
+  function plannedFiles() {
+    var files = [];
+    files.push({ path: "HOLO/BIGIRON/CODE/W.JS", bytes: Core.textBytes(Core.compactSource(Runtime.worldDispatcher(state.project.maps))).length });
+    state.project.maps.forEach(function (scene) {
+      var min = Core.compactSource(Runtime.worldModule(scene, state.project, state.assets));
+      files.push({ path: "HOLO/BIGIRON/CODE/W_" + Core.slug(scene.id) + ".JS", bytes: Core.textBytes(min).length });
+      files.push({ path: "HOLO/BIGIRON/DATA/MAP_" + Core.slug(scene.id) + ".BIN", bytes: 888000 });
+      files.push({ path: "HOLO/BIGIRON/DATA/COL_" + Core.slug(scene.id) + ".BIN", bytes: 1350 });
+    });
+    if (state.project.interiors.length) files.push({ path: "HOLO/BIGIRON/CODE/I.JS", bytes: Core.textBytes(Core.compactSource(Runtime.interiorDispatcher(state.project.interiors))).length });
+    state.project.interiors.forEach(function (scene) {
+      var min = Core.compactSource(Runtime.interiorModule(scene, state.project, state.assets));
+      files.push({ path: "HOLO/BIGIRON/CODE/INT_" + Core.slug(scene.id) + ".JS", bytes: Core.textBytes(min).length });
+      files.push({ path: "HOLO/BIGIRON/DATA/INT_" + Core.slug(scene.id) + ".BIN", bytes: 480 * scene.height / 4 });
+    });
+    return files;
+  }
+  function renderBuildFiles(files) {
+    files = files || plannedFiles();
+    $("buildFiles").innerHTML = files.map(function (file) { return '<div class="file-row"><span>+</span><code>' + html(file.path) + "</code><span>" + Core.formatBytes(file.bytes) + "</span></div>"; }).join("");
+    $("uploadList").innerHTML = files.filter(function (file) { return file.path.startsWith("HOLO/"); }).map(function (file) { return '<div class="file-row"><span>UP</span><code>' + html(file.path) + "</code><span>" + Core.formatBytes(file.bytes) + "</span></div>"; }).join("");
+  }
+  function renderBuildView() { renderValidation(); renderBuildFiles(state.lastBuild && state.lastBuild.manifest && state.lastBuild.manifest.files); }
 
-start().catch((error) => setStatus(error.message, true));
+  async function backgroundBuild(scene, world) {
+    var asset = assetById(scene.backgroundAssetId);
+    if (asset) {
+      try {
+        if (world && asset.format === "world-pages-2bpp" && asset.bytes === 888000) return await Core.assetBytes(asset);
+        if (!world && asset.format === "raw-2bpp" && asset.width === 480 && asset.height === scene.height && asset.bytes === 480 * scene.height / 4) return await Core.assetBytes(asset);
+        var decoded = await Core.decodeAsset(asset);
+        var converted = Core.quantizeCanvas(decoded.canvas, scene.width, scene.height, { fit: "stretch", low: 64, high: 145, bright: 215 });
+        return world ? Core.encodeWorldPages(converted.indexed, scene.width, scene.height) : Core.packIndexed(converted.indexed, 2);
+      } catch (error) { toast(scene.id + ": " + error.message + "; using placeholder", true); }
+    }
+    var blank = new Uint8Array(scene.width * scene.height);
+    return world ? Core.encodeWorldPages(blank, scene.width, scene.height) : Core.packIndexed(blank, 2);
+  }
+  async function collectRuntimeFiles() {
+    commitAllCollisions();
+    var files = [];
+    function add(path, bytes) { files.push({ path: path, bytes: bytes, data: Core.toBase64(bytes) }); }
+    var worldDispatcher = Runtime.worldDispatcher(state.project.maps);
+    var worldDispatcherMin = Core.compactSource(worldDispatcher);
+    add("SOURCE/WORLD_DISPATCHER.JS", Core.textBytes(worldDispatcher));
+    add("SOURCE/WORLD_DISPATCHER.MIN.JS", Core.textBytes(worldDispatcherMin));
+    add("HOLO/BIGIRON/CODE/W.JS", Core.textBytes(worldDispatcherMin));
+    for (var map of state.project.maps) {
+      var worldSource = Runtime.worldModule(map, state.project, state.assets);
+      var worldMin = Core.compactSource(worldSource);
+      add("SOURCE/" + Core.slug(map.id) + ".JS", Core.textBytes(worldSource));
+      add("SOURCE/" + Core.slug(map.id) + ".MIN.JS", Core.textBytes(worldMin));
+      add("HOLO/BIGIRON/CODE/W_" + Core.slug(map.id) + ".JS", Core.textBytes(worldMin));
+      add("HOLO/BIGIRON/DATA/MAP_" + Core.slug(map.id) + ".BIN", await backgroundBuild(map, true));
+      add("HOLO/BIGIRON/DATA/COL_" + Core.slug(map.id) + ".BIN", Core.packCollision(collisionFor(map)));
+    }
+    if (state.project.interiors.length) {
+      var interiorDispatcher = Runtime.interiorDispatcher(state.project.interiors);
+      var interiorDispatcherMin = Core.compactSource(interiorDispatcher);
+      add("SOURCE/INTERIOR_DISPATCHER.JS", Core.textBytes(interiorDispatcher));
+      add("SOURCE/INTERIOR_DISPATCHER.MIN.JS", Core.textBytes(interiorDispatcherMin));
+      add("HOLO/BIGIRON/CODE/I.JS", Core.textBytes(interiorDispatcherMin));
+    }
+    for (var interior of state.project.interiors) {
+      var interiorSource = Runtime.interiorModule(interior, state.project, state.assets);
+      var interiorMin = Core.compactSource(interiorSource);
+      add("SOURCE/" + Core.slug(interior.id) + ".JS", Core.textBytes(interiorSource));
+      add("SOURCE/" + Core.slug(interior.id) + ".MIN.JS", Core.textBytes(interiorMin));
+      add("HOLO/BIGIRON/CODE/INT_" + Core.slug(interior.id) + ".JS", Core.textBytes(interiorMin));
+      add("HOLO/BIGIRON/DATA/INT_" + Core.slug(interior.id) + ".BIN", await backgroundBuild(interior, false));
+    }
+    var usedAssets = new Set();
+    state.project.maps.concat(state.project.interiors).forEach(function (scene) { scene.entities.forEach(function (entity) { if (entity.spriteAssetId) usedAssets.add(entity.spriteAssetId); }); });
+    Array.from(usedAssets).forEach(function (assetId) {
+      if (!/\/DD\.IMG$/i.test(assetId)) return;
+      ["DL.IMG", "DR.IMG", "DU.IMG"].forEach(function (name) {
+        var candidate = assetId.replace(/DD\.IMG$/i, name);
+        if (state.assetMap[candidate]) usedAssets.add(candidate);
+      });
+    });
+    for (var assetId of usedAssets) {
+      var asset = assetById(assetId);
+      if (asset && asset.extension === ".img") add("HOLO/BIGIRON/DATA/" + Runtime.fileName(asset.id), await Core.assetBytes(asset));
+    }
+    add("BIRD.PROJECT.JSON", Core.textBytes(JSON.stringify(state.project, null, 2)));
+    var upload = files.filter(function (file) { return file.path.startsWith("HOLO/"); }).map(function (file) { return file.path + "  " + file.bytes.length + " bytes"; }).join("\n") + "\n";
+    add("PIPBOY-UPLOAD.txt", Core.textBytes(upload));
+    return files;
+  }
+  async function buildRuntime() {
+    var rows = renderValidation();
+    if (rows.some(function (row) { return row.level === "error"; })) { showView("build"); toast("Fix validation errors before building", true); return; }
+    $("buildProject").disabled = $("buildProjectSecondary").disabled = true;
+    try {
+      await saveProject(true);
+      var files = await collectRuntimeFiles();
+      var response = await Core.post("/api/build", { project: state.project, files: files.map(function (file) { return { path: file.path, data: file.data }; }) });
+      state.lastBuild = response;
+      renderBuildFiles(response.manifest.files);
+      $("buildResult").hidden = false;
+      $("buildResultTitle").textContent = "BUILD READY - " + Core.formatBytes(response.manifest.totalBytes);
+      $("buildResultPath").textContent = response.directory;
+      $("downloadBuild").href = response.download;
+      showView("build");
+      toast("Runtime build complete");
+    } catch (error) { toast(error.message, true); }
+    finally { $("buildProject").disabled = $("buildProjectSecondary").disabled = false; }
+  }
+
+  async function saveProject(quiet) {
+    commitAllCollisions();
+    state.project.name = $("projectName").value.trim() || "Big Iron";
+    $("saveProject").disabled = true;
+    try {
+      var response = await Core.post("/api/project", { project: state.project });
+      state.project = response.project;
+      markSaved();
+      if (!quiet) toast("Project saved");
+    } catch (error) { toast(error.message, true); }
+    finally { $("saveProject").disabled = false; }
+  }
+
+  function updateBudgets() {
+    if (!state.project) return;
+    var scene = currentScene();
+    var moduleBytes = scene ? Core.textBytes(Core.compactSource(scene.kind === "world" ? Runtime.worldModule(scene, state.project, state.assets) : Runtime.interiorModule(scene, state.project, state.assets))).length : 0;
+    var moduleBudget = scene && scene.kind === "interior" ? state.project.runtime.budgets.interiorModule : state.project.runtime.budgets.worldModule;
+    $("moduleMeter").max = moduleBudget;
+    $("moduleMeter").value = moduleBytes;
+    $("moduleBytes").textContent = Core.formatBytes(moduleBytes);
+    var mapBytes = scene ? scene.kind === "world" ? 889350 : 480 * scene.height / 4 : 0;
+    $("mapMeter").max = scene && scene.kind === "world" ? 889350 : Math.max(1, mapBytes);
+    $("mapMeter").value = mapBytes;
+    $("mapBytes").textContent = Core.formatBytes(mapBytes);
+  }
+
+  function showView(view) {
+    state.view = view;
+    document.querySelectorAll(".tab").forEach(function (button) { button.classList.toggle("active", button.dataset.view === view); });
+    document.querySelectorAll(".view").forEach(function (element) { element.classList.remove("active"); });
+    if (view === "world" || view === "interior") {
+      state.sceneKind = view;
+      var collection = currentCollection();
+      if (!collection.some(function (scene) { return scene.id === state.sceneId; })) state.sceneId = collection[0] && collection[0].id || "";
+      $("sceneView").classList.add("active");
+      renderSceneWorkspace();
+    } else if (view === "npc") { $("npcView").classList.add("active"); renderNpcView(); }
+    else if (view === "dialogue") { $("dialogueView").classList.add("active"); renderDialogueView(); }
+    else if (view === "media") { $("mediaView").classList.add("active"); renderAssetList(); renderAssetForm(); }
+    else if (view === "build") { $("buildView").classList.add("active"); renderBuildView(); }
+    updateBudgets();
+  }
+  function syncToolButtons() { document.querySelectorAll("#toolGroup button").forEach(function (button) { button.classList.toggle("selected", button.dataset.tool === state.tool); }); }
+
+  function deleteEntity() {
+    var scene = currentScene();
+    if (!scene || !state.selectedEntityId) return;
+    pushHistory(scene);
+    scene.entities = scene.entities.filter(function (entity) { return entity.id !== state.selectedEntityId; });
+    state.selectedEntityId = "";
+    markDirty();
+    renderSceneWorkspace();
+  }
+  function duplicateEntity() {
+    var scene = currentScene(), entity = selectedEntity();
+    if (!scene || !entity) return;
+    pushHistory(scene);
+    var copy = clone(entity);
+    copy.id = Core.uid(entity.type);
+    copy.name += " Copy";
+    copy.x += 18;
+    copy.y += 18;
+    scene.entities.push(copy);
+    state.selectedEntityId = copy.id;
+    markDirty();
+    renderSceneWorkspace();
+  }
+  function newScene() {
+    var scene = state.sceneKind === "world" ? newWorld() : newInterior();
+    currentCollection().push(scene);
+    state.sceneId = scene.id;
+    state.selectedEntityId = "";
+    markDirty();
+    renderSceneWorkspace();
+  }
+
+  function bindEvents() {
+    document.querySelectorAll(".tab").forEach(function (button) { button.addEventListener("click", function () { showView(button.dataset.view); }); });
+    $("saveProject").addEventListener("click", function () { saveProject(false); });
+    $("buildProject").addEventListener("click", buildRuntime);
+    $("buildProjectSecondary").addEventListener("click", buildRuntime);
+    $("validateProject").addEventListener("click", function () { renderBuildView(); toast("Validation refreshed"); });
+    $("projectName").addEventListener("input", markDirty);
+    $("newScene").addEventListener("click", newScene);
+    $("sceneList").addEventListener("click", function (event) { var button = event.target.closest("[data-scene-id]"); if (!button) return; state.sceneId = button.dataset.sceneId; state.selectedEntityId = ""; renderSceneWorkspace(); updateBudgets(); });
+    $("toolGroup").addEventListener("click", function (event) { var button = event.target.closest("[data-tool]"); if (!button) return; state.tool = button.dataset.tool; syncToolButtons(); });
+    $("brushSize").addEventListener("change", function () { state.brush = Core.clamp(Number(this.value) || 1, 1, 8); });
+    $("zoomRange").addEventListener("input", function () { state.zoom = Number(this.value); $("zoomValue").textContent = state.zoom + "%"; renderScene(); });
+    ["showBackground", "showCollision", "showEntities", "showGrid"].forEach(function (id) { $(id).addEventListener("change", renderScene); });
+    $("undoButton").addEventListener("click", undo);
+    $("redoButton").addEventListener("click", redo);
+    $("sceneCanvas").addEventListener("pointerdown", pointerDown);
+    $("sceneCanvas").addEventListener("pointermove", pointerMove);
+    $("sceneCanvas").addEventListener("pointerup", pointerUp);
+    $("sceneCanvas").addEventListener("pointercancel", pointerUp);
+    $("sceneInspector").addEventListener("change", function (event) {
+      var scene = currentScene(), entity = selectedEntity(), target = event.target;
+      if (target.dataset.scene) {
+        pushHistory(scene);
+        var oldId = scene.id;
+        setPath(scene, target.dataset.scene, inputValue(target));
+        if (target.dataset.scene === "id") { scene.id = Core.slug(scene.id, oldId); state.sceneId = scene.id; }
+        if (target.dataset.scene === "backgroundAssetId") { Object.keys(state.backgroundCache).forEach(function (key) { if (key.startsWith(sceneKey(scene) + "|")) delete state.backgroundCache[key]; }); loadBackground(scene, true); }
+      } else if (target.dataset.entity && entity) {
+        pushHistory(scene);
+        var entityOldId = entity.id;
+        setPath(entity, target.dataset.entity, inputValue(target));
+        if (target.dataset.entity === "id") { entity.id = Core.slug(entity.id, entityOldId).toLowerCase(); state.selectedEntityId = entity.id; }
+        if (target.dataset.entity === "spriteAssetId") loadSprite(entity);
+      }
+      markDirty(); renderSceneList(); renderSceneInspector(); renderScene();
+    });
+    $("sceneInspector").addEventListener("click", function (event) {
+      if (event.target.id === "deleteEntity") deleteEntity();
+      else if (event.target.id === "duplicateEntity") duplicateEntity();
+      else if (event.target.id === "duplicateScene") {
+        var source = currentScene(); pushHistory(source); var copy = clone(source); copy.id = Core.slug(source.id + "_COPY"); copy.name += " Copy"; currentCollection().push(copy); state.sceneId = copy.id; markDirty(); renderSceneWorkspace();
+      } else if (event.target.id === "deleteScene") {
+        if (currentCollection().length <= 1) { toast("A project needs at least one map", true); return; }
+        var id = currentScene().id; var index = currentCollection().findIndex(function (item) { return item.id === id; }); currentCollection().splice(index, 1); state.sceneId = currentCollection()[0].id; state.selectedEntityId = ""; markDirty(); renderSceneWorkspace();
+      }
+    });
+
+    $("npcMapFilter").addEventListener("change", function () { state.npcRef = null; renderNpcView(); });
+    $("npcList").addEventListener("click", function (event) { var button = event.target.closest("[data-npc-id]"); if (!button) return; var parts = $("npcMapFilter").value.split(":"); state.npcRef = { kind: parts[0], sceneId: parts[1], entityId: button.dataset.npcId }; renderNpcView(); });
+    $("newNpc").addEventListener("click", function () { var parts = $("npcMapFilter").value.split(":"); var collection = parts[0] === "interior" ? state.project.interiors : state.project.maps; var scene = collection.find(function (item) { return item.id === parts[1]; }) || collection[0]; if (!scene) return; var npc = newEntity("npc", Math.round(scene.width / 2), Math.round(scene.height / 2)); scene.entities.push(npc); state.npcRef = { kind: scene.kind, sceneId: scene.id, entityId: npc.id }; markDirty(); renderNpcView(); });
+    $("placeNpc").addEventListener("click", function () { var npc = npcFromRef(), scene = sceneFromNpcRef(); if (!npc || !scene) return; state.sceneKind = scene.kind; state.sceneId = scene.id; state.selectedEntityId = npc.id; showView(scene.kind); });
+    [$("npcForm"), $("npcCollisionPanel")].forEach(function (panel) {
+      panel.addEventListener("change", function (event) { var npc = npcFromRef(); if (!npc || !event.target.dataset.npc) return; var oldId = npc.id; setPath(npc, event.target.dataset.npc, inputValue(event.target)); if (event.target.dataset.npc === "id") { npc.id = Core.slug(npc.id, oldId).toLowerCase(); state.npcRef.entityId = npc.id; } markDirty(); renderNpcView(); });
+      panel.addEventListener("click", function (event) { if (event.target.id === "deleteNpc") { var scene = sceneFromNpcRef(); scene.entities = scene.entities.filter(function (entity) { return entity.id !== state.npcRef.entityId; }); state.npcRef = null; markDirty(); renderNpcView(); } });
+    });
+
+    $("dialogueList").addEventListener("click", function (event) { var button = event.target.closest("[data-dialogue-id]"); if (!button) return; state.dialogueId = button.dataset.dialogueId; state.nodeId = ""; renderDialogueView(); });
+    $("nodeList").addEventListener("click", function (event) { var node = event.target.closest("[data-node-id]"); if (!node) return; state.nodeId = node.dataset.nodeId; renderDialogueView(); });
+    $("newDialogue").addEventListener("click", function () { var id = "dialogue_" + (state.project.dialogues.length + 1); var dialogue = newDialogueData(id, "Dialogue " + (state.project.dialogues.length + 1)); state.project.dialogues.push(dialogue); state.dialogueId = dialogue.id; state.nodeId = "start"; markDirty(); renderDialogueView(); });
+    $("newNode").addEventListener("click", function () { var dialogue = currentDialogue(); if (!dialogue) return; var node = { id: "node_" + (dialogue.nodes.length + 1), text: "DIALOGUE", choices: [{ label: "CONTINUE", action: "close", target: "", next: "" }] }; dialogue.nodes.push(node); state.nodeId = node.id; markDirty(); renderDialogueView(); });
+    $("dialogueInspector").addEventListener("change", function (event) {
+      var dialogue = currentDialogue(), node = currentNode(), target = event.target;
+      if (target.dataset.dialogue) { var old = dialogue.id; setPath(dialogue, target.dataset.dialogue, inputValue(target)); if (target.dataset.dialogue === "id") { dialogue.id = Core.slug(dialogue.id, old).toLowerCase(); state.dialogueId = dialogue.id; } }
+      else if (target.dataset.node) { var oldNode = node.id; setPath(node, target.dataset.node, inputValue(target)); if (target.dataset.node === "id") { node.id = Core.slug(node.id, oldNode).toLowerCase(); state.nodeId = node.id; if (dialogue.startNode === oldNode) dialogue.startNode = node.id; } }
+      else if (target.dataset.choice) { var parts = target.dataset.choice.split("."); var choice = node.choices[Number(parts[0])]; choice[parts[1]] = inputValue(target); }
+      markDirty(); renderDialogueView();
+    });
+    $("dialogueInspector").addEventListener("click", function (event) {
+      var dialogue = currentDialogue(), node = currentNode();
+      if (event.target.id === "addChoice" && node.choices.length < 3) { node.choices.push({ label: "CHOICE", action: "close", target: "", next: "", interact: "", bullet: "", once: false, miniboss: false }); markDirty(); renderDialogueView(); }
+      else if (event.target.dataset.removeChoice != null) { node.choices.splice(Number(event.target.dataset.removeChoice), 1); markDirty(); renderDialogueView(); }
+      else if (event.target.id === "deleteNode") { if (dialogue.nodes.length <= 1) { toast("A dialogue needs one node", true); return; } dialogue.nodes = dialogue.nodes.filter(function (item) { return item.id !== node.id; }); state.nodeId = dialogue.nodes[0].id; dialogue.startNode = dialogue.nodes[0].id; markDirty(); renderDialogueView(); }
+    });
+
+    ["assetTypeFilter", "assetSourceFilter"].forEach(function (id) { $(id).addEventListener("change", renderAssetList); });
+    $("assetSearch").addEventListener("input", renderAssetList);
+    $("assetList").addEventListener("click", function (event) { var button = event.target.closest("[data-asset-id]"); if (!button) return; state.assetId = button.dataset.assetId; state.convert.outputName = ""; renderAssetList(); renderAssetForm(); });
+    $("assetForm").addEventListener("change", function (event) {
+      var target = event.target;
+      if (target.dataset.convert) setPath(state.convert, target.dataset.convert, inputValue(target));
+      else if (target.dataset.asset) { state.project.assetSettings[state.assetId] = state.project.assetSettings[state.assetId] || {}; setPath(state.project.assetSettings[state.assetId], target.dataset.asset, inputValue(target)); var asset = assetById(state.assetId); Object.assign(state.assetMap[state.assetId], state.project.assetSettings[state.assetId]); state.backgroundCache = {}; previewAsset(); }
+      markDirty();
+    });
+    $("importAsset").addEventListener("click", function () { state.importFiles = []; $("assetFile").value = ""; $("importQueue").innerHTML = ""; $("assetDialog").showModal(); });
+    $("assetFile").addEventListener("change", function () { state.importFiles = Array.from(this.files || []); $("importQueue").innerHTML = state.importFiles.map(function (file) { return '<div class="import-row"><span>' + html(file.name) + "</span><b>" + Core.formatBytes(file.size) + "</b></div>"; }).join(""); });
+    $("confirmImport").addEventListener("click", importFiles);
+    $("convertAsset").addEventListener("click", convertAsset);
+  }
+
+  async function boot() {
+    try {
+      var response = await Core.request("/api/bootstrap");
+      state.project = response.project;
+      state.assets = response.assets;
+      state.assets.forEach(function (asset) { state.assetMap[asset.id] = asset; });
+      normalizeProject(state.project);
+      $("projectName").value = state.project.name;
+      state.sceneKind = "world";
+      state.sceneId = state.project.maps[0].id;
+      state.dialogueId = state.project.dialogues[0] && state.project.dialogues[0].id || "";
+      state.assetId = state.assets.find(function (asset) { return asset.extension === ".img"; }) && state.assets.find(function (asset) { return asset.extension === ".img"; }).id || "";
+      bindEvents();
+      showView("world");
+      markSaved();
+      renderValidation();
+      renderBuildFiles();
+    } catch (error) {
+      document.body.innerHTML = '<main style="padding:40px;font-family:Segoe UI;background:#111;color:#eee;min-height:100vh"><h1>B.I.R.D. failed to load</h1><p>' + html(error.message) + "</p></main>";
+    }
+  }
+
+  boot();
+})();

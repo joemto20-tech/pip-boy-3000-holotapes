@@ -1,0 +1,381 @@
+{
+  "schemaVersion": 2,
+  "id": "bigiron-current",
+  "name": "Big Iron",
+  "updatedAt": "2026-07-22T12:07:51.979Z",
+  "runtime": {
+    "screenWidth": 480,
+    "screenHeight": 320,
+    "worldWidth": 1440,
+    "worldHeight": 1080,
+    "worldGrid": 12,
+    "interiorWidth": 480,
+    "footerY": 296,
+    "budgets": {
+      "worldModule": 20000,
+      "interiorModule": 20000,
+      "dialogueData": 4096,
+      "worldNpcs": 12,
+      "interiorNpcs": 8,
+      "dialogueNodes": 24,
+      "collisionBytes": 1350,
+      "worldPagesBytes": 888000
+    }
+  },
+  "maps": [
+    {
+      "id": "WORLD_01",
+      "name": "Sunscar",
+      "kind": "world",
+      "width": 1440,
+      "height": 1080,
+      "gridSize": 12,
+      "backgroundAssetId": "game:Assets/DATA/W.BIN",
+      "collisionData": "////////////////////////////////////////wAAAAAAAAAAAAAAAAAADwAAAAAAAAAAAAAAAAAADwAAAAAAAAAAAAAAAAAADwAAAAAAAAAAAAB///AADwAAAAAAAf///AB///f//x//////gf///AB///f//x//////gf////////f//x//////gf////////f//x////////////////f//x////////////////f//x////////////////f//x//////h////////7f//x/////+/+AAP/4//wD//x/////+P+AAP/6//wD//x/////+A+AAP/5f/wD//x/////+A+AAP/4P/wD//xz////+AeAAP/4Af4D//xz/////AeAAP/5wDgBAfxz/////geAAPYZ4AgAQfxz/////gAAAAAB/4AQA/xj/////gAAAAAB/+Af//xj/////gAAAAAB//Af//x5/////gAAAD////gf//x5/////h+AAD////wB//x5/////g+AAD////4AADxx//D//g+AAD////4AADxx//D//gIAAD/////wAD/g//D//g8AAD/////wAD/w/+BgAA4AAD/////wAD/4AAAAAA4AAD/////4AD/8AAAAAAAAAD/////4AD/8AAAAAAAAAD/////6AD/+Agf//AAAAD/////+AD/+AA///AAAAD/////+AD/+AB///AAAAD/////+AD/+AB///AAAAD/////+ADwAA////8AAAD/////+ADwAA/////gAAD/////+ABwAA/////gAAD/////+ABwAA/////AAAD/////+ABwAA/////gAAD//n//+AB9gA/////gAAD//B//+AR9wA/////gD8D/4A//+Ax/gA////8AD4Af4A//wBz/AA////8AH8AAwA8AAA//wA////8AX8AAAAAAAAf/wAP///8Af/AAAAAAAB//wAD/j/8Af/AAAAAAAB/wAAA/j/8Af/AAAH/+AADwAAAAAAAAf/AAAH//4ADxgAAAAAAAf/AAAP//4D/xgAAAAAAAf/AAAf///AH/wAP/gAAAAAAAB////AD/wH//+AAAAAAOB////8D/wH//+AAAAAA+B////8D/wH//+AAAAAAOB////+D/wP///gAYAAAAB////+D/Qf///4A+AAAAB////+DwA////+A+AAAAB////7DwB/////A///+AB////7DwD////3h///+AB////7DwD////zh////AB////7DwH////gh////gB////7DwH////gB////wB/8f8DDwef///gB////8Af8f4DDweH8f/AP////8AAAAADz38H8fwAP////8AAAAAPz18IAAAAP////8AAAAB/z3AAAAAAP////8AAAcB/73AAAAAAP////8AA//g///j/8APwP////8AA//gP//gAAAfwP////8AD//8D//gAAAPwP////8AD//kAf/gAAAPgP////8AD/8AAf/AAAABgP/8f/8AD/AAA//AAAADgH/AQD8ADwAAA//AAAAfgH/AAD8AD4AAH//z/4A/gAAAAAAAD8P////wAA//gAAAAAAAD///////+B//AAAAAAAAB///////+B/wEAAAAAAAAP/5/z//+B/AEAAAAAAAAD+BwDwAAAAAGAAAAOAAAAAAADwAAAAAMAAAAPAAAAAAADwAAAAAAAAAAGAAAAAAADwAAAAAAAAAAEAAAAAAAD/////////+AE/////////////////+AA////////",
+      "spawn": {
+        "x": 704,
+        "y": 255,
+        "facing": "down"
+      },
+      "entities": [
+        {
+          "id": "sun_king",
+          "type": "npc",
+          "name": "Solomon Ray",
+          "x": 1025,
+          "y": 590,
+          "width": 34,
+          "height": 34,
+          "solid": true,
+          "spriteAssetId": "game:Assets/DATA/SOLOMON_RAY_SPRITE.IMG",
+          "facing": "down",
+          "interactionRange": 54,
+          "movement": {
+            "type": "static"
+          },
+          "dialogueId": "sun_king_intro"
+        },
+        {
+          "id": "pawn_trader",
+          "type": "npc",
+          "name": "Sunscar Pawn",
+          "x": 386,
+          "y": 620,
+          "width": 34,
+          "height": 34,
+          "solid": true,
+          "spriteAssetId": "game:Assets/DATA/T.IMG",
+          "facing": "left",
+          "interactionRange": 46,
+          "movement": {
+            "type": "patrol",
+            "axis": "x",
+            "distance": 24,
+            "speed": 1
+          },
+          "dialogueId": "pawn_trade"
+        },
+        {
+          "id": "courier_dog",
+          "type": "companion",
+          "name": "Dog",
+          "x": 704,
+          "y": 291,
+          "width": 34,
+          "height": 34,
+          "solid": false,
+          "spriteAssetId": "game:Assets/DATA/DD.IMG",
+          "facing": "down",
+          "interactionRange": 0,
+          "movement": {
+            "type": "follow",
+            "axis": "x",
+            "distance": 60,
+            "speed": 6
+          },
+          "dialogueId": ""
+        },
+        {
+          "id": "market_battle",
+          "type": "trigger",
+          "name": "Sun King's Market",
+          "x": 320,
+          "y": 390,
+          "width": 100,
+          "height": 84,
+          "solid": false,
+          "prompt": "SEARCH SUN KING'S MARKET?",
+          "action": {
+            "type": "battle",
+            "target": "RAIDER"
+          },
+          "once": true
+        },
+        {
+          "id": "town_hall",
+          "type": "trigger",
+          "name": "Town Hall",
+          "x": 1025,
+          "y": 590,
+          "width": 124,
+          "height": 88,
+          "solid": false,
+          "prompt": "ENTER TOWN HALL?",
+          "action": {
+            "type": "confrontation",
+            "target": "SOLOMON_RAY",
+            "dialogue": "sun_king_intro"
+          },
+          "once": true
+        },
+        {
+          "id": "crater_motel",
+          "type": "trigger",
+          "name": "Crater Motel",
+          "x": 735,
+          "y": 980,
+          "width": 120,
+          "height": 84,
+          "solid": false,
+          "prompt": "ENTER CRATER MOTEL?",
+          "action": {
+            "type": "interior",
+            "target": "CRATER_MOTEL"
+          }
+        },
+        {
+          "id": "guns_ammo",
+          "type": "trigger",
+          "name": "Guns & Ammo",
+          "x": 980,
+          "y": 790,
+          "width": 112,
+          "height": 104,
+          "solid": false,
+          "prompt": "CHECK GUNS & AMMO?",
+          "action": {
+            "type": "battle",
+            "target": "RANDOM"
+          },
+          "once": true
+        },
+        {
+          "id": "docs_clinic",
+          "type": "trigger",
+          "name": "Doc's Clinic",
+          "x": 292,
+          "y": 856,
+          "width": 112,
+          "height": 84,
+          "solid": false,
+          "prompt": "ENTER DOC'S CLINIC?",
+          "action": {
+            "type": "battle",
+            "target": "RANDOM"
+          },
+          "once": true
+        }
+      ]
+    }
+  ],
+  "interiors": [
+    {
+      "id": "CRATER_MOTEL",
+      "name": "Crater Motel",
+      "kind": "interior",
+      "width": 480,
+      "height": 456,
+      "backgroundAssetId": "game:Assets/DATA/H.BIN",
+      "spawn": {
+        "x": 223,
+        "y": 376,
+        "facing": "up"
+      },
+      "collisionRects": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 480,
+          "height": 96
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "width": 24,
+          "height": 456
+        },
+        {
+          "x": 456,
+          "y": 0,
+          "width": 24,
+          "height": 456
+        },
+        {
+          "x": 0,
+          "y": 420,
+          "width": 205,
+          "height": 36
+        },
+        {
+          "x": 275,
+          "y": 420,
+          "width": 205,
+          "height": 36
+        },
+        {
+          "x": 24,
+          "y": 100,
+          "width": 106,
+          "height": 105
+        },
+        {
+          "x": 245,
+          "y": 100,
+          "width": 190,
+          "height": 66
+        },
+        {
+          "x": 285,
+          "y": 205,
+          "width": 122,
+          "height": 80
+        },
+        {
+          "x": 24,
+          "y": 260,
+          "width": 101,
+          "height": 150
+        },
+        {
+          "x": 95,
+          "y": 348,
+          "width": 90,
+          "height": 66
+        },
+        {
+          "x": 355,
+          "y": 345,
+          "width": 105,
+          "height": 71
+        },
+        {
+          "x": 438,
+          "y": 170,
+          "width": 22,
+          "height": 160
+        },
+        {
+          "x": 252,
+          "y": 314,
+          "width": 34,
+          "height": 36
+        }
+      ],
+      "entities": [
+        {
+          "id": "motel_resident",
+          "type": "npc",
+          "name": "Motel Resident",
+          "x": 252,
+          "y": 314,
+          "width": 34,
+          "height": 34,
+          "solid": true,
+          "spriteAssetId": "game:Assets/DATA/G.IMG",
+          "facing": "down",
+          "interactionRange": 46,
+          "movement": {
+            "type": "static"
+          },
+          "dialogueId": "motel_talk"
+        },
+        {
+          "id": "motel_exit",
+          "type": "exit",
+          "name": "Motel Exit",
+          "x": 205,
+          "y": 414,
+          "width": 70,
+          "height": 42,
+          "solid": false,
+          "prompt": "LEAVE MOTEL?",
+          "action": {
+            "type": "world",
+            "target": "WORLD_01"
+          }
+        }
+      ]
+    }
+  ],
+  "dialogues": [
+    {
+      "id": "sun_king_intro",
+      "name": "Solomon Ray Confrontation",
+      "startNode": "start",
+      "nodes": [
+        {
+          "id": "start",
+          "text": "HOW YOU ENJOYING THE RADS?",
+          "choices": [
+            {
+              "label": "FIGHT",
+              "action": "confrontation",
+              "target": "SOLOMON_RAY",
+              "interact": "town_hall",
+              "once": true,
+              "bullet": "SCORCHED",
+              "miniboss": true
+            },
+            {
+              "label": "FLEE",
+              "action": "close",
+              "target": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pawn_trade",
+      "name": "Sunscar Pawn",
+      "startNode": "start",
+      "nodes": [
+        {
+          "id": "start",
+          "text": "LOOKING TO TRADE?",
+          "choices": [
+            {
+              "label": "TRADE",
+              "action": "shop",
+              "target": "Shop"
+            },
+            {
+              "label": "LEAVE",
+              "action": "close",
+              "target": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "motel_talk",
+      "name": "Motel Resident",
+      "startNode": "start",
+      "nodes": [
+        {
+          "id": "start",
+          "text": "SURE IS NICE TO HAVE A NOSE.",
+          "choices": [
+            {
+              "label": "CONTINUE",
+              "action": "close",
+              "target": ""
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "assetSettings": {}
+}
