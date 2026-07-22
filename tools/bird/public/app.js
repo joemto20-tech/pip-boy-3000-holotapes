@@ -7,10 +7,6 @@ const state = {
   painting: false,
   sprite: null,
   spritePainting: false,
-  sceneSprite: null,
-  sceneSpritePainting: false,
-  duelSprites: {},
-  duelDrag: null,
   items: {},
   itemIconData: "",
   itemIconName: "",
@@ -21,22 +17,50 @@ const state = {
 
 const quickTools = [
   ["G", "Grass"], ["P", "Path"], ["B", "Block"], ["H", "House"], ["D", "Door"], ["S", "Sand"],
-  ["spawn", "Spawn"], ["exit", "Exit"], ["regular", "Regular"], ["npcEncounter", "NPC Enc"], ["boss", "Boss"], ["shoot", "Shoot"], ["shop", "Shop"], ["duel", "Sprite Battle"], ["erase", "Erase"],
+  ["spawn", "Spawn"], ["exit", "Exit"], ["regular", "Regular"], ["npcEncounter", "NPC Enc"], ["interior", "Interior"], ["boss", "Boss"], ["shoot", "Shoot"], ["shop", "Shop"], ["erase", "Erase"],
   ["tree", "Tree"], ["npc", "NPC"], ["camp", "Camp"], ["sign", "Sign"], ["rocks", "Rocks"]
 ];
 
 const PLAYER_SPRITE_WIDTH = 34;
 const PLAYER_SPRITE_HEIGHT = 34;
 const PLAYER_SPRITE_BPP = 2;
-const DUEL_WIDTH = 320;
-const DUEL_HEIGHT = 236;
-const DUEL_SLOTS = {
-  enemy: { select: "duelEnemySprite", position: "duelEnemyPos", name: "RADSCORP_SPRITE", width: 64, height: 48, fallback: "RADSCORP_SPRITE" },
-  player: { select: "duelPlayerSprite", position: "duelPlayerPos", name: "PLAYER_BATTLE_SPRITE", width: 64, height: 64, fallback: "PLAYER_BATTLE_SPRITE" },
-  projectile: { select: "duelProjectileSprite", name: "BULLET_SPRITE", width: 16, height: 8, fallback: "BULLET_SPRITE" },
-  effect: { select: "duelEffectSprite", name: "HIT_SPRITE", width: 28, height: 28, fallback: "HIT_SPRITE" }
+const BATTLE_UI_DEFAULTS = {
+  prompt: "CHOOSE AN ACTION",
+  reloadPrompt: "SLASH NOW",
+  attack: "",
+  stim: "STIMPAK",
+  reloadAttack: "SLASH",
+  reloadStim: "STIMPAK",
+  attackDetail: "DMG {dmg}",
+  stimDetail: "HEAL {heal} x{st}",
+  enemyReload: "ENEMY RELOADS",
+  reloadAttackMsg: "KEEP SLASHING",
+  pauseResume: "RESUME",
+  pauseSave: "SAVE LOCATION",
+  pauseExit: "EXIT GAME",
+  pauseNote: "TURN WHEEL / PRESS TO SELECT"
 };
-
+const DEFAULT_LIMITS = {
+  worldJsonBytes: 2800,
+  rows: 32,
+  cols: 48,
+  interacts: 18,
+  decor: 36,
+  exits: 8,
+  artWidth: 255,
+  artHeight: 255,
+  playerSpriteBytes: 304,
+  spriteBytes: 1536,
+  videoBytes: 450000
+};
+const DEFAULT_WORLD_DEFINITIONS = [
+  { id: "WORLD_01", name: "Sunscar", miniboss: "Solomon Ray", round: "SCORCHED", unlocks: "WORLD_02" },
+  { id: "WORLD_02", name: "Dogtown Heights", miniboss: "Danner Cole", round: "HOUND", unlocks: "WORLD_03" },
+  { id: "WORLD_03", name: "Crown Junction", miniboss: "Odessa Crown", round: "CROWN", unlocks: "WORLD_04" },
+  { id: "WORLD_04", name: "The Broken Arch", miniboss: "Captain Mordecai Flint", round: "RIVER", unlocks: "WORLD_05" },
+  { id: "WORLD_05", name: "The Black Loop", miniboss: "Warden Elias Black", round: "BLACK", unlocks: "WORLD_06" },
+  { id: "WORLD_06", name: "Vale's World", miniboss: "Harlan Vale", round: "COURIER", unlocks: "" }
+];
 function worldFriendlyName(id) {
   const key = cleanId(id || "WORLD_01");
   if (key === "WORLD_01") return "Sunscar";
@@ -215,6 +239,111 @@ function worldHeight() {
   return state.world && state.world.rows ? state.world.rows.length : 24;
 }
 
+function limits() {
+  return { ...DEFAULT_LIMITS, ...(state.info && state.info.limits || {}) };
+}
+
+function worldDefinitions() {
+  return state.info && state.info.worldDefinitions && state.info.worldDefinitions.length
+    ? state.info.worldDefinitions
+    : DEFAULT_WORLD_DEFINITIONS;
+}
+
+function compactWorldEstimate(world) {
+  if (!world) return "";
+  const copy = JSON.parse(JSON.stringify(world));
+  const clean = (item) => {
+    if (!item || typeof item !== "object") return item;
+    ["storyCity", "storyType", "lockedMsg", "bulletName", "miniboss", "finalBoss", "bullet", "requiresRound", "music"].forEach((key) => delete item[key]);
+    if (item.w === 1) delete item.w;
+    if (item.h === 1) delete item.h;
+    if (item.minRegular === 2) delete item.minRegular;
+    return item;
+  };
+  delete copy.tile;
+  delete copy.scale;
+  if (Array.isArray(copy.interacts)) copy.interacts = copy.interacts.map(clean);
+  if (Array.isArray(copy.exits)) copy.exits.forEach(clean);
+  if (Array.isArray(copy.decor)) copy.decor.forEach(clean);
+  return JSON.stringify(copy) + "\n";
+}
+
+function byteSize(text) {
+  return new Blob([text || ""]).size;
+}
+
+function budgetMetric(label, value, max) {
+  const pct = max ? Math.min(100, Math.round(value * 100 / max)) : 0;
+  const stateClass = pct >= 100 ? "bad" : pct >= 85 ? "warn" : "";
+  return `<div class="budget-line ${stateClass}">
+    <span>${label}</span><strong>${value}/${max}</strong>
+    <div class="meter"><i style="width:${pct}%"></i></div>
+  </div>`;
+}
+
+function worldBudget(world = state.world) {
+  const lim = limits();
+  return {
+    bytes: byteSize(compactWorldEstimate(world)),
+    cols: world && world.rows && world.rows[0] ? world.rows[0].length : 0,
+    rows: world && world.rows ? world.rows.length : 0,
+    interacts: world && world.interacts ? world.interacts.length : 0,
+    decor: world && world.decor ? world.decor.length : 0,
+    exits: world && world.exits ? world.exits.length : 0,
+    limits: lim
+  };
+}
+
+function budgetOk(world = state.world) {
+  const b = worldBudget(world);
+  return b.bytes <= b.limits.worldJsonBytes &&
+    b.cols <= b.limits.cols &&
+    b.rows <= b.limits.rows &&
+    b.interacts <= b.limits.interacts &&
+    b.decor <= b.limits.decor &&
+    b.exits <= b.limits.exits;
+}
+
+function renderWorldBudget() {
+  if (!$("worldBudgetBars") || !state.world) return;
+  const b = worldBudget();
+  $("worldBudgetBars").innerHTML = [
+    budgetMetric("Runtime JSON", b.bytes, b.limits.worldJsonBytes),
+    budgetMetric("Columns", b.cols, b.limits.cols),
+    budgetMetric("Rows", b.rows, b.limits.rows),
+    budgetMetric("Encounters", b.interacts, b.limits.interacts),
+    budgetMetric("Decor", b.decor, b.limits.decor),
+    budgetMetric("Exits", b.exits, b.limits.exits)
+  ].join("");
+  $("worldBudgetHint").textContent = budgetOk() ? "Good for the current low-memory build." : "Over budget. Remove encounters/decor or split this map into another world/interior.";
+}
+
+function renderWorldIndex() {
+  if (!$("worldCards")) return;
+  const lim = limits();
+  const details = new Map((state.info && state.info.worldDetails || []).map((world) => [world.id, world]));
+  $("limitReadout").innerHTML = [
+    `World JSON ${lim.worldJsonBytes} bytes`,
+    `Grid ${lim.cols} x ${lim.rows}`,
+    `${lim.interacts} encounters`,
+    `${lim.decor} decor`,
+    `${lim.exits} exits`,
+    `Player sprites 34x34 IMG`
+  ].map((line) => `<span>${line}</span>`).join("");
+  const cards = worldDefinitions().map((def) => {
+    const detail = details.get(def.id) || { id: def.id, file: `${def.id}.JSON`, name: def.name, size: 0, rows: 0, cols: 0, interacts: 0, decor: 0, exits: 0 };
+    const over = detail.size > lim.worldJsonBytes || detail.rows > lim.rows || detail.cols > lim.cols || detail.interacts > lim.interacts || detail.decor > lim.decor || detail.exits > lim.exits;
+    return `<button class="world-card ${over ? "bad" : ""}" data-world="${detail.file || `${def.id}.JSON`}">
+      <strong>${def.id} - ${detail.name || def.name}</strong>
+      <span>${def.miniboss || "Final"} / ${def.round || ""}</span>
+      <em>${detail.size || 0}/${lim.worldJsonBytes} bytes - ${detail.interacts || 0} enc - ${detail.decor || 0} decor</em>
+      <small>${def.unlocks ? `Unlocks ${def.unlocks}` : "Final world"}</small>
+    </button>`;
+  }).join("");
+  $("worldCards").innerHTML = cards;
+  $("worldIndexReadout").textContent = `${worldDefinitions().length} worlds`;
+}
+
 function objectAt(list, x, y) {
   return (list || []).find((item) => item && item.x === x && item.y === y);
 }
@@ -226,7 +355,6 @@ function decorMark(type) {
 function encounterMark(item) {
   if (!item) return "";
   if (item.type === "shoot") return "SH";
-  if (item.type === "duel") return "SB";
   if (item.boss) return "B!";
   if (item.npc) return "N!";
   return "E";
@@ -259,6 +387,7 @@ function renderWorld() {
   $("worldRows").value = height;
   $("worldReadout").textContent = `${width} x ${height} - ${world.interacts.length} encounters`;
   $("worldJson").value = JSON.stringify(world, null, 2);
+  renderWorldBudget();
 }
 
 function cleanId(value) {
@@ -322,6 +451,376 @@ function renderItem() {
   } else {
     icon.textContent = "ICON";
   }
+}
+
+function enemyById(id) {
+  const key = cleanId(id || $("battleEnemySelect").value || "");
+  return (state.info && state.info.enemies || []).find((enemy) => cleanId(enemy.id || enemy.name) === key) || null;
+}
+
+function loadBattleEnemyForm(id) {
+  const enemy = enemyById(id) || (state.info && state.info.enemies && state.info.enemies[0]) || {};
+  const videos = enemy.videos || {};
+  const ui = { ...BATTLE_UI_DEFAULTS, ...(enemy.ui || {}) };
+  $("battleEnemySelect").value = enemy.id || "";
+  $("battleEnemyName").value = enemy.name || enemy.id || "ENEMY";
+  $("battleFolder").value = enemy.folder || "";
+  $("battleLevel").value = enemy.level || 1;
+  $("battleMaxHp").value = enemy.maxHP || 75;
+  $("battleXp").value = enemy.xp || 35;
+  $("battleMelee").checked = !!enemy.melee;
+  $("battleReload").checked = !!enemy.reload;
+  $("battleMeleePower").value = enemy.meleePower || 0;
+  $("battleRad").value = enemy.rad ? enemy.rad.join(",") : "";
+  $("battleDot").value = enemy.dot ? enemy.dot.join(",") : "";
+  $("battleVideos").value = ["idle", "start", "enemyFaint", "playerFaint", "victory", "defeat"].map((key) => videos[key] || "").join(",");
+  $("battlePrompt").value = ui.prompt;
+  $("battleReloadPrompt").value = ui.reloadPrompt;
+  $("battleAttackLabel").value = ui.attack;
+  $("battleStimLabel").value = ui.stim;
+  $("battleReloadAttackLabel").value = ui.reloadAttack;
+  $("battleReloadStimLabel").value = ui.reloadStim;
+  $("battleAttackDetail").value = ui.attackDetail;
+  $("battleStimDetail").value = ui.stimDetail;
+  $("battleEnemyReload").value = ui.enemyReload;
+  $("battleReloadAttackMsg").value = ui.reloadAttackMsg;
+  $("battlePauseResume").value = ui.pauseResume;
+  $("battlePauseSave").value = ui.pauseSave;
+  $("battlePauseExit").value = ui.pauseExit;
+  $("battlePauseNote").value = ui.pauseNote;
+  previewBattleUi();
+}
+
+function pairInput(value) {
+  const parts = String(value || "").split(",").map((part) => Number(part.trim())).filter((part) => Number.isFinite(part));
+  return parts.length ? parts : [0, 0];
+}
+
+function currentBattleEnemy() {
+  const selected = enemyById();
+  const rad = pairInput($("battleRad").value);
+  const dot = pairInput($("battleDot").value);
+  const videoValues = String($("battleVideos").value || "").split(",").map((part) => part.trim());
+  const videos = {};
+  ["idle", "start", "enemyFaint", "playerFaint", "victory", "defeat"].forEach((key, index) => {
+    if (videoValues[index]) videos[key] = videoValues[index];
+  });
+  return {
+    id: selected && selected.id || cleanId($("battleEnemyName").value),
+    name: $("battleEnemyName").value,
+    folder: $("battleFolder").value,
+    level: Number($("battleLevel").value) || 1,
+    maxHP: Number($("battleMaxHp").value) || 75,
+    xp: Number($("battleXp").value) || 35,
+    melee: $("battleMelee").checked,
+    reload: $("battleReload").checked,
+    meleePower: Number($("battleMeleePower").value) || 0,
+    radAmount: rad[0] || 0,
+    radSeconds: rad[1] || 0,
+    dotAmount: dot[0] || 0,
+    dotSeconds: dot[1] || 0,
+    videos,
+    ui: currentBattleUi()
+  };
+}
+
+function currentBattleUi() {
+  return {
+    prompt: $("battlePrompt").value,
+    reloadPrompt: $("battleReloadPrompt").value,
+    attack: $("battleAttackLabel").value,
+    stim: $("battleStimLabel").value,
+    reloadAttack: $("battleReloadAttackLabel").value,
+    reloadStim: $("battleReloadStimLabel").value,
+    attackDetail: $("battleAttackDetail").value,
+    stimDetail: $("battleStimDetail").value,
+    enemyReload: $("battleEnemyReload").value,
+    reloadAttackMsg: $("battleReloadAttackMsg").value,
+    pauseResume: $("battlePauseResume").value,
+    pauseSave: $("battlePauseSave").value,
+    pauseExit: $("battlePauseExit").value,
+    pauseNote: $("battlePauseNote").value
+  };
+}
+
+function previewBattleUi() {
+  if (!$("battleUiPreview")) return;
+  const ui = { ...BATTLE_UI_DEFAULTS, ...currentBattleUi() };
+  const attack = ui.attack || "runtime weapon move";
+  $("battleUiPreview").textContent = [
+    "Menu:",
+    `> ${attack}       ${ui.attackDetail.replace("{dmg}", "12")}`,
+    `  ${ui.stim}      ${ui.stimDetail.replace("{heal}", "35").replace("{st}", "2")}`,
+    "",
+    ui.prompt,
+    "",
+    "Reload:",
+    `> ${ui.reloadStim}      ${ui.stimDetail.replace("{heal}", "35").replace("{st}", "2")}`,
+    `  ${ui.reloadAttack}    ${ui.attackDetail.replace("{dmg}", "12")}`,
+    ui.reloadPrompt
+  ].join("\n");
+  renderBattleRuntimePreview();
+}
+
+function drawRuntimeBar(ctx, x, y, w, value, max) {
+  const pct = max ? Math.max(0, Math.min(1, value / max)) : 0;
+  ctx.strokeStyle = "#78ff6d";
+  ctx.strokeRect(x, y, w, 8);
+  ctx.fillStyle = "#0b1509";
+  ctx.fillRect(x + 2, y + 2, w - 4, 4);
+  ctx.fillStyle = "#a8ffa0";
+  ctx.fillRect(x + 2, y + 2, Math.round((w - 4) * pct), 4);
+}
+
+function runtimeUiText(text, fallback, data) {
+  return String(text || fallback || "")
+    .replace("{dmg}", data.dmg)
+    .replace("{heal}", data.heal)
+    .replace("{st}", data.st);
+}
+
+function renderBattleRuntimePreview() {
+  const canvas = $("battleRuntimeCanvas");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  const enemy = enemyById() || {};
+  const ui = { ...BATTLE_UI_DEFAULTS, ...currentBattleUi() };
+  const videos = String($("battleVideos").value || "").split(",").map((part) => part.trim());
+  const data = { dmg: 12, heal: 35, st: 2 };
+  const reloadMode = $("battleReload") && $("battleReload").checked;
+  const commandLabels = reloadMode
+    ? [ui.reloadStim || "STIMPAK", ui.reloadAttack || "SLASH"]
+    : [ui.attack || "PLAYER WEAPON", ui.stim || "STIMPAK"];
+  const commandDetails = reloadMode
+    ? [runtimeUiText(ui.stimDetail, "HEAL {heal} x{st}", data), runtimeUiText(ui.attackDetail, "DMG {dmg}", data)]
+    : [runtimeUiText(ui.attackDetail, "DMG {dmg}", data), runtimeUiText(ui.stimDetail, "HEAL {heal} x{st}", data)];
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, 480, 320);
+  ctx.fillStyle = "#020502";
+  ctx.fillRect(0, 0, 480, 320);
+  ctx.fillStyle = "#071607";
+  ctx.fillRect(0, 0, 480, 192);
+  ctx.strokeStyle = "#2f6d2d";
+  ctx.strokeRect(6, 6, 468, 180);
+  ctx.fillStyle = "#78ff6d";
+  ctx.font = "16px Consolas, monospace";
+  ctx.textAlign = "center";
+  ctx.fillText(videos[1] || "BATTLE_START.avi / IDLE LOOP", 240, 84);
+  ctx.font = "11px Consolas, monospace";
+  ctx.fillStyle = "#a8ffa0";
+  ctx.fillText("AVI PLAYBACK AREA - BATTLE.JS DOES NOT DRAW SPRITES HERE", 240, 110);
+  ctx.strokeStyle = "#78ff6d";
+  ctx.beginPath();
+  ctx.moveTo(0, 192);
+  ctx.lineTo(480, 192);
+  ctx.stroke();
+  ctx.textAlign = "left";
+  ctx.font = "12px Consolas, monospace";
+  ctx.fillStyle = "#d9ffd4";
+  ctx.fillText("WANDERER  LV12", 8, 205);
+  ctx.fillText(`${(enemy.name || $("battleEnemyName").value || "ENEMY").slice(0, 15)}  LV${$("battleLevel").value || 1}`, 250, 205);
+  drawRuntimeBar(ctx, 8, 210, 210, 86, 120);
+  drawRuntimeBar(ctx, 250, 210, 222, 72, 95);
+  ctx.fillStyle = "#78ff6d";
+  ctx.fillText("HP 86/120 DT 4", 8, 230);
+  ctx.fillText("HP 72/95", 250, 230);
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#d9ffd4";
+  ctx.fillText((reloadMode ? ui.reloadPrompt : ui.prompt).slice(0, 54), 240, 240);
+  for (let i = 0; i < commandLabels.length; i += 1) {
+    const x = 5 + (i % 3) * 158;
+    const y = 249 + Math.floor(i / 3) * 39;
+    if (i === 0) {
+      ctx.fillStyle = "#78ff6d";
+      ctx.fillRect(x, y, 154, 35);
+      ctx.fillStyle = "#020502";
+    } else {
+      ctx.strokeStyle = "#78ff6d";
+      ctx.strokeRect(x, y, 154, 35);
+      ctx.fillStyle = "#d9ffd4";
+    }
+    ctx.textAlign = "left";
+    ctx.font = "12px Consolas, monospace";
+    ctx.fillText(`${i === 0 ? "> " : "  "}${String(commandLabels[i] || "").slice(0, 16)}`, x + 5, y + 13);
+    ctx.font = "10px Consolas, monospace";
+    ctx.fillText(String(commandDetails[i] || "").slice(0, 20), x + 12, y + 28);
+  }
+}
+
+async function saveBattleEnemy() {
+  const body = await api("/api/battle", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ enemy: currentBattleEnemy() })
+  });
+  state.info.enemies = body.enemies || state.info.enemies;
+  setStatus(`Saved battle UI for ${body.enemy.name}`);
+  await loadInfo();
+  $("battleEnemySelect").value = body.enemy.id;
+  loadBattleEnemyForm(body.enemy.id);
+}
+
+function previewInteriorData() {
+  const enemy = $("interiorEnemy").value || $("encEnemy").value || "RANDOM";
+  const npcSprite = cleanSpriteRef($("interiorNpcSprite").value, "");
+  const dialogue = cleanScreenText($("interiorDialogue").value, "HOW YOU ENJOYING THE RADS?", 54);
+  const fightText = cleanScreenText($("interiorFightText").value, "FIGHT", 10);
+  const fleeText = cleanScreenText($("interiorFleeText").value, "FLEE", 10);
+  const item = {
+    id: `${cleanId($("worldId").value || "WORLD_01").toLowerCase()}_interior_x_y`,
+    type: "interior",
+    x: "click",
+    y: "click",
+    prompt: $("interiorPrompt").value || "ENTER?",
+    room: cleanScreenText($("interiorRoom").value, "INTERIOR", 22),
+    enemy,
+    once: $("interiorOnce").checked
+  };
+  if (npcSprite) item.ns = npcSprite;
+  if (dialogue) item.dlg = dialogue;
+  if (fightText && fightText !== "FIGHT") item.ft = fightText;
+  if (fleeText && fleeText !== "FLEE") item.fl = fleeText;
+  $("interiorTitle").textContent = item.room;
+  $("interiorNpcPreview").textContent = npcSprite || enemy || "NPC";
+  $("interiorDialoguePreview").textContent = dialogue;
+  $("interiorJson").value = JSON.stringify(item, null, 2);
+}
+
+async function saveInteriorEnemySprite() {
+  const file = $("interiorSpriteImage").files && $("interiorSpriteImage").files[0];
+  if (!file) throw new Error("Pick an enemy image first.");
+  const bpp = Number($("interiorSpriteBpp").value) || 2;
+  const enemy = cleanId($("interiorEnemy").value || $("encEnemy").value || imageName(file) || "ENEMY");
+  const name = cleanSpriteRef(`${enemy}_SPRITE`, "ENEMY_SPRITE");
+  const pixels = await imageToPixels(file, PLAYER_SPRITE_WIDTH, PLAYER_SPRITE_HEIGHT, bpp, "fit");
+  const body = await api("/api/sprite", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name,
+      width: PLAYER_SPRITE_WIDTH,
+      height: PLAYER_SPRITE_HEIGHT,
+      bpp,
+      pixels,
+      scope: "npc",
+      runtime: "img"
+    })
+  });
+  await loadInfo();
+  ensureOption($("interiorNpcSprite"), body.ref, body.name);
+  $("interiorNpcSprite").value = body.ref;
+  previewInteriorData();
+  setStatus(`Saved ${body.name} for NPC/interior use`);
+}
+
+function enemySpriteName(enemy) {
+  return `${cleanId(enemy && (enemy.id || enemy.name) || "ENEMY")}_SPRITE`;
+}
+
+function spriteExists(ref) {
+  const wanted = `${cleanSpriteRef(ref, "")}.IMG`.toUpperCase();
+  return (state.info && state.info.sprites || []).some((name) => String(name).toUpperCase() === wanted);
+}
+
+function useEnemySpriteSlot(id, assignInterior) {
+  const enemy = enemyById(id) || (state.info.enemies || []).find((item) => cleanId(item.id || item.name) === cleanId(id));
+  const slot = enemySpriteName(enemy || { id });
+  $("spriteScope").value = "npc";
+  $("spriteName").value = slot;
+  $("spriteWidth").value = PLAYER_SPRITE_WIDTH;
+  $("spriteHeight").value = PLAYER_SPRITE_HEIGHT;
+  $("spriteBpp").value = "2";
+  if (assignInterior) {
+    ensureOption($("interiorEnemy"), enemy && enemy.id || id, enemy && enemy.name || id);
+    $("interiorEnemy").value = enemy && enemy.id || id;
+    ensureOption($("interiorNpcSprite"), slot, `${slot}.IMG`);
+    $("interiorNpcSprite").value = slot;
+    previewInteriorData();
+  }
+  makeSprite(PLAYER_SPRITE_WIDTH, PLAYER_SPRITE_HEIGHT, 0);
+  setStatus(`${slot}.IMG slot ready. Upload art or draw, then Save Runtime Sprite.`);
+}
+
+function renderEnemySpriteSlots() {
+  const box = $("enemySpriteSlots");
+  if (!box || !state.info) return;
+  const enemies = state.info.enemies || [];
+  if (!enemies.length) {
+    box.innerHTML = '<p class="hint">No enemies in battle.json yet. Use New NPC to make the first slot.</p>';
+    return;
+  }
+  box.innerHTML = enemies.map((enemy) => {
+    const slot = enemySpriteName(enemy);
+    const hasSprite = spriteExists(slot);
+    return `
+      <div class="enemy-slot ${hasSprite ? "ready" : "missing"}">
+        <strong>${enemy.name || enemy.id}</strong>
+        <span>${slot}.IMG</span>
+        <em>${hasSprite ? "ready" : "empty slot"}</em>
+        <button data-enemy-slot="${enemy.id}">Use Slot</button>
+        <button data-enemy-interior="${enemy.id}">Assign Interior</button>
+      </div>
+    `;
+  }).join("");
+}
+
+async function newNpcSprite() {
+  const rawName = cleanScreenText(prompt("NPC enemy name?", "NEW NPC"), "NEW NPC", 20);
+  if (!rawName) return;
+  const id = cleanId(rawName);
+  const body = await api("/api/battle", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      enemy: {
+        id,
+        name: rawName,
+        level: 1,
+        maxHP: 50,
+        xp: 10
+      }
+    })
+  });
+  state.info.enemies = body.enemies || state.info.enemies || [];
+  await loadInfo();
+  ensureOption($("battleEnemySelect"), id, rawName);
+  $("battleEnemySelect").value = id;
+  loadBattleEnemyForm(id);
+  useEnemySpriteSlot(id, true);
+}
+
+function renderMediaInfo() {
+  if (!$("mediaReadout") || !state.info) return;
+  const lim = limits();
+  const groups = state.info.media || {};
+  const lines = [];
+  Object.entries(groups).forEach(([group, files]) => {
+    const total = (files || []).reduce((sum, item) => sum + (item.size || 0), 0);
+    lines.push(`<strong>${group.toUpperCase()} ${files.length} files / ${formatBytes(total)}</strong>`);
+    (files || []).slice(0, 12).forEach((item) => {
+      const over = item.kind === "AVI" && item.size > lim.videoBytes;
+      lines.push(`<span class="${over ? "bad" : ""}">${item.path} - ${formatBytes(item.size)}</span>`);
+    });
+    if ((files || []).length > 12) lines.push(`<em>+${files.length - 12} more</em>`);
+  });
+  $("mediaReadout").innerHTML = lines.join("");
+  $("converterNotes").textContent = [
+    "Video encounters: AVI, 480x192 battle-safe area when using current battle layout.",
+    `Keep individual AVI clips near ${formatBytes(lim.videoBytes)} or smaller when possible.`,
+    "Start/menu: 480x320 BIN screen assets.",
+    "Player movement sprites: 34x34 IMG, 2 bpp, transparent shade 0.",
+    "World art: IMG from World Art tab, max 255x255, 1 or 2 bpp.",
+    "NPC/interior sprites: 34x34 IMG, 2 bpp, saved through Sprite Creator scope NPC IMG.",
+    "Map scenery decor sprites: JS snippets only when they are small and reused.",
+    "Battle JSON edits save to both root battle.json and Assets/battle.json."
+  ].join("\n");
+}
+
+function formatBytes(value) {
+  const n = Number(value) || 0;
+  if (n > 1024 * 1024) return `${(n / 1024 / 1024).toFixed(1)} MB`;
+  if (n > 1024) return `${Math.round(n / 1024)} KB`;
+  return `${n} B`;
 }
 
 function fillItemForm(key) {
@@ -449,34 +948,6 @@ function addLaunchText(item, fallbackTitle, fallbackSubtitle) {
   if (title && title !== "ENCOUNTER") item.lt = title;
   if (subtitle) item.ls = subtitle;
   return item;
-}
-
-function buildDuelData(base = {}, enemy = "RANDOM") {
-  const boxes = boxList($("duelBoxes").value);
-  return {
-    ...base,
-    type: "duel",
-    enemy,
-    en: cleanLabel($("duelEnemyName").value, "RADSCORP"),
-    el: Math.max(1, Math.min(99, Number($("duelEnemyLevel").value) || 16)),
-    pn: cleanLabel($("duelPlayerName").value, "GUNSLNGR"),
-    pl: Math.max(1, Math.min(99, Number($("duelPlayerLevel").value) || 18)),
-    es: cleanSpriteRef($("duelEnemySprite").value, "RADSCORP_SPRITE"),
-    ps: cleanSpriteRef($("duelPlayerSprite").value, "PLAYER_BATTLE_SPRITE"),
-    pr: cleanSpriteRef($("duelProjectileSprite").value, "BULLET_SPRITE"),
-    fx: cleanSpriteRef($("duelEffectSprite").value, "HIT_SPRITE"),
-    lay: {
-      e: numberList($("duelEnemyPos").value, [210, 18], 2),
-      p: numberList($("duelPlayerPos").value, [30, 86], 2),
-      shot: numberList($("duelShotPath").value, [128, 122, 220, 70], 4),
-      eb: boxes[0],
-      pb: boxes[1],
-      cb: boxes[2],
-      lb: boxes[3],
-      xb: boxes[4]
-    },
-    msg: messageList($("duelMessages").value)
-  };
 }
 
 function artIndex(art, x, y) {
@@ -684,6 +1155,28 @@ function readBinaryFile(file) {
   });
 }
 
+async function imageToPixels(file, width, height, bpp, mode = "fit") {
+  const image = await loadImageFile(file);
+  const max = (1 << bpp) - 1;
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  const rect = imageDrawRect(image, width, height, mode);
+  canvas.width = width;
+  canvas.height = height;
+  ctx.imageSmoothingEnabled = true;
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, width, height);
+  ctx.drawImage(image, rect.sx, rect.sy, rect.sw, rect.sh, rect.dx, rect.dy, rect.dw, rect.dh);
+  const rgba = ctx.getImageData(0, 0, width, height).data;
+  const pixels = [];
+  for (let index = 0; index < rgba.length; index += 4) {
+    const alpha = rgba[index + 3] / 255;
+    const luma = (rgba[index] * 0.299 + rgba[index + 1] * 0.587 + rgba[index + 2] * 0.114) * alpha;
+    pixels.push(Math.max(0, Math.min(max, Math.round(luma * max / 255))));
+  }
+  return pixels;
+}
+
 async function convertImageToArt() {
   const file = $("imageImport").files && $("imageImport").files[0];
   const image = await loadImageFile(file);
@@ -773,7 +1266,7 @@ function paintArtPoint(point, fillRect) {
 function placeEncounter(tool, x, y) {
   const world = state.world;
   const enemy = $("encEnemy").value || "RANDOM";
-  const prompt = $("encPrompt").value || (tool === "duel" ? "SPRITE BATTLE?" : tool === "finalBoss" ? "FINAL BOSS?" : tool === "miniboss" ? "MINIBOSS?" : tool === "forge" ? "FORGE FINAL ROUND?" : tool === "boss" ? "BOSS?" : tool === "shop" ? "TRADE?" : tool === "shoot" ? "TAKE SHOT?" : tool === "npcEncounter" ? "TALK?" : "ENCOUNTER?");
+  const prompt = $("encPrompt").value || (tool === "finalBoss" ? "FINAL BOSS?" : tool === "miniboss" ? "MINIBOSS?" : tool === "forge" ? "FORGE FINAL ROUND?" : tool === "boss" ? "BOSS?" : tool === "shop" ? "TRADE?" : tool === "shoot" ? "TAKE SHOT?" : tool === "npcEncounter" ? "TALK?" : "ENCOUNTER?");
   const once = $("encOnce").checked;
   const pickedSprite = $("decorSprite").value;
   const minRegular = Math.max(0, Math.min(20, Number($("minRegular").value) || 0));
@@ -790,13 +1283,12 @@ function placeEncounter(tool, x, y) {
     prompt,
     once
   };
-  if (tool === "duel") {
-    world.interacts.push(addLaunchText(buildDuelData(base, enemy), "DUEL", enemy));
-  } else if (tool === "shoot") {
+  if (tool === "shoot") {
     world.interacts.push(addLaunchText({ ...base, type: "shoot", target: $("shootTarget").value || "RADROACH", enemy: $("shootTarget").value || "RADROACH" }, "TAKE SHOT", $("shootTarget").value || "RADROACH"));
   } else if (tool === "shop") {
+    const shopSprite = cleanSpriteRef($("shopSprite").value || "SHOP_SPRITE", "SHOP_SPRITE");
     world.decor = (world.decor || []).filter((item) => !(item.x === x && item.y === y));
-    world.decor.push({ type: "shop", x, y });
+    world.decor.push({ type: "shop", x, y, sprite: shopSprite });
     world.interacts.push(addLaunchText({
       ...base,
       type: "shop",
@@ -804,6 +1296,34 @@ function placeEncounter(tool, x, y) {
       vendor: "SUNSCAR TRADER",
       folder: "Shop"
     }, "SHOP", "SUNSCAR TRADER"));
+  } else if (tool === "interior") {
+    const room = cleanScreenText($("interiorRoom").value, "INTERIOR", 22);
+    const intEnemy = $("interiorEnemy").value || enemy;
+    const npcSprite = cleanSpriteRef($("interiorNpcSprite").value, "");
+    const dialogue = cleanScreenText($("interiorDialogue").value, "HOW YOU ENJOYING THE RADS?", 54);
+    const fightText = cleanScreenText($("interiorFightText").value, "FIGHT", 10);
+    const fleeText = cleanScreenText($("interiorFleeText").value, "FLEE", 10);
+    const interact = {
+      ...base,
+      type: "interior",
+      prompt: $("interiorPrompt").value || prompt,
+      room,
+      name: room,
+      enemy: intEnemy,
+      once: $("interiorOnce").checked
+    };
+    if (npcSprite) interact.ns = npcSprite;
+    if (dialogue) interact.dlg = dialogue;
+    if (fightText && fightText !== "FIGHT") interact.ft = fightText;
+    if (fleeText && fleeText !== "FLEE") interact.fl = fleeText;
+    const oldTitle = $("encLaunchTitle").value;
+    const oldSubtitle = $("encLaunchSubtitle").value;
+    $("encLaunchTitle").value = $("interiorLaunchTitle").value || "INTERIOR";
+    $("encLaunchSubtitle").value = $("interiorLaunchSubtitle").value || intEnemy;
+    addLaunchText(interact, "INTERIOR", intEnemy);
+    $("encLaunchTitle").value = oldTitle;
+    $("encLaunchSubtitle").value = oldSubtitle;
+    world.interacts.push(interact);
   } else if (tool === "forge") {
     world.interacts.push({ ...base, type: "forge", once: false });
   } else if (tool === "miniboss") {
@@ -887,7 +1407,7 @@ function applyWorldTool(x, y) {
     if (travelSubtitle && travelSubtitle !== exit.to) exit.ts = travelSubtitle;
     world.exits = (world.exits || []).filter((item) => !(item.x === x && item.y === y));
     world.exits.push(exit);
-  } else if (tool === "regular" || tool === "boss" || tool === "shoot" || tool === "shop" || tool === "duel" || tool === "npcEncounter" || tool === "miniboss" || tool === "forge" || tool === "finalBoss") {
+  } else if (tool === "regular" || tool === "boss" || tool === "shoot" || tool === "shop" || tool === "npcEncounter" || tool === "interior" || tool === "miniboss" || tool === "forge" || tool === "finalBoss") {
     placeEncounter(tool, x, y);
   } else if (["tree", "npc", "camp", "sign", "rocks"].includes(tool)) {
     world.decor = (world.decor || []).filter((item) => !(item.x === x && item.y === y));
@@ -950,8 +1470,16 @@ function isPlayerSpriteName(value) {
   return /^PLAYER_SPRITE/i.test(spriteBaseName(value));
 }
 
+function isInteriorSpriteMode() {
+  return $("spriteScope") && $("spriteScope").value === "interior";
+}
+
+function isNpcSpriteMode() {
+  return $("spriteScope") && ($("spriteScope").value === "npc" || $("spriteScope").value === "interior");
+}
+
 function spriteRuntimeExt(value) {
-  return isPlayerSpriteName(value) ? ".IMG" : ".JS";
+  return isPlayerSpriteName(value) || isNpcSpriteMode() ? ".IMG" : ".JS";
 }
 
 function refreshSpriteBrush() {
@@ -1021,7 +1549,7 @@ function renderSprite() {
   $("spriteTitle").textContent = sprite.name;
   $("spriteReadout").textContent = `${sprite.width} x ${sprite.height} - ${sprite.bpp} bpp - runtime ${spriteRuntimeExt(sprite.name)}`;
   $("spriteCode").value = spriteOutputText();
-  if ($("downloadSprite")) $("downloadSprite").textContent = isPlayerSpriteName(sprite.name) ? "Download IMG" : "Download JS";
+  if ($("downloadSprite")) $("downloadSprite").textContent = isPlayerSpriteName(sprite.name) || isNpcSpriteMode() ? "Download IMG" : "Download JS";
   if (isPlayerSpriteName(sprite.name)) $("spriteScope").value = "global";
 }
 
@@ -1092,12 +1620,12 @@ function spriteSnippet() {
 function spriteOutputText() {
   const sprite = state.sprite;
   const name = spriteBaseName($("spriteName").value || sprite && sprite.name || "SPRITE");
-  if (!isPlayerSpriteName(name)) return spriteSnippet();
+  if (!isPlayerSpriteName(name) && !isNpcSpriteMode()) return spriteSnippet();
   return [
     `Runtime output: ${name}.IMG`,
     `Upload path: Assets/DATA/${name}.IMG -> HOLO/BIGIRON/DATA/${name}.IMG`,
     "",
-    "Player direction sprites use IMG in the current low-memory Big Iron build.",
+    isNpcSpriteMode() ? "NPC sprites use 34x34 IMG files so world and interior modules can load them cheaply." : "Player direction sprites use IMG in the current low-memory Big Iron build.",
     "Use Download IMG or Save Runtime Sprite for the Pip-Boy file."
   ].join("\n");
 }
@@ -1168,7 +1696,7 @@ function downloadBlob(name, blob) {
 
 function spriteImageBlob() {
   const sprite = state.sprite;
-  const bpp = selectedSpriteBpp();
+  const bpp = isNpcSpriteMode() ? 2 : selectedSpriteBpp();
   const pixelBytes = packSpritePixelBytes({ ...sprite, bpp });
   const bytes = new Uint8Array(pixelBytes.length + 4);
   bytes[0] = sprite.width;
@@ -1182,7 +1710,7 @@ function spriteImageBlob() {
 function downloadSpriteRuntime() {
   if (!state.sprite) return;
   const name = spriteBaseName($("spriteName").value || state.sprite.name || "SPRITE");
-  if (isPlayerSpriteName(name)) {
+  if (isPlayerSpriteName(name) || isNpcSpriteMode()) {
     downloadBlob(`${name}.IMG`, spriteImageBlob());
     return;
   }
@@ -1191,7 +1719,7 @@ function downloadSpriteRuntime() {
 
 async function loadInfo() {
   const keep = {};
-  ["duelEnemySprite", "duelPlayerSprite", "duelProjectileSprite", "duelEffectSprite", "decorSprite", "encEnemy", "itemSelect"].forEach((id) => {
+  ["decorSprite", "shopSprite", "encEnemy", "interiorEnemy", "interiorNpcSprite", "battleEnemySelect", "itemSelect"].forEach((id) => {
     if ($(id)) keep[id] = $(id).value;
   });
   state.info = await api("/api/info");
@@ -1200,8 +1728,8 @@ async function loadInfo() {
     ? state.info.worldDetails
     : state.info.worlds.map((file) => ({ file, id: file.replace(/\.JSON$/i, ""), image: "" }));
   const worldOptions = state.info.worlds.length
-    ? worldDetails.map((world) => `<option value="${world.file}">${world.name || world.id} (${world.file})</option>`).join("")
-    : '<option value="WORLD_NEW.JSON">WORLD_NEW - new offline world</option>';
+    ? ['<option value="">Choose existing world to edit</option>'].concat(worldDetails.map((world) => `<option value="${world.file}">${world.name || world.id} (${world.file})</option>`)).join("")
+    : '<option value="">No existing worlds found</option>';
   $("worldSelect").innerHTML = worldOptions;
   $("artWorld").innerHTML = state.info.worlds.length
     ? state.info.worlds.map((name) => `<option value="${name}">${name.replace(/\.JSON$/i, "")}</option>`).join("")
@@ -1221,15 +1749,22 @@ async function loadInfo() {
   $("decorSprite").innerHTML = ['<option value="">Auto</option>']
     .concat(decorSprites.map((name) => `<option value="${name.replace(/\.(JS|IMG)$/i, "")}">${name}</option>`))
     .join("");
+  const imgSprites = state.info.sprites.filter((name) => /\.IMG$/i.test(name));
+  if ($("shopSprite")) {
+    $("shopSprite").innerHTML = ['<option value="SHOP_SPRITE">SHOP_SPRITE.IMG</option>']
+      .concat(imgSprites.map((name) => `<option value="${name.replace(/\.IMG$/i, "")}">${name}</option>`))
+      .join("");
+  }
   const spriteOptions = (placeholder) => [`<option value="">${placeholder}</option>`]
     .concat(state.info.sprites.map((name) => `<option value="${name.replace(/\.(JS|IMG)$/i, "")}">${name}</option>`))
     .join("");
-  $("duelEnemySprite").innerHTML = spriteOptions("Enemy sprite");
-  $("duelPlayerSprite").innerHTML = spriteOptions("Player battle sprite");
-  $("duelProjectileSprite").innerHTML = spriteOptions("Projectile sprite");
-  $("duelEffectSprite").innerHTML = spriteOptions("Effect sprite");
+  if ($("interiorNpcSprite")) $("interiorNpcSprite").innerHTML = spriteOptions("Auto stick NPC");
   const enemyOptions = ['<option value="RANDOM">RANDOM</option>'].concat(state.info.enemies.map((enemy) => `<option value="${enemy.id}">${enemy.name} LV${enemy.level}</option>`));
   $("encEnemy").innerHTML = enemyOptions.join("");
+  if ($("interiorEnemy")) $("interiorEnemy").innerHTML = enemyOptions.join("");
+  if ($("battleEnemySelect")) {
+    $("battleEnemySelect").innerHTML = state.info.enemies.map((enemy) => `<option value="${enemy.id}">${enemy.name} LV${enemy.level}</option>`).join("");
+  }
   if ($("itemSelect")) {
     const itemKeys = Object.keys(state.items).sort((a, b) => a.localeCompare(b));
     $("itemSelect").innerHTML = itemKeys.length
@@ -1245,6 +1780,7 @@ async function loadInfo() {
     "",
     "Start/menu boot files:",
     "APP.MIN.JS -> HOLO/BIGIRON/APP.JS",
+    "IMAGE.BIN -> HOLO/BIGIRON/IMAGE.BIN",
     "MENU.BIN -> HOLO/BIGIRON/MENU.BIN",
     "Start/load options are drawn by APP.JS over MENU.BIN",
     "Assets/CODE/SHOP.JS -> HOLO/BIGIRON/CODE/SHOP.JS (or SHOP.MIN.JS after minify)",
@@ -1254,6 +1790,7 @@ async function loadInfo() {
     "Runtime code:",
     "Assets/CODE/WORLD.MIN.JS -> HOLO/BIGIRON/CODE/WORLD.JS",
     "Assets/CODE/BATTLE.MIN.JS -> HOLO/BIGIRON/CODE/BATTLE.JS",
+    "Assets/CODE/INTERIOR.MIN.JS -> HOLO/BIGIRON/CODE/INTERIOR.JS",
     "Assets/CODE/SHOOT.MIN.JS -> HOLO/BIGIRON/CODE/SHOOT.JS",
     "",
     "Battle data:",
@@ -1280,13 +1817,18 @@ async function loadInfo() {
     "Assets/DATA/PLAYER_SPRITER.IMG -> HOLO/BIGIRON/DATA/PLAYER_SPRITER.IMG",
     "Do not upload the old PLAYER_SPRITE*.JS files for the player.",
     "",
-    "NPC/decor sprite snippets:",
+    "Interior enemy sprites:",
+    "Assets/DATA/<ENEMY>_SPRITE.IMG -> HOLO/BIGIRON/DATA/<ENEMY>_SPRITE.IMG",
+    "",
+    "NPC sprite slots:",
+    "Assets/DATA/<NPC>_SPRITE.IMG -> HOLO/BIGIRON/DATA/<NPC>_SPRITE.IMG",
+    "",
+    "Shop sprite:",
+    "Assets/DATA/SHOP_SPRITE.IMG -> HOLO/BIGIRON/DATA/SHOP_SPRITE.IMG",
+    "",
+    "Decor sprite snippets:",
     "Assets/DATA/*SPRITE*.JS -> HOLO/BIGIRON/DATA/*SPRITE*.JS",
     "Assets/DATA/WORLD_XX/*SPRITE*.JS -> HOLO/BIGIRON/DATA/WORLD_XX/*SPRITE*.JS",
-    "",
-    "Sprite battle assets:",
-    "Enemy/player/projectile/effect art can be saved as *SPRITE*.JS, PROJECTILE.JS, BULLET.JS, HIT.JS, or EFFECT.JS",
-    "The Sprite Battle encounter stores these as es, ps, pr, and fx in the world JSON.",
     "",
     "Local sprite copies saved by the Sprite Creator:",
     state.info.spriteExportRoot || "tools/bird/exports/sprites",
@@ -1301,7 +1843,6 @@ async function loadInfo() {
     'boss -> { type:"battle", boss:true, enemy:"...", music:"NVTH" }',
     'shoot -> { type:"shoot", target:"RADROACH" }',
     'shop -> { type:"shop", vendor:"..." }; stock defaults live in SHOP.JS to keep world JSON small',
-    'sprite battle -> { type:"duel", es:"ENEMY_SPRITE", ps:"PLAYER_BATTLE_SPRITE", pr:"BULLET_SPRITE", fx:"HIT_SPRITE" }',
     'item reward -> { item:"STIMPAK", chance:1 }',
     'custom launch screen -> encounter lt:"TITLE", ls:"SUBTITLE"',
     'custom travel screen -> exit tt:"TITLE", ts:"SUBTITLE"',
@@ -1310,10 +1851,17 @@ async function loadInfo() {
     "Assets/DATA/EYEBOT.JS and similar visual snippets go in HOLO/BIGIRON/DATA/"
   ].join("\n");
   if ($("itemSelect") && Object.keys(state.items).length) fillItemForm($("itemSelect").value || Object.keys(state.items)[0]);
+  renderWorldIndex();
+  renderEnemySpriteSlots();
+  renderMediaInfo();
+  if ($("battleEnemySelect") && state.info.enemies.length) loadBattleEnemyForm($("battleEnemySelect").value || state.info.enemies[0].id);
+  previewInteriorData();
 }
 
 async function loadWorld(name) {
-  const body = await api(`/api/world?name=${encodeURIComponent(name || $("worldSelect").value || "WORLD_01.JSON")}`);
+  const selected = name || $("worldSelect").value;
+  if (!selected) throw new Error("Select an existing world before editing it.");
+  const body = await api(`/api/world?name=${encodeURIComponent(selected)}`);
   state.world = body.world;
   renderWorld();
   ensureOption($("artWorld"), `${state.world.id}.JSON`, state.world.id);
@@ -1326,6 +1874,8 @@ async function loadWorld(name) {
 async function saveWorld() {
   state.world.id = cleanId($("worldId").value || state.world.id);
   state.world.name = ($("worldName").value || worldFriendlyName(state.world.id)).trim();
+  renderWorldBudget();
+  if (!budgetOk()) throw new Error("World is over the Big Iron memory budget. Trim encounters/decor/exits or split it into an interior/world.");
   const body = await api("/api/world", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -1412,12 +1962,17 @@ async function saveSprite() {
   state.sprite.name = cleanId($("spriteName").value || state.sprite.name);
   state.sprite.bpp = selectedSpriteBpp();
   const playerSprite = /^PLAYER_SPRITE/i.test(state.sprite.name);
+  const npcSprite = isNpcSpriteMode();
+  if (npcSprite && (state.sprite.width !== PLAYER_SPRITE_WIDTH || state.sprite.height !== PLAYER_SPRITE_HEIGHT)) {
+    throw new Error("NPC sprites must be 34x34. Set width/height to 34 before saving.");
+  }
   const body = await api("/api/sprite", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       ...state.sprite,
       scope: playerSprite ? "global" : $("spriteScope").value,
+      runtime: npcSprite ? "img" : "",
       world: state.world ? state.world.id : cleanId($("worldId").value || "WORLD_01")
     })
   });
@@ -1425,18 +1980,25 @@ async function saveSprite() {
   setStatus(`Saved ${body.name}`);
   await loadInfo();
   if (body.ref && !body.global) $("decorSprite").value = body.ref;
+  if (body.ref && npcSprite) {
+    ensureOption($("interiorNpcSprite"), body.ref, body.name);
+    $("interiorNpcSprite").value = body.ref;
+    previewInteriorData();
+  }
 }
 
 async function saveSpriteLocal() {
   state.sprite.name = cleanId($("spriteName").value || state.sprite.name);
   state.sprite.bpp = selectedSpriteBpp();
   const playerSprite = /^PLAYER_SPRITE/i.test(state.sprite.name);
+  const npcSprite = isNpcSpriteMode();
   const body = await api("/api/sprite-local", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       ...state.sprite,
       scope: playerSprite ? "global" : $("spriteScope").value,
+      runtime: npcSprite ? "img" : "",
       world: state.world ? state.world.id : cleanId($("worldId").value || "WORLD_01")
     })
   });
@@ -1444,304 +2006,29 @@ async function saveSpriteLocal() {
   setStatus(`Saved local copy ${body.name}`);
 }
 
-function selectedSceneSpriteBpp() {
-  const bpp = Number($("sceneSpriteBpp").value);
-  return bpp === 1 || bpp === 2 || bpp === 4 ? bpp : 4;
-}
-
-function refreshSceneSpriteBrush() {
-  const brush = $("sceneSpriteBrush");
-  const current = Number(brush.value) || 0;
-  const max = (1 << selectedSceneSpriteBpp()) - 1;
-  brush.innerHTML = Array.from({ length: max + 1 }, (_, value) => `<option value="${value}">${value}</option>`).join("");
-  brush.value = String(Math.min(current, max));
-}
-
-function sceneSlot() {
-  return $("sceneSpriteSlot").value || "enemy";
-}
-
-function sceneSlotDef(slot = sceneSlot()) {
-  return DUEL_SLOTS[slot] || DUEL_SLOTS.enemy;
-}
-
-function sceneSlotRef(slot = sceneSlot()) {
-  const def = sceneSlotDef(slot);
-  return cleanSpriteRef($(def.select).value, def.fallback);
-}
-
-function syncSceneSpriteFields() {
-  const slot = sceneSlot();
-  const def = sceneSlotDef(slot);
-  const ref = sceneSlotRef(slot);
-  $("sceneSpriteName").value = ref === def.fallback ? def.name : ref.split("/").pop();
-  $("sceneSpriteWidth").value = def.width;
-  $("sceneSpriteHeight").value = def.height;
-}
-
-function makeSceneSprite(width, height, fill = 0) {
-  const slot = sceneSlot();
-  const def = sceneSlotDef(slot);
-  state.sceneSprite = {
-    name: cleanId($("sceneSpriteName").value || def.name),
-    width: Math.max(4, Math.min(96, Number(width) || Number($("sceneSpriteWidth").value) || def.width)),
-    height: Math.max(4, Math.min(96, Number(height) || Number($("sceneSpriteHeight").value) || def.height)),
-    bpp: selectedSceneSpriteBpp(),
-    pixels: []
-  };
-  state.sceneSprite.pixels = Array(state.sceneSprite.width * state.sceneSprite.height).fill(fill);
-  renderSceneSprite();
-}
-
-function renderSceneSprite() {
-  const sprite = state.sceneSprite;
-  if (!sprite) return;
-  const grid = $("sceneSpriteGrid");
-  const bpp = selectedSceneSpriteBpp();
-  sprite.name = cleanId($("sceneSpriteName").value || sprite.name || sceneSlotDef().name);
-  sprite.bpp = bpp;
-  grid.className = `scene-sprite-grid bpp${bpp}`;
-  grid.style.gridTemplateColumns = `repeat(${sprite.width}, 14px)`;
-  grid.innerHTML = sprite.pixels.map((value, index) => {
-    const x = index % sprite.width;
-    const y = Math.floor(index / sprite.width);
-    return `<div class="pixel small v${value || 0}" data-x="${x}" data-y="${y}"></div>`;
-  }).join("");
-  refreshSceneSpriteBrush();
-  $("sceneSpriteTitle").textContent = sprite.name;
-  $("sceneSpriteReadout").textContent = `${sprite.width} x ${sprite.height} - ${sprite.bpp} bpp`;
-  state.duelSprites[sceneSlot()] = { ...sprite, pixels: sprite.pixels.slice() };
-  renderBattleScene();
-}
-
-function sceneSpritePixel(event) {
-  return event.target.closest(".pixel");
-}
-
-function paintSceneSprite(x, y) {
-  const sprite = state.sceneSprite;
-  if (!sprite) return;
-  sprite.pixels[y * sprite.width + x] = Number($("sceneSpriteBrush").value) || 0;
-  renderSceneSprite();
-}
-
-async function loadSceneSprite() {
-  const ref = sceneSlotRef();
-  const body = await api(`/api/sprite?name=${encodeURIComponent(ref)}`);
-  state.sceneSprite = { ...body.sprite, pixels: body.sprite.pixels.slice() };
-  $("sceneSpriteName").value = state.sceneSprite.name;
-  $("sceneSpriteWidth").value = state.sceneSprite.width;
-  $("sceneSpriteHeight").value = state.sceneSprite.height;
-  $("sceneSpriteBpp").value = String(state.sceneSprite.bpp);
-  state.duelSprites[sceneSlot()] = { ...state.sceneSprite, pixels: state.sceneSprite.pixels.slice() };
-  renderSceneSprite();
-  setStatus(`Loaded ${body.name}`);
-}
-
-async function convertImageToSceneSprite() {
-  const file = $("sceneSpriteImageImport").files && $("sceneSpriteImageImport").files[0];
-  const image = await loadImageFile(file);
-  const width = Math.max(4, Math.min(96, Number($("sceneSpriteWidth").value) || sceneSlotDef().width));
-  const height = Math.max(4, Math.min(96, Number($("sceneSpriteHeight").value) || sceneSlotDef().height));
-  const bpp = selectedSceneSpriteBpp();
-  const max = (1 << bpp) - 1;
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d", { willReadFrequently: true });
-  const rect = imageDrawRect(image, width, height, "fit");
-  canvas.width = width;
-  canvas.height = height;
-  ctx.imageSmoothingEnabled = true;
-  ctx.fillStyle = "#000";
-  ctx.fillRect(0, 0, width, height);
-  ctx.drawImage(image, rect.sx, rect.sy, rect.sw, rect.sh, rect.dx, rect.dy, rect.dw, rect.dh);
-  const rgba = ctx.getImageData(0, 0, width, height).data;
-  const pixels = [];
-  for (let index = 0; index < rgba.length; index += 4) {
-    const alpha = rgba[index + 3] / 255;
-    const luma = (rgba[index] * 0.299 + rgba[index + 1] * 0.587 + rgba[index + 2] * 0.114) * alpha;
-    pixels.push(Math.max(0, Math.min(max, Math.round(luma * max / 255))));
-  }
-  const current = cleanId($("sceneSpriteName").value || "");
-  state.sceneSprite = { name: current || `${imageName(file)}_SPRITE`, width, height, bpp, pixels };
-  renderSceneSprite();
-  setStatus(`Converted ${file.name} for ${sceneSlot()}`);
-}
-
-async function saveSceneSprite() {
-  if (!state.sceneSprite) makeSceneSprite();
-  state.sceneSprite.name = cleanId($("sceneSpriteName").value || state.sceneSprite.name || sceneSlotDef().name);
-  state.sceneSprite.bpp = selectedSceneSpriteBpp();
-  const body = await api("/api/sprite", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ...state.sceneSprite, scope: "global", world: state.world ? state.world.id : cleanId($("worldId").value || "WORLD_01") })
-  });
-  const slot = sceneSlot();
-  const def = sceneSlotDef(slot);
-  await loadInfo();
-  ensureOption($(def.select), body.ref, body.name);
-  $(def.select).value = body.ref;
-  state.duelSprites[slot] = { ...state.sceneSprite, pixels: state.sceneSprite.pixels.slice() };
-  renderBattleScene();
-  setStatus(`Saved ${body.name} for ${slot}`);
-}
-
-function duelPalette(value, bpp) {
-  const max = (1 << normalizeSpriteBpp(bpp)) - 1;
-  const t = max ? Math.max(0, Math.min(1, Number(value) / max)) : 0;
-  const c = Math.round(22 + t * 220);
-  return `rgb(${c},${c},${c})`;
-}
-
-function drawDuelSprite(ctx, sprite, x, y, fallbackW, fallbackH, label) {
-  if (!sprite || !sprite.pixels) {
-    ctx.strokeStyle = "#111";
-    ctx.strokeRect(x, y, fallbackW, fallbackH);
-    ctx.fillStyle = "#111";
-    ctx.font = "7px Consolas, monospace";
-    ctx.fillText(label, x + 3, y + 11);
-    return { width: fallbackW, height: fallbackH };
-  }
-  const bpp = normalizeSpriteBpp(sprite.bpp);
-  for (let yy = 0; yy < sprite.height; yy += 1) {
-    for (let xx = 0; xx < sprite.width; xx += 1) {
-      const value = sprite.pixels[yy * sprite.width + xx] || 0;
-      if (!value) continue;
-      ctx.fillStyle = duelPalette(value, bpp);
-      ctx.fillRect(x + xx, y + yy, 1, 1);
-    }
-  }
-  return { width: sprite.width, height: sprite.height };
-}
-
-function drawDuelBox(ctx, rect) {
-  const [x, y, w, h] = rect;
-  ctx.strokeStyle = "#111";
-  ctx.lineWidth = 1;
-  ctx.strokeRect(x, y, w, h);
-  ctx.strokeRect(x + 3, y + 3, Math.max(1, w - 6), Math.max(1, h - 6));
-  [[x, y], [x + w - 5, y], [x, y + h - 5], [x + w - 5, y + h - 5]].forEach(([cx, cy]) => {
-    ctx.fillStyle = "#111";
-    ctx.fillRect(cx, cy + 2, 5, 1);
-    ctx.fillRect(cx + 2, cy, 1, 5);
-  });
-}
-
-function drawHp(ctx, x, y, w, pct) {
-  ctx.fillStyle = "#111";
-  ctx.fillRect(x, y, w, 6);
-  ctx.fillStyle = "#777";
-  ctx.fillRect(x + 2, y + 2, Math.max(2, Math.round((w - 4) * pct)), 2);
-  ctx.fillStyle = "#eee";
-  ctx.fillRect(x + 2 + Math.max(2, Math.round((w - 4) * pct)), y + 2, Math.max(0, w - 4 - Math.round((w - 4) * pct)), 2);
-}
-
-function renderBattleScene() {
-  const canvas = $("battleSceneCanvas");
-  if (!canvas) return;
-  const ctx = canvas.getContext("2d");
-  ctx.setTransform(2, 0, 0, 2, 0, 0);
-  ctx.clearRect(0, 0, DUEL_WIDTH, DUEL_HEIGHT);
-  ctx.fillStyle = "#e9eee7";
-  ctx.fillRect(0, 0, DUEL_WIDTH, DUEL_HEIGHT);
-  ctx.fillStyle = "rgba(0,0,0,.04)";
-  for (let y = 0; y < DUEL_HEIGHT; y += 6) ctx.fillRect(0, y, DUEL_WIDTH, 1);
-  const data = buildDuelData({}, $("encEnemy").value || "RANDOM");
-  const lay = data.lay;
-  [lay.eb, lay.pb, lay.cb, lay.lb, lay.xb].forEach((rect) => drawDuelBox(ctx, rect));
-  const enemyRect = drawDuelSprite(ctx, state.duelSprites.enemy, lay.e[0], lay.e[1], 64, 48, "ENEMY");
-  const playerRect = drawDuelSprite(ctx, state.duelSprites.player, lay.p[0], lay.p[1], 64, 64, "PLAYER");
-  const shot = lay.shot;
-  ctx.strokeStyle = "#777";
-  ctx.setLineDash([3, 3]);
-  ctx.beginPath();
-  ctx.moveTo(shot[0], shot[1]);
-  ctx.lineTo(shot[2], shot[3]);
-  ctx.stroke();
-  ctx.setLineDash([]);
-  drawDuelSprite(ctx, state.duelSprites.projectile, Math.round((shot[0] + shot[2]) / 2), Math.round((shot[1] + shot[3]) / 2), 16, 8, "SHOT");
-  drawDuelSprite(ctx, state.duelSprites.effect, shot[2] - 10, shot[3] - 10, 28, 28, "HIT");
-  ctx.fillStyle = "#111";
-  ctx.font = "12px Consolas, monospace";
-  ctx.fillText(`${data.en} :L${data.el}`, lay.eb[0] + 14, lay.eb[1] + 22);
-  ctx.fillText(`${data.pn} :L${data.pl}`, lay.pb[0] + 14, lay.pb[1] + 22);
-  ctx.font = "9px Consolas, monospace";
-  ctx.fillText("HP:", lay.eb[0] + 14, lay.eb[1] + 40);
-  ctx.fillText("HP:", lay.pb[0] + 14, lay.pb[1] + 40);
-  drawHp(ctx, lay.eb[0] + 42, lay.eb[1] + 34, Math.max(24, lay.eb[2] - 58), .74);
-  drawHp(ctx, lay.pb[0] + 42, lay.pb[1] + 34, Math.max(24, lay.pb[2] - 58), .86);
-  ctx.font = "13px Consolas, monospace";
-  ctx.fillText("> ATTACK", lay.cb[0] + 16, lay.cb[1] + 20);
-  ctx.fillText("ITEM   RUN", lay.cb[0] + 26, lay.cb[1] + 38);
-  ctx.font = "18px Consolas, monospace";
-  ctx.fillText(data.msg[0], lay.lb[0] + 12, lay.lb[1] + 27);
-  $("duelJson").value = JSON.stringify(data, null, 2);
-  $("duelPreviewReadout").textContent = `${DUEL_WIDTH} x ${DUEL_HEIGHT} - drag sprites`;
-  state.duelHitRects = {
-    enemy: { x: lay.e[0], y: lay.e[1], w: enemyRect.width, h: enemyRect.height },
-    player: { x: lay.p[0], y: lay.p[1], w: playerRect.width, h: playerRect.height },
-    shotStart: { x: shot[0] - 6, y: shot[1] - 6, w: 12, h: 12 },
-    shotEnd: { x: shot[2] - 6, y: shot[3] - 6, w: 12, h: 12 }
-  };
-}
-
-function battleScenePoint(event) {
-  const rect = $("battleSceneCanvas").getBoundingClientRect();
-  return {
-    x: Math.round((event.clientX - rect.left) * DUEL_WIDTH / rect.width),
-    y: Math.round((event.clientY - rect.top) * DUEL_HEIGHT / rect.height)
-  };
-}
-
-function duelHit(point) {
-  const rects = state.duelHitRects || {};
-  for (const key of ["enemy", "player", "shotStart", "shotEnd"]) {
-    const rect = rects[key];
-    if (rect && point.x >= rect.x && point.y >= rect.y && point.x <= rect.x + rect.w && point.y <= rect.y + rect.h) return key;
-  }
-  return "";
-}
-
-function moveDuelPart(kind, point) {
-  if (kind === "enemy" || kind === "player") {
-    const def = sceneSlotDef(kind);
-    $(def.position).value = `${Math.max(0, Math.min(DUEL_WIDTH, point.x - state.duelDrag.dx))},${Math.max(0, Math.min(DUEL_HEIGHT, point.y - state.duelDrag.dy))}`;
-  } else {
-    const shot = numberList($("duelShotPath").value, [128, 122, 220, 70], 4);
-    if (kind === "shotStart") {
-      shot[0] = point.x;
-      shot[1] = point.y;
-    } else if (kind === "shotEnd") {
-      shot[2] = point.x;
-      shot[3] = point.y;
-    }
-    $("duelShotPath").value = shot.join(",");
-  }
-  renderBattleScene();
-}
-
-async function loadDuelSprite(slot) {
-  const ref = sceneSlotRef(slot);
-  try {
-    const body = await api(`/api/sprite?name=${encodeURIComponent(ref)}`);
-    state.duelSprites[slot] = { ...body.sprite, pixels: body.sprite.pixels.slice() };
-  } catch (error) {
-    state.duelSprites[slot] = null;
-  }
-}
-
-async function loadDuelSprites() {
-  await Promise.all(Object.keys(DUEL_SLOTS).map((slot) => loadDuelSprite(slot)));
-  renderBattleScene();
-}
-
 function wireEvents() {
   document.querySelectorAll(".tab").forEach((button) => {
     button.addEventListener("click", () => {
       showView(button.dataset.view);
-      if (button.dataset.view === "battleScene") loadDuelSprites().catch((error) => setStatus(error.message, true));
+      if (button.dataset.view === "worlds") renderWorldIndex();
+      if (button.dataset.view === "media") renderMediaInfo();
+      if (button.dataset.view === "battleScene") previewBattleUi();
     });
   });
+
+  $("worldCards").addEventListener("click", (event) => {
+    const card = event.target.closest("[data-world]");
+    if (!card) return;
+    ensureOption($("worldSelect"), card.dataset.world, card.dataset.world);
+    $("worldSelect").value = card.dataset.world;
+    loadWorld(card.dataset.world).then(() => showView("world")).catch((error) => setStatus(error.message, true));
+  });
+  $("refreshWorldIndex").onclick = () => loadInfo().catch((error) => setStatus(error.message, true));
+  $("openSelectedWorld").onclick = () => {
+    const selected = $("worldSelect").value;
+    if (selected) loadWorld(selected).then(() => showView("world")).catch((error) => setStatus(error.message, true));
+    else setStatus("Select a world first.", true);
+  };
 
   $("quickTools").innerHTML = quickTools.map(([value, label]) => `<button data-tool="${value}">${label}</button>`).join("");
   $("quickTools").addEventListener("click", (event) => {
@@ -1763,7 +2050,7 @@ function wireEvents() {
     applyWorldTool(Number(cell.dataset.x), Number(cell.dataset.y));
   });
   document.addEventListener("pointerup", () => { state.painting = false; }, true);
-  window.addEventListener("blur", () => { state.painting = false; state.duelDrag = null; state.sceneSpritePainting = false; });
+  window.addEventListener("blur", () => { state.painting = false; });
 
   $("spriteGrid").addEventListener("pointerdown", (event) => {
     const cell = spritePixel(event);
@@ -1778,64 +2065,43 @@ function wireEvents() {
     if (!state.spritePainting || event.buttons === 0) { state.spritePainting = false; return; }
     paintSprite(Number(cell.dataset.x), Number(cell.dataset.y));
   });
+  $("enemySpriteSlots").addEventListener("click", (event) => {
+    const slotButton = event.target.closest("button[data-enemy-slot]");
+    const interiorButton = event.target.closest("button[data-enemy-interior]");
+    if (slotButton) useEnemySpriteSlot(slotButton.dataset.enemySlot, false);
+    if (interiorButton) useEnemySpriteSlot(interiorButton.dataset.enemyInterior, true);
+  });
   document.addEventListener("pointerup", () => { state.spritePainting = false; }, true);
-  window.addEventListener("blur", () => { state.spritePainting = false; state.artPainting = false; state.artStart = null; state.sceneSpritePainting = false; state.duelDrag = null; });
-
-  $("battleSceneCanvas").addEventListener("pointerdown", (event) => {
-    const point = battleScenePoint(event);
-    const kind = duelHit(point);
-    if (!kind) return;
-    const rect = state.duelHitRects[kind] || { x: point.x, y: point.y };
-    state.duelDrag = { kind, dx: point.x - rect.x, dy: point.y - rect.y };
-    $("battleSceneCanvas").setPointerCapture(event.pointerId);
+  window.addEventListener("blur", () => { state.spritePainting = false; state.artPainting = false; state.artStart = null; });
+  $("loadBattleEnemy").onclick = () => loadBattleEnemyForm();
+  $("saveBattleEnemy").onclick = () => saveBattleEnemy().catch((error) => setStatus(error.message, true));
+  $("battleEnemySelect").onchange = () => loadBattleEnemyForm();
+  ["battleEnemyName", "battleLevel", "battleReload", "battleVideos", "battlePrompt", "battleReloadPrompt", "battleAttackLabel", "battleStimLabel", "battleReloadAttackLabel", "battleReloadStimLabel", "battleAttackDetail", "battleStimDetail", "battleEnemyReload", "battleReloadAttackMsg", "battlePauseResume", "battlePauseSave", "battlePauseExit", "battlePauseNote"].forEach((id) => {
+    $(id).addEventListener("input", previewBattleUi);
+    $(id).addEventListener("change", previewBattleUi);
   });
-  $("battleSceneCanvas").addEventListener("pointermove", (event) => {
-    if (!state.duelDrag || event.buttons === 0) { state.duelDrag = null; return; }
-    moveDuelPart(state.duelDrag.kind, battleScenePoint(event));
-  });
-  $("battleSceneCanvas").addEventListener("pointerup", () => { state.duelDrag = null; });
-  $("battleSceneCanvas").addEventListener("pointercancel", () => { state.duelDrag = null; });
-
-  $("sceneSpriteGrid").addEventListener("pointerdown", (event) => {
-    const cell = sceneSpritePixel(event);
-    if (!cell) return;
-    state.sceneSpritePainting = true;
-    $("sceneSpriteGrid").setPointerCapture(event.pointerId);
-    paintSceneSprite(Number(cell.dataset.x), Number(cell.dataset.y));
-  });
-  $("sceneSpriteGrid").addEventListener("pointerover", (event) => {
-    const cell = sceneSpritePixel(event);
-    if (!cell) return;
-    if (!state.sceneSpritePainting || event.buttons === 0) { state.sceneSpritePainting = false; return; }
-    paintSceneSprite(Number(cell.dataset.x), Number(cell.dataset.y));
-  });
-  document.addEventListener("pointerup", () => { state.sceneSpritePainting = false; }, true);
-
-  ["duelEnemyName", "duelEnemyLevel", "duelPlayerName", "duelPlayerLevel", "duelEnemyPos", "duelPlayerPos", "duelShotPath", "duelBoxes", "duelMessages"].forEach((id) => {
-    $(id).addEventListener("input", renderBattleScene);
-  });
-  ["duelEnemySprite", "duelPlayerSprite", "duelProjectileSprite", "duelEffectSprite"].forEach((id) => {
-    $(id).addEventListener("change", () => loadDuelSprites().catch((error) => setStatus(error.message, true)));
-  });
-  $("duelRefreshPreview").onclick = () => loadDuelSprites().catch((error) => setStatus(error.message, true));
-  $("duelUseWorldTool").onclick = () => {
-    $("worldTool").value = "duel";
+  $("useInteriorTool").onclick = () => {
+    $("worldTool").value = "interior";
+    $("encEnemy").value = $("interiorEnemy").value || $("encEnemy").value;
     showView("world");
-    setStatus("Sprite Battle tool armed on the World Builder.");
+    setStatus("Interior Door tool armed on the World Builder.");
   };
-  $("sceneSpriteSlot").onchange = () => {
-    syncSceneSpriteFields();
-    makeSceneSprite(Number($("sceneSpriteWidth").value), Number($("sceneSpriteHeight").value), 0);
+  $("editShopSprite").onclick = () => {
+    $("spriteScope").value = "npc";
+    $("spriteName").value = cleanSpriteRef($("shopSprite").value || "SHOP_SPRITE", "SHOP_SPRITE");
+    $("spriteWidth").value = PLAYER_SPRITE_WIDTH;
+    $("spriteHeight").value = PLAYER_SPRITE_HEIGHT;
+    $("spriteBpp").value = "2";
+    makeSprite(PLAYER_SPRITE_WIDTH, PLAYER_SPRITE_HEIGHT, 0);
+    showView("sprite");
+    setStatus("SHOP_SPRITE.IMG slot ready. Upload art or draw, then Save Runtime Sprite.");
   };
-  $("sceneNewSprite").onclick = () => makeSceneSprite(Number($("sceneSpriteWidth").value), Number($("sceneSpriteHeight").value), 0);
-  $("sceneLoadSprite").onclick = () => loadSceneSprite().catch((error) => setStatus(error.message, true));
-  $("sceneConvertImage").onclick = () => convertImageToSceneSprite().catch((error) => setStatus(error.message, true));
-  $("sceneSaveSprite").onclick = () => saveSceneSprite().catch((error) => setStatus(error.message, true));
-  $("sceneSpriteBpp").onchange = () => {
-    refreshSceneSpriteBrush();
-    if (state.sceneSprite) renderSceneSprite();
-  };
-  $("sceneSpriteName").oninput = () => { if (state.sceneSprite) renderSceneSprite(); };
+  $("previewInterior").onclick = previewInteriorData;
+  $("saveInteriorEnemySprite").onclick = () => saveInteriorEnemySprite().catch((error) => setStatus(error.message, true));
+  ["interiorRoom", "interiorPrompt", "interiorEnemy", "interiorNpcSprite", "interiorDialogue", "interiorFightText", "interiorFleeText", "interiorLaunchTitle", "interiorLaunchSubtitle", "interiorOnce"].forEach((id) => {
+    $(id).addEventListener("input", previewInteriorData);
+    $(id).addEventListener("change", previewInteriorData);
+  });
 
   $("loadItem").onclick = () => fillItemForm();
   $("newItem").onclick = () => newItem();
@@ -1853,7 +2119,7 @@ function wireEvents() {
     renderItem();
   };
 
-  $("loadWorld").onclick = () => loadWorld();
+  $("loadWorld").onclick = () => loadWorld().catch((error) => setStatus(error.message, true));
   $("newWorld").onclick = () => newWorld(cleanId($("worldId").value || "WORLD_NEW"), Number($("worldCols").value) || 42, Number($("worldRows").value) || 24);
   $("newWorldBuild").onclick = () => {
     newWorld(cleanId($("worldId").value || "WORLD_NEW"), Number($("worldCols").value) || 42, Number($("worldRows").value) || 24);
@@ -1922,6 +2188,7 @@ function wireEvents() {
 
   $("loadSprite").onclick = () => loadSprite().catch((error) => setStatus(error.message, true));
   $("newSprite").onclick = () => makeSprite(Number($("spriteWidth").value) || 12, Number($("spriteHeight").value) || 14, 0);
+  $("newNpcSprite").onclick = () => newNpcSprite().catch((error) => setStatus(error.message, true));
   $("importSpriteImg").onclick = () => importSpriteImg().catch((error) => setStatus(error.message, true));
   $("convertSpriteImage").onclick = () => convertImageToSprite().catch((error) => setStatus(error.message, true));
   $("spriteImageImport").onchange = () => {
@@ -1934,6 +2201,15 @@ function wireEvents() {
   $("downloadSprite").onclick = downloadSpriteRuntime;
   $("spriteBpp").onchange = () => {
     refreshSpriteBrush();
+    if (state.sprite) renderSprite();
+  };
+  $("spriteScope").onchange = () => {
+    if (isNpcSpriteMode()) {
+      $("spriteWidth").value = PLAYER_SPRITE_WIDTH;
+      $("spriteHeight").value = PLAYER_SPRITE_HEIGHT;
+      if (!state.sprite) makeSprite(PLAYER_SPRITE_WIDTH, PLAYER_SPRITE_HEIGHT, 0);
+      else if (state.sprite.width !== PLAYER_SPRITE_WIDTH || state.sprite.height !== PLAYER_SPRITE_HEIGHT) makeSprite(PLAYER_SPRITE_WIDTH, PLAYER_SPRITE_HEIGHT, 0);
+    }
     if (state.sprite) renderSprite();
   };
   $("mirrorSprite").onclick = () => {
@@ -1967,13 +2243,7 @@ function wireEvents() {
 async function start() {
   wireEvents();
   await loadInfo();
-  try {
-    if (state.info.worlds.length) await loadWorld(state.info.worlds[0]);
-    else newWorld();
-  } catch (error) {
-    newWorld();
-    setStatus(`World load skipped: ${error.message}`, true);
-  }
+  newWorld(cleanId($("worldId").value || "WORLD_NEW"), Number($("worldCols").value) || 42, Number($("worldRows").value) || 24);
   try {
     if (state.info.sprites.length) await loadSprite(state.info.sprites[0]);
     else makeSprite();
@@ -1982,22 +2252,12 @@ async function start() {
     setStatus(`Sprite load skipped: ${error.message}`, true);
   }
   try {
-    syncSceneSpriteFields();
-    makeSceneSprite(Number($("sceneSpriteWidth").value), Number($("sceneSpriteHeight").value), 0);
-    await loadDuelSprites();
-  } catch (error) {
-    renderBattleScene();
-    setStatus(`Battle scene preview skipped: ${error.message}`, true);
-  }
-  try {
-    if (state.info.worlds.length) await loadArt(`world:${state.info.worlds[0]}`);
-    else if (state.info.worldArt && state.info.worldArt.length) await loadArt(`art:${state.info.worldArt[0]}`);
-    else makeArt();
+    makeArt();
   } catch (error) {
     makeArt();
     setStatus(`World art load skipped: ${error.message}`, true);
   }
-  setStatus("Ready");
+  setStatus("Ready - new world. Use Load/Open Selected World to edit an existing map.");
 }
 
 start().catch((error) => setStatus(error.message, true));

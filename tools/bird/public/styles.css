@@ -165,6 +165,61 @@ p { margin: 3px 0 0; color: var(--green-2); }
   color: var(--amber);
   margin-bottom: 8px;
 }
+.world-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 10px;
+}
+.world-card {
+  display: grid;
+  gap: 5px;
+  min-height: 122px;
+  padding: 12px;
+  text-align: left;
+  border-color: var(--line);
+  background: rgba(12, 26, 10, .72);
+}
+.world-card strong { color: var(--green-2); }
+.world-card span { color: var(--amber); }
+.world-card em, .world-card small {
+  color: #b7efad;
+  font-style: normal;
+  font-size: 12px;
+}
+.world-card.bad {
+  border-color: var(--red);
+  box-shadow: inset 0 0 0 1px rgba(255, 116, 109, .35);
+}
+.limit-list {
+  display: grid;
+  gap: 5px;
+  color: var(--green-2);
+  font-size: 12px;
+}
+.budget-line {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 8px;
+  margin-bottom: 8px;
+  color: var(--green-2);
+  font-size: 12px;
+}
+.budget-line strong { color: var(--green); }
+.budget-line.warn strong { color: var(--amber); }
+.budget-line.bad strong { color: var(--red); }
+.meter {
+  grid-column: 1 / -1;
+  height: 7px;
+  border: 1px solid var(--dim);
+  background: #030703;
+}
+.meter i {
+  display: block;
+  height: 100%;
+  background: var(--green);
+}
+.budget-line.warn .meter i { background: var(--amber); }
+.budget-line.bad .meter i { background: var(--red); }
 .item-icon-preview {
   width: 74px;
   height: 74px;
@@ -177,10 +232,110 @@ p { margin: 3px 0 0; color: var(--green-2); }
   font-size: 12px;
   overflow: hidden;
 }
+.interior-preview {
+  position: relative;
+  width: min(100%, 640px);
+  height: 320px;
+  border: 1px solid var(--green);
+  border-radius: 6px;
+  background:
+    linear-gradient(90deg, rgba(120,255,109,.08) 1px, transparent 1px),
+    linear-gradient(rgba(120,255,109,.08) 1px, transparent 1px),
+    #061006;
+  background-size: 40px 40px;
+  overflow: hidden;
+}
+.room-wall {
+  position: absolute;
+  left: 60px;
+  right: 60px;
+  top: 42px;
+  height: 52px;
+  border: 1px solid var(--dim);
+  background: rgba(120,255,109,.08);
+}
+.room-npc, .room-player {
+  position: absolute;
+  width: 54px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--green);
+  background: #081207;
+  font-size: 12px;
+}
+.room-npc { left: 292px; top: 120px; color: var(--amber); }
+.room-player { left: 292px; top: 230px; color: var(--green-2); }
+.room-dialogue {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 14px;
+  min-height: 52px;
+  border: 1px solid var(--line);
+  background: rgba(2, 9, 7, .9);
+  color: var(--green);
+  padding: 10px 12px;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.35;
+}
+.media-list {
+  display: grid;
+  gap: 5px;
+  max-height: 320px;
+  overflow: auto;
+  font-size: 12px;
+}
+.media-list strong {
+  margin-top: 8px;
+  color: var(--amber);
+}
+.media-list span, .media-list em {
+  color: var(--green-2);
+  font-style: normal;
+}
+.media-list .bad { color: var(--red); }
 .item-icon-preview img {
   max-width: 72px;
   max-height: 72px;
   image-rendering: pixelated;
+}
+.enemy-slot-list {
+  display: grid;
+  gap: 7px;
+  max-height: 270px;
+  overflow: auto;
+}
+.enemy-slot {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 4px 7px;
+  align-items: center;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: rgba(5, 12, 5, .86);
+}
+.enemy-slot strong {
+  color: var(--green-2);
+  font-size: 12px;
+}
+.enemy-slot span {
+  grid-column: 1 / -1;
+  color: var(--amber);
+  font-size: 11px;
+}
+.enemy-slot em {
+  color: var(--red);
+  font-size: 11px;
+  font-style: normal;
+}
+.enemy-slot.ready em { color: var(--green); }
+.enemy-slot button {
+  min-height: 28px;
+  padding: 4px 7px;
+  font-size: 11px;
 }
 .actions {
   display: grid;
@@ -318,16 +473,15 @@ p { margin: 3px 0 0; color: var(--green-2); }
   touch-action: none;
 }
 
-#battleSceneCanvas {
+#battleRuntimeCanvas {
   display: block;
-  width: min(100%, 640px);
+  width: min(100%, 960px);
   height: auto;
   border: 1px solid var(--green);
   border-radius: 6px;
-  background: #e9eee7;
+  background: #020502;
   image-rendering: pixelated;
   box-shadow: 0 0 24px rgba(120, 255, 109, .14);
-  touch-action: none;
 }
 
 pre {

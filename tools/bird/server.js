@@ -44,7 +44,47 @@ const exportRoot = path.join(appRoot, "exports");
 const spriteExportRoot = path.join(exportRoot, "sprites");
 const metadataPath = path.join(bigIronRoot, "metadata.json");
 const battlePath = path.join(bigIronRoot, "battle.json");
+const battleAssetPath = path.join(assetsRoot, "battle.json");
 const itemsPath = path.join(dataRoot, "ITEMS.JSON");
+
+const WORLD_LIMITS = {
+  worldJsonBytes: 2800,
+  rows: 32,
+  cols: 48,
+  interacts: 18,
+  decor: 36,
+  exits: 8,
+  artWidth: 255,
+  artHeight: 255,
+  playerSpriteBytes: 304,
+  spriteBytes: 1536,
+  videoBytes: 450000
+};
+
+const WORLD_DEFINITIONS = [
+  { id: "WORLD_01", name: "Sunscar", miniboss: "Solomon Ray", round: "SCORCHED", unlocks: "WORLD_02" },
+  { id: "WORLD_02", name: "Dogtown Heights", miniboss: "Danner Cole", round: "HOUND", unlocks: "WORLD_03" },
+  { id: "WORLD_03", name: "Crown Junction", miniboss: "Odessa Crown", round: "CROWN", unlocks: "WORLD_04" },
+  { id: "WORLD_04", name: "The Broken Arch", miniboss: "Captain Mordecai Flint", round: "RIVER", unlocks: "WORLD_05" },
+  { id: "WORLD_05", name: "The Black Loop", miniboss: "Warden Elias Black", round: "BLACK", unlocks: "WORLD_06" },
+  { id: "WORLD_06", name: "Vale's World", miniboss: "Harlan Vale", round: "COURIER", unlocks: "" }
+];
+const BATTLE_UI_DEFAULTS = {
+  prompt: "CHOOSE AN ACTION",
+  reloadPrompt: "SLASH NOW",
+  attack: "",
+  stim: "STIMPAK",
+  reloadAttack: "SLASH",
+  reloadStim: "STIMPAK",
+  attackDetail: "DMG {dmg}",
+  stimDetail: "HEAL {heal} x{st}",
+  enemyReload: "ENEMY RELOADS",
+  reloadAttackMsg: "KEEP SLASHING",
+  pauseResume: "RESUME",
+  pauseSave: "SAVE LOCATION",
+  pauseExit: "EXIT GAME",
+  pauseNote: "TURN WHEEL / PRESS TO SELECT"
+};
 
 const mime = {
   ".html": "text/html; charset=utf-8",
@@ -119,12 +159,8 @@ function cleanSpriteRef(value, fallback) {
 
 function worldDisplayName(id) {
   const key = cleanBase(id, "WORLD_01");
-  if (key === "WORLD_01") return "Sunscar";
-  if (key === "WORLD_02") return "Dogtown Heights";
-  if (key === "WORLD_03") return "Crown Junction";
-  if (key === "WORLD_04") return "The Broken Arch";
-  if (key === "WORLD_05") return "The Black Loop";
-  if (key === "WORLD_06") return "Vale's World";
+  const found = WORLD_DEFINITIONS.find((world) => world.id === key);
+  if (found) return found.name;
   return key;
 }
 
@@ -135,12 +171,14 @@ function dataPath(name, fallback, ext) {
   return target;
 }
 
-function spritePath(name, fallback) {
+function spritePath(name, fallback, forceExt) {
   const ref = cleanSpriteRef(name, fallback);
   const isPlayer = /^PLAYER_SPRITE/i.test(path.basename(ref));
-  const target = path.resolve(dataRoot, ...ref.split("/")) + (isPlayer ? ".IMG" : ".JS");
+  const baseTarget = path.resolve(dataRoot, ...ref.split("/"));
+  const ext = forceExt || (isPlayer || fs.existsSync(baseTarget + ".IMG") ? ".IMG" : ".JS");
+  const target = baseTarget + ext;
   if (!target.startsWith(path.resolve(dataRoot))) throw new Error("Unsafe sprite path.");
-  return { ref, target, ext: isPlayer ? ".IMG" : ".JS" };
+  return { ref, target, ext };
 }
 
 function spriteExportPath(name, fallback) {
@@ -200,13 +238,125 @@ function listWorldArt(ext) {
 function listWorldDetails() {
   return listData(".JSON", /^WORLD_/i).map((file) => {
     const world = readJson(path.join(dataRoot, file), {});
+    const compact = compactRuntimeWorld(normalizeWorld(world));
     return {
       file,
       id: cleanBase(world.id || file, file.replace(/\.JSON$/i, "")),
       name: world.name || worldDisplayName(world.id || file),
-      image: world.image || ""
+      image: world.image || "",
+      size: Buffer.byteLength(compact, "utf8"),
+      rows: Array.isArray(world.rows) ? world.rows.length : 0,
+      cols: world.rows && world.rows[0] ? String(world.rows[0]).length : 0,
+      interacts: Array.isArray(world.interacts) ? world.interacts.length : 0,
+      decor: Array.isArray(world.decor) ? world.decor.length : 0,
+      exits: Array.isArray(world.exits) ? world.exits.length : 0
     };
   });
+}
+
+function listMedia(folder, rel) {
+  const out = [];
+  function walk(dir, prefix) {
+    if (!fs.existsSync(dir)) return;
+    for (const item of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, item.name);
+      const name = prefix ? `${prefix}/${item.name}` : item.name;
+      if (item.isDirectory()) walk(full, name);
+      else if (/\.(AVI|WAV|IMG|BIN|BMP|PNG|JSON)$/i.test(item.name)) {
+        const stat = fs.statSync(full);
+        out.push({
+          file: name.replace(/\\/g, "/"),
+          path: `${rel}/${name}`.replace(/\\/g, "/"),
+          size: stat.size,
+          kind: path.extname(item.name).replace(".", "").toUpperCase()
+        });
+      }
+    }
+  }
+  walk(folder, "");
+  return out.sort((a, b) => a.path.localeCompare(b.path));
+}
+
+function cleanScreenText(value, fallback, max = 24) {
+  return String(value || fallback || "")
+    .replace(/[^a-z0-9 ._!?'-]+/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, max)
+    .toUpperCase();
+}
+
+function cleanUiText(value, fallback, max = 24) {
+  return String(value === undefined || value === null ? fallback || "" : value)
+    .replace(/[^a-z0-9 ._!?'\-{}\/]+/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, max);
+}
+
+function readBattle() {
+  const rootBattle = readJson(battlePath, {});
+  const assetBattle = readJson(battleAssetPath, {});
+  const battle = rootBattle && Object.keys(rootBattle).length ? rootBattle : assetBattle;
+  if (!battle.enemies && assetBattle.enemies) battle.enemies = assetBattle.enemies;
+  return battle && typeof battle === "object" ? battle : {};
+}
+
+function writeBattle(battle) {
+  const data = JSON.stringify(battle, null, 2) + "\n";
+  fs.writeFileSync(battlePath, data, "utf8");
+  fs.writeFileSync(battleAssetPath, data, "utf8");
+}
+
+function normalizeBattleEnemy(input) {
+  if (!input || typeof input !== "object") throw new Error("Enemy config is required.");
+  const id = cleanBase(input.id || input.name, "ENEMY");
+  const enemy = {
+    id,
+    name: cleanScreenText(input.name || id, id, 20),
+    level: Math.max(1, Math.min(99, Number(input.level) || 1)),
+    maxHP: Math.max(1, Math.min(999, Number(input.maxHP) || 75)),
+    xp: Math.max(0, Math.min(999, Number(input.xp) || 35))
+  };
+  const folder = cleanBase(input.folder || "", "");
+  if (folder) enemy.folder = folder.charAt(0) + folder.slice(1).toLowerCase();
+  if (input.melee) enemy.melee = 1;
+  if (input.reload) enemy.reload = 1;
+  if (Number(input.meleePower) > 0) enemy.meleePower = Math.max(1, Math.min(99, Number(input.meleePower)));
+  if (Number(input.radAmount) > 0) enemy.rad = [Math.max(1, Math.min(25, Number(input.radAmount))), Math.max(1, Math.min(60, Number(input.radSeconds) || 4))];
+  if (Number(input.dotAmount) > 0) enemy.dot = [Math.max(1, Math.min(99, Number(input.dotAmount))), Math.max(1, Math.min(60, Number(input.dotSeconds) || 5))];
+  const videos = {};
+  for (const key of ["idle", "start", "enemyFaint", "playerFaint", "victory", "defeat"]) {
+    const value = String(input.videos && input.videos[key] || "").trim();
+    if (value) videos[key] = value;
+  }
+  if (Object.keys(videos).length) enemy.videos = videos;
+  const ui = {};
+  for (const [key, fallback] of Object.entries(BATTLE_UI_DEFAULTS)) {
+    const raw = input.ui && input.ui[key];
+    const value = cleanUiText(raw === undefined || raw === null || raw === "" ? fallback : raw, fallback, key === "prompt" || key === "reloadPrompt" || key === "pauseNote" ? 54 : 22);
+    if (value !== fallback) ui[key] = value;
+  }
+  if (Object.keys(ui).length) enemy.ui = ui;
+  return enemy;
+}
+
+function battleSummary(battle) {
+  return (battle.enemies || []).map((enemy) => ({
+    id: enemy.id || enemy.name || enemy.folder,
+    name: enemy.name || enemy.id || enemy.folder,
+    folder: enemy.folder || "",
+    level: enemy.level || 1,
+    maxHP: enemy.maxHP || 0,
+    xp: enemy.xp || 0,
+    rad: enemy.rad || null,
+    dot: enemy.dot || null,
+    reload: !!enemy.reload,
+    melee: !!enemy.melee,
+    meleePower: enemy.meleePower || 0,
+    videos: enemy.videos || {},
+    ui: enemy.ui || {}
+  }));
 }
 
 function itemIconPath(key, fileName) {
@@ -342,7 +492,6 @@ function compactRuntimeWorld(world) {
   };
   delete copy.tile;
   delete copy.scale;
-  if (Array.isArray(copy.interacts)) copy.interacts = copy.interacts.filter((item) => !item || item.type !== "duel");
   if (Array.isArray(copy.interacts)) copy.interacts.forEach(clean);
   if (Array.isArray(copy.exits)) copy.exits.forEach(clean);
   if (Array.isArray(copy.decor)) copy.decor.forEach(clean);
@@ -495,7 +644,7 @@ function addInfoFile(name) {
 async function api(req, res, url) {
   if (url.pathname === "/api/info") {
     const metadata = readJson(metadataPath, {});
-    const battle = readJson(battlePath, {});
+    const battle = readBattle();
     const worldDetails = listWorldDetails();
     json(res, 200, {
       ok: true,
@@ -505,19 +654,45 @@ async function api(req, res, url) {
       itemIconRoot,
       worldArtRoot,
       spriteExportRoot,
+      limits: WORLD_LIMITS,
+      worldDefinitions: WORLD_DEFINITIONS,
       worlds: worldDetails.map((world) => world.file),
       worldDetails,
       worldArt: listWorldArt(".JSON"),
       sprites: listSprites(),
       items: Object.keys(readItems()).sort((a, b) => a.localeCompare(b)),
       itemMap: readItems(),
-      enemies: (battle.enemies || []).map((enemy) => ({
-        id: enemy.id || enemy.name || enemy.folder,
-        name: enemy.name || enemy.id || enemy.folder,
-        folder: enemy.folder || "",
-        level: enemy.level || 1
-      }))
+      enemies: battleSummary(battle),
+      media: {
+        root: listMedia(bigIronRoot, "HOLO/BIGIRON").filter((item) => !item.path.includes("/Assets/")),
+        audio: listMedia(path.join(assetsRoot, "AUDIO"), "HOLO/BIGIRON/AUDIO"),
+        video: listMedia(path.join(assetsRoot, "VIDEO"), "HOLO/BIGIRON/VIDEO"),
+        images: listMedia(assetsRoot, "HOLO/BIGIRON").filter((item) => /^(IMG|BIN|BMP|PNG)$/i.test(item.kind))
+      }
     });
+    return;
+  }
+
+  if (url.pathname === "/api/battle" && req.method === "GET") {
+    const battle = readBattle();
+    json(res, 200, { ok: true, battle, enemies: battleSummary(battle), limits: WORLD_LIMITS });
+    return;
+  }
+
+  if (url.pathname === "/api/battle" && req.method === "POST") {
+    const body = await bodyJson(req);
+    const battle = readBattle();
+    battle.enemies = Array.isArray(battle.enemies) ? battle.enemies : [];
+    const enemy = normalizeBattleEnemy(body.enemy || body);
+    const index = battle.enemies.findIndex((item) => cleanBase(item.id || item.name, "") === enemy.id);
+    if (index >= 0) {
+      const merged = { ...battle.enemies[index], ...enemy };
+      if (!enemy.ui) delete merged.ui;
+      battle.enemies[index] = merged;
+    }
+    else battle.enemies.push(enemy);
+    writeBattle(battle);
+    json(res, 200, { ok: true, enemy, battle, enemies: battleSummary(battle) });
     return;
   }
 
@@ -551,7 +726,16 @@ async function api(req, res, url) {
     const body = await bodyJson(req);
     const world = normalizeWorld(body.world || body);
     const target = dataPath(body.name || world.id, world.id, ".JSON");
-    fs.writeFileSync(target, compactRuntimeWorld(world), "utf8");
+    const compact = compactRuntimeWorld(world);
+    const size = Buffer.byteLength(compact, "utf8");
+    if (size > WORLD_LIMITS.worldJsonBytes) throw new Error(`World JSON is ${size} bytes. Keep it under ${WORLD_LIMITS.worldJsonBytes} bytes for the Pip-Boy build.`);
+    if (world.rows.length > WORLD_LIMITS.rows || String(world.rows[0] || "").length > WORLD_LIMITS.cols) {
+      throw new Error(`World grid exceeds ${WORLD_LIMITS.cols} x ${WORLD_LIMITS.rows}.`);
+    }
+    if ((world.interacts || []).length > WORLD_LIMITS.interacts) throw new Error(`Too many encounters. Limit is ${WORLD_LIMITS.interacts}.`);
+    if ((world.decor || []).length > WORLD_LIMITS.decor) throw new Error(`Too much decor. Limit is ${WORLD_LIMITS.decor}.`);
+    if ((world.exits || []).length > WORLD_LIMITS.exits) throw new Error(`Too many exits. Limit is ${WORLD_LIMITS.exits}.`);
+    fs.writeFileSync(target, compact, "utf8");
     json(res, 200, { ok: true, name: path.basename(target), world });
     return;
   }
@@ -605,13 +789,16 @@ async function api(req, res, url) {
   if (url.pathname === "/api/sprite" && req.method === "POST") {
     const body = await bodyJson(req);
     const playerSprite = /^PLAYER_SPRITE/i.test(cleanBase(body.name, "PLAYER_SPRITE"));
-    const output = playerSprite ? makeSpriteImage(body) : makeSpriteSnippet(body);
+    const scopeInput = String(body.scope || "").toLowerCase();
+    const npcSprite = scopeInput === "npc" || scopeInput === "interior" || String(body.runtime || "").toLowerCase() === "img";
+    if (npcSprite && ((Number(body.width) || 0) !== 34 || (Number(body.height) || 0) !== 34)) throw new Error("NPC sprites must be 34x34 IMG.");
+    const output = playerSprite || npcSprite ? makeSpriteImage(npcSprite ? { ...body, bpp: 2 } : body) : makeSpriteSnippet(body);
     const scope = playerSprite ? "global" : String(body.scope || "global").toLowerCase();
     const world = cleanBase(body.world || body.worldId || "", "");
     const ref = scope === "world" && world ? `${world}/${output.name}` : output.name;
-    const found = spritePath(ref, "PLAYER_SPRITE");
+    const found = spritePath(ref, "PLAYER_SPRITE", playerSprite || npcSprite ? ".IMG" : ".JS");
     fs.mkdirSync(path.dirname(found.target), { recursive: true });
-    if (playerSprite) fs.writeFileSync(found.target, output.buffer);
+    if (playerSprite || npcSprite) fs.writeFileSync(found.target, output.buffer);
     else fs.writeFileSync(found.target, output.source, "utf8");
     addMetadataStorage(`HOLO/BIGIRON/DATA/${found.ref}${found.ext}`, `Assets/DATA/${found.ref}${found.ext}`);
     addInfoFile(`HOLO/BIGIRON/DATA/${found.ref}${found.ext}`);
@@ -621,7 +808,7 @@ async function api(req, res, url) {
       ref: found.ref,
       global: playerSprite || scope !== "world",
       runtime: found.ext,
-      snippet: playerSprite ? `Saved ${found.ref}.IMG for the low-memory Big Iron runtime.` : output.source
+      snippet: playerSprite || npcSprite ? `Saved ${found.ref}.IMG for the low-memory Big Iron runtime.` : output.source
     });
     return;
   }
@@ -629,17 +816,20 @@ async function api(req, res, url) {
   if (url.pathname === "/api/sprite-local" && req.method === "POST") {
     const body = await bodyJson(req);
     const playerSprite = /^PLAYER_SPRITE/i.test(cleanBase(body.name, "PLAYER_SPRITE"));
-    const output = playerSprite ? makeSpriteImage(body) : makeSpriteSnippet(body);
+    const scopeInput = String(body.scope || "").toLowerCase();
+    const npcSprite = scopeInput === "npc" || scopeInput === "interior" || String(body.runtime || "").toLowerCase() === "img";
+    if (npcSprite && ((Number(body.width) || 0) !== 34 || (Number(body.height) || 0) !== 34)) throw new Error("NPC sprites must be 34x34 IMG.");
+    const output = playerSprite || npcSprite ? makeSpriteImage(npcSprite ? { ...body, bpp: 2 } : body) : makeSpriteSnippet(body);
     const scope = playerSprite ? "global" : String(body.scope || "global").toLowerCase();
     const world = cleanBase(body.world || body.worldId || "", "");
     const ref = scope === "world" && world ? `${world}/${output.name}` : output.name;
     const found = spriteExportPath(ref, "PLAYER_SPRITE");
-    const target = playerSprite ? found.target.replace(/\.JS$/i, ".IMG") : found.target;
-    const name = found.ref + (playerSprite ? ".IMG" : ".JS");
+    const target = playerSprite || npcSprite ? found.target.replace(/\.JS$/i, ".IMG") : found.target;
+    const name = found.ref + (playerSprite || npcSprite ? ".IMG" : ".JS");
     fs.mkdirSync(path.dirname(found.target), { recursive: true });
-    if (playerSprite) fs.writeFileSync(target, output.buffer);
+    if (playerSprite || npcSprite) fs.writeFileSync(target, output.buffer);
     else fs.writeFileSync(target, output.source, "utf8");
-    json(res, 200, { ok: true, name, ref: found.ref, path: target, snippet: playerSprite ? `Saved ${name} locally.` : output.source });
+    json(res, 200, { ok: true, name, ref: found.ref, path: target, snippet: playerSprite || npcSprite ? `Saved ${name} locally.` : output.source });
     return;
   }
 

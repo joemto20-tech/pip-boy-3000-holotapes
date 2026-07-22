@@ -1,332 +1,77 @@
 (function(){
   var W=h.getWidth?h.getWidth():480,H=h.getHeight?h.getHeight():320;
-  var mod=null,loading=false,exiting=false,loadTimer=0,exitTimer=0;
-  var home=typeof Pip.MODE=="number"?Pip.MODE:1,mode="splash",sel=0;
-  var musicOn=false,musicTrack="",musicPath="";
-  var battleEquip=null;
-  var shellQuiet=false,shellTick=0;
+  var B="HOLO/BIGIRON/",M=0,busy=0,quit=0,lt=0,rt=0,xt=0;
+  var rn="",ra=0,rd=0,home=typeof Pip.MODE=="number"?Pip.MODE:1;
+  var mode="splash",sel=0,mus=0,track="",st=0,ip=0,last=0,it=0,fade=0;
+  var shell=0,sht=0;
 
-  function exists(p){try{return !!fs.statSync(p);}catch(e){return false;}}
-  function base(){
-    var r=["HOLO/BIGIRON/","BIGIRON/",""],i;
-    for(i=0;i<r.length;i++){
-      if(exists(r[i]+"battle.json")&&exists(r[i]+"CODE/WORLD.JS"))return r[i];
-      if(exists(r[i]+"Assets/battle.json")&&exists(r[i]+"Assets/CODE/WORLD.JS"))return r[i]+"Assets/";
-    }
-    return "HOLO/BIGIRON/";
-  }
-  var B=base();
-
-  function gc(){
-    try{if(E&&E.gc)E.gc();}catch(e){}
-    try{if(E&&E.defrag)E.defrag();}catch(e2){}
-  }
-  function font(s){try{h.setFont("6x8",s||1);}catch(e){}}
-  function sound(n){try{if(Pip.playSound)Pip.playSound(n);}catch(e){}}
-  function txt(p){try{return fs.readFileSync(p);}catch(e){}try{return fs.readFile(p);}catch(e2){}return null;}
-  function img(p){try{return fs.readFile(p);}catch(e){}try{return fs.readFileSync(p);}catch(e2){}return null;}
-  function wr(p,d){try{if(fs.writeFileSync){fs.writeFileSync(p,d);return true;}}catch(e){}try{if(fs.writeFile){fs.writeFile(p,d);return true;}}catch(e2){}return false;}
-
-  function playerData(){try{return typeof player!="undefined"&&player&&player.player?player.player:{};}catch(e){return {};}}
-  function weaponName(o,d){var v=o&&o.txt!==undefined?o.txt:d;v=v==null?"":v.toString();return v.length>20?v.substr(0,19)+"~":v;}
-  function weaponDmg(o,d){var v=parseFloat(o&&o.DMG);return isNaN(v)?d:v;}
-  function datPath(c){return"DATA/"+(NV?"NV":"F3")+"/"+c+".DAT";}
-  function datGet(c,id){var d=0,o=0;try{if(!id)return 0;d=new DataFile(datPath(c));o=d.getId(parseInt(id,10)||id);}catch(e){}finally{try{if(d)d.close();}catch(e2){}}return o||0;}
-  function prefetchEquipment(force){
-    var p=playerData(),wid,w,base;
-    if(battleEquip&&!force)return battleEquip;
-    try{
-      wid=parseInt(p.equippedweap,10)||0;
-      w=wid?datGet("WEAPONS",wid):0;
-      base=weaponDmg(w,0);
-      if(!base)base=wid?12:6;
-      battleEquip={weapon:weaponName(w,wid?("WEAPON "+wid):"FISTS"),armor:"NO ARMOR",dt:0,dmg:Math.max(1,Math.floor(base)),type:wid?"GUN":"MELEE"};
-    }catch(e){
-      battleEquip={weapon:"FISTS",armor:"NO ARMOR",dt:0,dmg:6,type:"MELEE"};
-    }
-    return battleEquip;
-  }
-
-  function flip(y1,y2){
-    var b=0;
-    try{
-      if(Pip.blitOptions&&y1!==undefined&&y2!==undefined){
-        b=Pip.blitOptions;
-        b.y1=Math.max(0,Math.min(H-1,Math.floor(y1)));
-        b.y2=Math.max(b.y1,Math.min(H-1,Math.floor(y2)));
-      }
-      h.flip();
-      try{Pip.lastFlip=getTime();}catch(e2){}
-    }catch(e3){}finally{
-      try{if(b){delete b.y1;delete b.y2;}}catch(e4){}
-    }
-  }
-
-  function rawFlip(){
-    try{
-      h.flip();
-      try{Pip.lastFlip=getTime();}catch(e){}
-    }catch(e2){}
-  }
-
-  function holdShell(){
-    try{Pip.lastFlip=getTime()+1;}catch(e){}
-  }
-
-  function quietShell(on){
+  function gc(){try{if(E&&E.gc)E.gc()}catch(e){}try{if(E&&E.defrag)E.defrag()}catch(e2){}}
+  function ft(n){try{h.setFont("6x8",n||1)}catch(e){}}
+  function snd(n){try{if(Pip.playSound)Pip.playSound(n)}catch(e){}}
+  function flip(){h.flip();if(typeof getTime=="function")Pip.lastFlip=getTime()}
+  function hold(){try{Pip.lastFlip=getTime()+1}catch(e){}}
+  function quiet(on){
     if(on){
-      if(shellQuiet){holdShell();return;}
-      shellQuiet=true;
-      try{if(Pip.stopTimers)Pip.stopTimers();}catch(e){}
-      try{
-        if(Pip.timers){
-          if(Pip.timers.timeHeader){clearInterval(Pip.timers.timeHeader);Pip.timers.timeHeader=0;}
-          if(Pip.timers.flip){clearInterval(Pip.timers.flip);Pip.timers.flip=0;}
-        }
-      }catch(e2){}
-      if(shellTick)clearInterval(shellTick);
-      shellTick=setInterval(holdShell,100);
-      holdShell();
+      if(shell){hold();return}shell=1;
+      try{if(Pip.stopTimers)Pip.stopTimers()}catch(e){}
+      try{if(Pip.timers){if(Pip.timers.timeHeader){clearInterval(Pip.timers.timeHeader);Pip.timers.timeHeader=0}if(Pip.timers.flip){clearInterval(Pip.timers.flip);Pip.timers.flip=0}}}catch(e2){}
+      if(sht)clearInterval(sht);sht=setInterval(hold,120);hold();
     }else{
-      if(shellTick){clearInterval(shellTick);shellTick=0;}
-      if(!shellQuiet){
-        try{if(Pip.startTimers)Pip.startTimers();}catch(e0){}
-        try{if(Pip.setWatches)Pip.setWatches();}catch(e1){}
-        return;
-      }
-      shellQuiet=false;
-      try{if(Pip.stopTimers)Pip.stopTimers();}catch(e3){}
-      try{if(Pip.startTimers)Pip.startTimers();}catch(e4){}
-      try{if(Pip.setWatches)Pip.setWatches();}catch(e5){}
+      if(sht){clearInterval(sht);sht=0}shell=0;
+      try{if(Pip.stopTimers)Pip.stopTimers()}catch(e3){}
+      try{if(Pip.startTimers)Pip.startTimers()}catch(e4){}
+      try{if(Pip.setWatches)Pip.setWatches()}catch(e5){}
     }
   }
+  function screen(a,b){h.setClipRect(0,0,W-1,H-1);h.setColor(0).fillRect(0,0,W-1,H-1);h.setFontAlign(0,0);ft(3);h.setColor(3).drawString(a,W/2,126);ft(1);h.setColor(2).drawString(b||"",W/2,172);flip(0,H-1)}
 
-  function screen(a,b){
-    h.setClipRect(0,0,W-1,H-1);
-    h.setColor(0).fillRect(0,0,W-1,H-1);
-    h.setFontAlign(0,0);
-    font(3);h.setColor(3).drawString(a,W/2,125);
-    font(1);h.setColor(2).drawString(b||"",W/2,172);
-    flip(0,H-1);
+  function pdata(){try{return player&&player.player?player.player:{}}catch(e){return{}}}
+  function equip(){
+    var p=pdata(),id=0,d=0,o=0,v,n="FISTS",dm=6;
+    try{if(player&&player.getav)id=player.getav("equippedWeap")}catch(e){}
+    if(id===undefined||id===null||id==="")id=p.equippedWeap;
+    if(id===undefined||id===null||id==="")id=p.equippedweap;
+    id=parseInt(id,10)||0;
+    if(id)try{d=new DataFile("DATA/"+(NV?"NV":"F3")+"/WEAPONS.DAT");o=d.getId(id)}catch(e2){}finally{try{if(d&&d.close)d.close()}catch(e3){}}
+    if(o){v=o.txt;if(v!==undefined&&v!==null)n=String(v);v=parseFloat(o.dam!==undefined?o.dam:(o.dmg!==undefined?o.dmg:o.damage));if(!isNaN(v)&&v>0)dm=Math.floor(v)}
+    if(n.length>20)n=n.substr(0,19)+"~";
+    return{weapon:n,weaponId:id,dmg:dm,dt:0,type:id?"GUN":"MELEE"};
   }
 
-  function openFile(n){
-    var p=[B+n,n,B+"Assets/"+n],i,f=0;
-    if(typeof E=="undefined"||!E.openFile)return 0;
-    for(i=0;i<p.length&&!f;i++)try{f=E.openFile(p[i],"r");}catch(e){}
-    return f;
-  }
+  function bin(n){var f=0,t=0,o,c;try{f=E.openFile(B+n,"r");if(!f)return 0;t=new Uint8Array(h.buffer);o=t.length;c=f.read(256);while(c){o-=c.length;if(o<0)break;t.set(c,o);c=f.read(256)}f.close();t=0;return 1}catch(e){try{if(f)f.close()}catch(e2){}return 0}}
+  function fallback(){h.setColor(0).fillRect(0,0,W-1,H-1);h.setFontAlign(0,0);h.setColor(2).drawRect(34,24,W-35,H-25);ft(4);h.setColor(3).drawString("BIG IRON",W/2,78);ft(1);h.setColor(2).drawString("PB3000 RPG",W/2,116)}
+  function choices(){h.setFontAlign(0,0);h.setColor(2).drawRect(118,166,W-119,198).drawRect(118,211,W-119,243);ft(2);h.setColor(sel?2:3).drawString("START NEW",W/2,174);h.setColor(sel?3:2).drawString("LOAD GAME",W/2,219);h.setColor(3).fillPoly([96,sel?220:175,96,sel?232:187,108,sel?226:181]);ft(1);h.setColor(2).drawString("RIGHT WHEEL / LEFT CLICK",W/2,286)}
+  function menu(){if(!bin("MENU.BIN"))fallback();choices();flip(0,H-1)}
+  function showMenu(){if(st){clearTimeout(st);st=0}if(busy||M)return;mode="menu";sel=0;menu();music("BICT")}
+  function start(){sel=0;mode="splash";if(bin("IMAGE.BIN")||bin("Startg1.BIN")){flip(0,H-1);st=setTimeout(showMenu,1300)}else showMenu()}
 
-  function drawBin(n){
-    var f,t,o,c;
-    try{
-      f=openFile(n);
-      if(!f)return false;
-      t=new Uint8Array(h.buffer);
-      o=t.length;
-      c=f.read(256);
-      while(c){
-        o-=c.length;
-        if(o<0)break;
-        t.set(c,o);
-        c=f.read(256);
-      }
-      try{f.close();}catch(e){}
-      t=null;
-      return true;
-    }catch(e2){try{if(f)f.close();}catch(e3){}}
-    return false;
-  }
+  function music(n){var p;if(!n){mus=0;track="";try{if(Pip.audioStop)Pip.audioStop()}catch(e){}try{Pip.radioClipPlaying=0}catch(e2){}return}if(quit)return;n=String(n);if(mus&&track==n)return;p=n=="NVTH"?B+"AUDIO/NVTH.wav":B+n+".wav";try{if(mus&&Pip.audioStop)Pip.audioStop();Pip.radioClipPlaying=1;Pip.audioStart(p);mus=1;track=n}catch(e3){mus=0;track=""}}
 
-  function drawFallback(){
-    h.setClipRect(0,0,W-1,H-1);
-    h.setColor(0).fillRect(0,0,W-1,H-1);
-    h.setFontAlign(0,0);
-    h.setColor(2).drawRect(34,24,W-35,H-25);
-    h.drawRect(42,32,W-43,H-33);
-    font(4);h.setColor(3).drawString("BIG IRON",W/2,70);
-    font(1);h.setColor(2).drawString("PB3000RPG",W/2,104);
-    h.drawString("STATUS: DORMANT",W/2,130);
-    h.drawString("CHAMBERS READY: 0/6",W/2,146);
-  }
+  function closeIntro(){try{if(ip&&ip.close)ip.close()}catch(e){}ip=0}
+  function introDraw(s){var a=s.split("|"),y=Math.floor(H/2-(a.length-1)*12),i;h.setColor(0).fillRect(0,0,W-1,H-1);h.setColor(2).drawRect(18,18,W-19,H-19).drawRect(24,24,W-25,H-25);h.setFontAlign(0,0);ft(2);for(i=0;i<a.length;i++){h.setColor(a[i].charAt(0)=="*"?2:3);h.drawString(a[i],W/2,y+i*24)}ft(1);h.setColor(2).drawString(last?"":"LEFT CLICK",W/2,H-34);flip(0,H-1);if(last){closeIntro();if(it)clearTimeout(it);it=setTimeout(fadeIntro,1500)}}
+  function introRead(){var c,n,s;if(!ip)return;c=ip.read(1);if(!c){closeIntro();fadeIntro();return}n=c.charCodeAt(0);last=!!(n&128);n&=127;s=ip.read(n)||"";introDraw(s);s=0}
+  function fadeIntro(){if(it){clearTimeout(it);it=0}if(mode!="intro")return;fade++;h.setColor(fade<3?fade:0).fillRect(0,0,W-1,H-1);flip(0,H-1);if(fade<3){it=setTimeout(fadeIntro,180);return}fade=0;last=0;music(0);gc();route("W",{newGame:true},90)}
+  function intro(){if(st){clearTimeout(st);st=0}mode="intro";last=0;fade=0;try{ip=E.openFile(B+"I.BIN","r")}catch(e){ip=0}if(!ip){music(0);route("W",{newGame:true},90);return}introRead()}
 
-  function drawMenuChoices(){
-    h.setClipRect(0,0,W-1,H-1);
-    h.setFontAlign(0,0);
-    h.setColor(2).drawRect(118,166,W-119,198);
-    h.drawRect(118,211,W-119,243);
-    font(2);
-    h.setColor(sel?2:3).drawString("START NEW",W/2,174);
-    h.setColor(sel?3:2).drawString("LOAD GAME",W/2,219);
-    h.setColor(3).fillPoly([96,sel?220:175,96,sel?232:187,108,sel?226:181]);
-    font(1);h.setColor(2).drawString("RIGHT WHEEL / LEFT CLICK",W/2,286);
-  }
+  function unload(){var q=M;M=0;if(q){try{if(q.remove)q.remove()}catch(e){}q=0}gc()}
+  function load(){var n=rn,a=ra,s=0,f=0;lt=0;rn="";ra=0;rd=0;try{s=fs.readFile(B+"CODE/"+n+".JS");if(!s)throw n;f=eval(s);s=0;gc();M=f(API,a||{});f=a=0;busy=0;gc()}catch(e){s=f=a=0;busy=0;screen("LOAD FAILED",String(e).substr(0,36))}}
+  function detach(){rt=0;unload();music(0);h.setColor(0).fillRect(0,0,W-1,H-1);flip(0,H-1);gc();screen("LOADING",rn);lt=setTimeout(load,rd)}
+  function route(n,a,d){if(busy||quit)return;busy=1;mode="load";rn=n;ra=a||{};rd=d===undefined?80:d;if(rt)clearTimeout(rt);if(lt)clearTimeout(lt);rt=lt=0;quiet(1);rt=setTimeout(detach,20)}
+  function back(a){route("W",a,100)}
 
-  function drawMenu(){
-    if(!drawBin("MENU.BIN"))drawFallback();
-    drawMenuChoices();
-    flip(0,H-1);
-    gc();
-  }
+  function exitApp(){if(quit)return;quit=1;music(0);quiet(0);try{if(M&&M.save)M.save(true)}catch(e){}try{Pip.CURRENT.fullscreen=false}catch(e2){}try{Pip.emit("mode",home,true)}catch(e3){try{Pip.changeMenu()}catch(e4){remove()}}if(xt)clearTimeout(xt);xt=setTimeout(function(){xt=0;try{Pip.changeMenu()}catch(e){}},180)}
+  function remove(){busy=1;if(st)clearTimeout(st);if(lt)clearTimeout(lt);if(rt)clearTimeout(rt);if(xt)clearTimeout(xt);if(it)clearTimeout(it);st=lt=rt=xt=it=0;closeIntro();unload();music(0);quiet(0);try{Pip.removeListener("knob1",k1)}catch(e){}try{Pip.removeListener("knob2",k2)}catch(e2){}try{Pip.CURRENT.fullscreen=false}catch(e3){}gc()}
+  function k1(v,l){if(busy)return;if(M&&M.k1){M.k1(v,l);return}if(mode=="intro"){if(v===0&&!l&&!last){snd("SELECT");introRead()}return}if(mode=="menu"&&v===0&&!l){snd("SELECT");if(sel){music(0);route("W",{},90)}else intro()}}
+  function k2(v){if(busy)return;if(M&&M.k2){M.k2(v);return}if(mode=="menu"&&v){sel=sel?0:1;menu()}}
 
-  function showMenu(){
-    if(loading||mod)return;
-    mode="menu";
-    sel=0;
-    drawMenu();
-    music("BICT");
-  }
-
-  function clearStartMedia(){
-    music(false);
-    try{if(Pip.videoStop)Pip.videoStop();}catch(e){}
-    h.setClipRect(0,0,W-1,H-1);
-    h.setColor(0).fillRect(0,0,W-1,H-1);
-    flip(0,H-1);
-    gc();
-  }
-
-  function start(){
-    sel=0;
-    showMenu();
-  }
-
-  function musicPathFor(t){
-    var p=[B+"AUDIO/"+t+".wav",B+"CODE/"+t+".wav",B+t+".wav"],i;
-    for(i=0;i<p.length;i++)if(exists(p[i]))return p[i];
-    return "";
-  }
-
-  function music(t){
-    var p;
-    if(!t){
-      musicOn=false;
-      try{if(Pip.audioStop)Pip.audioStop();}catch(e){}
-      try{Pip.radioClipPlaying=0;}catch(e2){}
-      return;
-    }
-    if(exiting)return;
-    t=t===true?"NVTH":(""+t);
-    p=musicPathFor(t);
-    if(!p||!Pip.audioStart)return;
-    if(musicOn&&musicTrack==t)return;
-    try{if(musicOn&&Pip.audioStop)Pip.audioStop();}catch(e3){}
-    try{Pip.radioClipPlaying=1;}catch(e4){}
-    try{Pip.audioStart(p);musicOn=true;musicTrack=t;musicPath=p;}catch(e5){musicOn=false;}
-  }
-
-  function unload(){
-    if(mod){
-      try{if(mod.remove)mod.remove();}catch(e){}
-      mod=null;
-    }
-    gc();
-  }
-
-  function loadModule(n,a){
-    if(loading)return;
-    loading=true;
-    if(loadTimer)clearTimeout(loadTimer);
-    unload();
-    if(api)api.flip=flip;
-    quietShell(true);
-    music(false);
-    if(n=="BATTLE"){
-      screen("CHECKING","WEAPON");
-      battleEquip=null;
-      prefetchEquipment(true);
-    }
-    screen("LOADING",n);
-    loadTimer=setTimeout(function(){
-      var s,f;
-      loadTimer=0;
-      try{
-        h.setColor(0).fillRect(0,0,W-1,H-1);
-        flip(0,H-1);
-        gc();
-        s=txt(B+"CODE/"+n+".JS");
-        if(!s)throw "MISSING "+n+".JS";
-        f=eval(s);
-        s=null;
-        gc();
-        mod=f(api,a||{});
-        f=null;
-        loading=false;
-        gc();
-      }catch(e){
-        loading=false;
-        screen("LOAD FAILED",(""+e).substr(0,42));
-      }
-    },20);
-  }
-
-  function exitApp(){
-    if(exiting)return;
-    exiting=true;
-    music(false);
-    quietShell(false);
-    try{if(mod&&mod.save)mod.save(true);}catch(e){}
-    try{Pip.CURRENT.fullscreen=false;}catch(e2){}
-    try{Pip.emit("mode",home,true);}catch(e3){try{Pip.changeMenu();}catch(e4){remove();}}
-    if(exitTimer)clearTimeout(exitTimer);
-    exitTimer=setTimeout(function(){exitTimer=0;if(!loading&&exiting)try{Pip.changeMenu();}catch(e){}},180);
-  }
-
-  function remove(){
-    loading=true;
-    if(loadTimer)clearTimeout(loadTimer);
-    if(exitTimer)clearTimeout(exitTimer);
-    loadTimer=exitTimer=0;
-    unload();
-    music(false);
-    quietShell(false);
-    try{Pip.removeListener("knob1",k1);}catch(e){}
-    try{Pip.removeListener("knob2",k2);}catch(e2){}
-    try{Pip.CURRENT.fullscreen=false;}catch(e3){}
-    try{if(Pip.setWatches)Pip.setWatches();}catch(e4){}
-    gc();
-  }
-
-  function k1(v,l){
-    if(loading)return;
-    if(mod&&mod.k1){mod.k1(v,l);return;}
-    if(mode=="splash")return;
-    if(mode=="menu"){
-      if(v!==0||l)return;
-      sound("SELECT");
-      mode="loading";
-      clearStartMedia();
-      if(sel)loadModule("WORLD",{});
-      else loadModule("WORLD",{newGame:true});
-    }
-  }
-
-  function k2(v){
-    if(loading)return;
-    if(mod&&mod.k2){mod.k2(v);return;}
-    if(mode=="menu"&&v){
-      sel=sel?0:1;
-      drawMenu();
-    }
-  }
-
-  var api={
-    base:B,w:W,h:H,flip:flip,
-    equip:function(){return prefetchEquipment();},
-    world:function(a){loadModule("WORLD",a);},
-    battle:function(a){loadModule("BATTLE",a);},
-    interior:function(a){loadModule("INTERIOR",a);},
-    inventory:function(a){loadModule("INVENTORY",a);},
-    pause:function(a){loadModule("PAUSE",a);},
-    shop:function(a){loadModule("SHOP",a);},
-    shoot:function(a){loadModule("SHOOT",a);},
-    music:music,exit:exitApp,gc:gc
-  };
-
-  try{Pip.CURRENT.fullscreen=true;}catch(e){}
-  quietShell(false);
-  try{Pip.onExclusive("knob1",k1);}catch(e2){try{Pip.on("knob1",k1);}catch(e3){}}
-  try{Pip.onExclusive("knob2",k2);}catch(e4){try{Pip.on("knob2",k2);}catch(e5){}}
+  var API={base:B,w:W,h:H,flip:flip,gc:gc,equip:equip,music:music,exit:exitApp,
+    world:function(a){route("W",a,100)},returnWorld:back,
+    battle:function(a){route("B",a,80)},shop:function(a){route("S",a,55)},
+    pause:function(a){route("P",a,55)},interior:function(a){route("R",a,75)},house:function(a){route("I",a,65)}};
+  try{Pip.CURRENT.fullscreen=true}catch(e){}
+  quiet(0);
+  try{Pip.onExclusive("knob1",k1)}catch(e2){try{Pip.on("knob1",k1)}catch(e3){}}
+  try{Pip.onExclusive("knob2",k2)}catch(e4){try{Pip.on("knob2",k2)}catch(e5){}}
   start();
-  return {id:"BIGIRON",notDefault:true,fullscreen:true,remove:remove};
+  return{id:"BIGIRON",notDefault:true,fullscreen:true,remove:remove};
 });

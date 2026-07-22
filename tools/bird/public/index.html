@@ -17,15 +17,38 @@
     </header>
 
     <nav class="tabs" aria-label="B.I.R.D. sections">
+      <button class="tab" data-view="worlds">World Index</button>
       <button class="tab active" data-view="world">World Builder</button>
+      <button class="tab" data-view="interior">Interior</button>
       <button class="tab" data-view="art">World Art</button>
       <button class="tab" data-view="sprite">Sprite Creator</button>
-      <button class="tab" data-view="battleScene">Battle Scene</button>
+      <button class="tab" data-view="battleScene">Battle UI</button>
       <button class="tab" data-view="items">Items</button>
-      <button class="tab" data-view="package">Upload Checklist</button>
+      <button class="tab" data-view="media">Media & Build</button>
     </nav>
 
     <main class="workspace">
+      <section class="panel left hidden" id="worldIndexPanel" data-view-panel="worlds">
+        <h2>World Index</h2>
+        <p class="hint">Each map has a live Big Iron memory budget. Red means stop adding content or split it into another map/interior.</p>
+        <div class="box">
+          <h2>Budget Rules</h2>
+          <div id="limitReadout" class="limit-list"></div>
+        </div>
+        <div class="actions">
+          <button id="refreshWorldIndex">Refresh Index</button>
+          <button id="openSelectedWorld" class="primary">Open Selected World</button>
+        </div>
+      </section>
+
+      <section class="stage hidden" id="worldIndexStage" data-view-panel="worlds">
+        <div class="stage-head">
+          <strong>Big Iron World Chain</strong>
+          <span id="worldIndexReadout">6 worlds</span>
+        </div>
+        <div class="world-cards" id="worldCards"></div>
+      </section>
+
       <section class="panel left" id="worldPanel" data-view-panel="world">
         <div class="field-row">
           <label>World
@@ -35,12 +58,12 @@
         </div>
         <div class="field-row">
           <label>World ID
-            <input id="worldId" value="WORLD_01">
+            <input id="worldId" value="WORLD_NEW">
           </label>
           <button id="newWorld">New</button>
         </div>
         <label>Map Name
-          <input id="worldName" value="Sunscar">
+          <input id="worldName" value="New World">
         </label>
         <div class="field-row">
           <label>Map Width
@@ -49,6 +72,11 @@
           <label>Map Height
             <input id="worldRows" type="number" min="8" max="64" value="24">
           </label>
+        </div>
+        <div class="box budget-box">
+          <h2>Memory Budget</h2>
+          <div id="worldBudgetBars"></div>
+          <p class="hint" id="worldBudgetHint">Compact maps keep the Pip-Boy from running out of memory.</p>
         </div>
         <div class="box">
           <h2>World Art</h2>
@@ -74,12 +102,12 @@
             <option value="exit">Exit</option>
             <option value="regular">Regular Encounter</option>
             <option value="npcEncounter">NPC Encounter</option>
+            <option value="interior">Interior Door</option>
             <option value="miniboss">Miniboss Encounter</option>
             <option value="forge">Forge Press</option>
             <option value="finalBoss">Final Boss Encounter</option>
             <option value="boss">Boss Encounter</option>
             <option value="shoot">Shoot Encounter</option>
-            <option value="duel">Sprite Battle Encounter</option>
             <option value="tree">Tree</option>
             <option value="npc">NPC</option>
             <option value="camp">Camp</option>
@@ -153,6 +181,12 @@
           <label>Map Sprite
             <select id="decorSprite"></select>
           </label>
+          <div class="field-row">
+            <label>Shop Sprite
+              <select id="shopSprite"></select>
+            </label>
+            <button id="editShopSprite">Edit Shop Sprite</button>
+          </div>
         </div>
 
         <div class="box">
@@ -204,6 +238,84 @@
         </div>
         <div class="world-grid" id="worldGrid"></div>
         <textarea id="worldJson" spellcheck="false"></textarea>
+      </section>
+
+      <section class="panel left hidden" id="interiorPanel" data-view-panel="interior">
+        <h2>Interior World Editor</h2>
+        <p class="hint">Build a door encounter that loads the lightweight interior module, lets an NPC confront the player, then hands into battle.</p>
+        <div class="box">
+          <h2>Interior Door</h2>
+          <label>Room Name
+            <input id="interiorRoom" value="SUN KING'S HALL">
+          </label>
+          <label>Door Prompt
+            <input id="interiorPrompt" value="ENTER?">
+          </label>
+          <label>Enemy
+            <select id="interiorEnemy"></select>
+          </label>
+          <label>Enemy Sprite Slot
+            <select id="interiorNpcSprite"></select>
+          </label>
+          <div class="field-row">
+            <label>BPP
+              <select id="interiorSpriteBpp">
+                <option value="1">1</option>
+                <option value="2" selected>2</option>
+                <option value="4">4</option>
+              </select>
+            </label>
+          </div>
+          <label>Upload Enemy Image
+            <input id="interiorSpriteImage" type="file" accept="image/*">
+          </label>
+          <button id="saveInteriorEnemySprite">Convert + Save NPC IMG Slot</button>
+          <label>Confrontation Dialogue
+            <textarea id="interiorDialogue" spellcheck="false">HOW YOU ENJOYING THE RADS?</textarea>
+          </label>
+          <div class="field-row">
+            <label>Fight Text
+              <input id="interiorFightText" value="FIGHT">
+            </label>
+            <label>Flee Text
+              <input id="interiorFleeText" value="FLEE">
+            </label>
+          </div>
+          <div class="field-row">
+            <label>Launch Title
+              <input id="interiorLaunchTitle" value="INTERIOR">
+            </label>
+            <label>Subtitle
+              <input id="interiorLaunchSubtitle" placeholder="SOLOMON RAY">
+            </label>
+          </div>
+          <label class="check">
+            <input id="interiorOnce" type="checkbox" checked>
+            Clear after victory
+          </label>
+        </div>
+        <div class="box">
+          <h2>Placement</h2>
+          <p class="hint">Choose Interior Door here, then click the door tile in World Builder.</p>
+          <div class="actions">
+            <button id="useInteriorTool" class="primary">Use Interior Door Tool</button>
+            <button id="previewInterior">Preview Interior JSON</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="stage hidden" id="interiorStage" data-view-panel="interior">
+        <div class="stage-head">
+          <strong id="interiorTitle">Interior Preview</strong>
+          <span>runtime-light</span>
+        </div>
+        <div class="interior-preview">
+          <div class="room-wall"></div>
+          <div class="room-npc" id="interiorNpcPreview">NPC</div>
+          <div class="room-player">YOU</div>
+          <div class="room-dialogue" id="interiorDialoguePreview">HOW YOU ENJOYING THE RADS?</div>
+        </div>
+        <textarea id="interiorJson" spellcheck="false"></textarea>
       </section>
 
       <section class="panel left hidden" id="artPanel" data-view-panel="art">
@@ -290,13 +402,18 @@
       </section>
 
       <section class="panel left hidden" id="spritePanel" data-view-panel="sprite">
+        <div class="box">
+          <h2>Enemy NPC Slots</h2>
+          <p class="hint">Every enemy gets a matching 34x34 IMG sprite slot. Use a slot, upload art, then Save Runtime Sprite.</p>
+          <div id="enemySpriteSlots" class="enemy-slot-list"></div>
+        </div>
         <div class="field-row">
           <label>Existing Sprite
             <select id="spriteSelect"></select>
           </label>
           <button id="loadSprite">Load</button>
         </div>
-        <p class="hint">Player direction sprites use 34x34 IMG files for the current low-memory build.</p>
+        <p class="hint">Player and NPC sprites use 34x34 IMG files for the current low-memory build.</p>
         <label>Name
           <input id="spriteName" value="PLAYER_SPRITEUP">
         </label>
@@ -304,6 +421,8 @@
           <select id="spriteScope">
             <option value="global">Global</option>
             <option value="world">Current World</option>
+            <option value="npc">NPC IMG</option>
+            <option value="interior">Interior NPC IMG</option>
           </select>
         </label>
         <div class="field-row">
@@ -362,6 +481,7 @@
         </div>
         <div class="actions">
           <button id="newSprite">New</button>
+          <button id="newNpcSprite">New NPC</button>
           <button id="mirrorSprite">Mirror</button>
           <button id="invertSprite">Invert</button>
           <button id="saveSprite" class="primary">Save Runtime Sprite</button>
@@ -381,117 +501,127 @@
 
       <section class="panel left hidden" id="battleScenePanel" data-view-panel="battleScene">
         <div class="box">
-          <h2>Battle Template</h2>
-          <div class="field-row">
-            <label>Enemy Name
-              <input id="duelEnemyName" value="RADSCORP">
-            </label>
-            <label>Enemy Level
-              <input id="duelEnemyLevel" type="number" value="16" min="1" max="99">
-            </label>
-          </div>
-          <label>Enemy Sprite
-            <select id="duelEnemySprite"></select>
+          <h2>Encounter Battle UI</h2>
+          <p class="hint">Pick an enemy, then edit only that enemy's command labels, prompts, pause labels, and videos. Player stats, weapon data, and confrontation sprites stay in their own systems.</p>
+          <label>Enemy
+            <select id="battleEnemySelect"></select>
           </label>
           <div class="field-row">
-            <label>Player Name
-              <input id="duelPlayerName" value="GUNSLNGR">
+            <label>Name
+              <input id="battleEnemyName" value="SOLOMON RAY">
             </label>
-            <label>Player Level
-              <input id="duelPlayerLevel" type="number" value="18" min="1" max="99">
-            </label>
-          </div>
-          <label>Player Sprite
-            <select id="duelPlayerSprite"></select>
-          </label>
-          <div class="field-row">
-            <label>Projectile
-              <select id="duelProjectileSprite"></select>
-            </label>
-            <label>Effect
-              <select id="duelEffectSprite"></select>
+            <label>Folder
+              <input id="battleFolder" placeholder="Granny">
             </label>
           </div>
           <div class="field-row">
-            <label>Enemy Sprite XY
-              <input id="duelEnemyPos" value="210,18">
+            <label>Level
+              <input id="battleLevel" type="number" min="1" max="99" value="7">
             </label>
-            <label>Player Sprite XY
-              <input id="duelPlayerPos" value="30,86">
+            <label>Max HP
+              <input id="battleMaxHp" type="number" min="1" max="999" value="95">
             </label>
           </div>
-          <label>Projectile Path
-            <input id="duelShotPath" value="128,122,220,70">
+          <div class="field-row">
+            <label>XP
+              <input id="battleXp" type="number" min="0" max="999" value="55">
+            </label>
+            <label>Melee Power
+              <input id="battleMeleePower" type="number" min="0" max="99" value="0">
+            </label>
+          </div>
+          <div class="field-row">
+            <label>Rad Amount, Seconds
+              <input id="battleRad" placeholder="1,4">
+            </label>
+            <label>DOT Amount, Seconds
+              <input id="battleDot" placeholder="3,5">
+            </label>
+          </div>
+          <label class="check">
+            <input id="battleMelee" type="checkbox">
+            Force melee flow
           </label>
-          <label>Boxes: enemy; player; command; text; spare
-            <input id="duelBoxes" value="8,8,154,52;158,111,154,58;178,171,134,42;4,203,312,33;4,171,174,42">
+          <label class="check">
+            <input id="battleReload" type="checkbox">
+            Enemy reload choice
           </label>
-          <label>Action Text: attack; power; defend; run
-            <input id="duelMessages" value="ATTACK!;POWER!;DEFEND!;FLEE!">
+          <label>Video Overrides: idle,start,enemyFaint,playerFaint,victory,defeat
+            <input id="battleVideos" placeholder="BATTLE_IDLE.avi,BATTLE_START.avi,ENEMY_FAINT.avi,PLAYER_FAINT.avi,VICTORY.avi,DEFEAT.avi">
           </label>
+          <h3>Command UI</h3>
+          <div class="field-row">
+            <label>Menu Prompt
+              <input id="battlePrompt" value="CHOOSE AN ACTION">
+            </label>
+            <label>Reload Prompt
+              <input id="battleReloadPrompt" value="SLASH NOW">
+            </label>
+          </div>
+          <div class="field-row">
+            <label>Attack Button
+              <input id="battleAttackLabel" placeholder="leave blank for weapon move">
+            </label>
+            <label>Stim Button
+              <input id="battleStimLabel" value="STIMPAK">
+            </label>
+          </div>
+          <div class="field-row">
+            <label>Reload Attack
+              <input id="battleReloadAttackLabel" value="SLASH">
+            </label>
+            <label>Reload Stim
+              <input id="battleReloadStimLabel" value="STIMPAK">
+            </label>
+          </div>
+          <div class="field-row">
+            <label>Attack Detail
+              <input id="battleAttackDetail" value="DMG {dmg}">
+            </label>
+            <label>Stim Detail
+              <input id="battleStimDetail" value="HEAL {heal} x{st}">
+            </label>
+          </div>
+          <div class="field-row">
+            <label>Enemy Reload Text
+              <input id="battleEnemyReload" value="ENEMY RELOADS">
+            </label>
+            <label>Reload Attack Text
+              <input id="battleReloadAttackMsg" value="KEEP SLASHING">
+            </label>
+          </div>
+          <h3>Battle Pause</h3>
+          <div class="field-row">
+            <label>Resume
+              <input id="battlePauseResume" value="RESUME">
+            </label>
+            <label>Save
+              <input id="battlePauseSave" value="SAVE LOCATION">
+            </label>
+          </div>
+          <div class="field-row">
+            <label>Exit
+              <input id="battlePauseExit" value="EXIT GAME">
+            </label>
+            <label>Footer Note
+              <input id="battlePauseNote" value="TURN WHEEL / PRESS TO SELECT">
+            </label>
+          </div>
+          <pre id="battleUiPreview"></pre>
           <div class="actions">
-            <button id="duelUseWorldTool" class="primary">Use On World Map</button>
-            <button id="duelRefreshPreview">Refresh Preview</button>
+            <button id="loadBattleEnemy">Load Enemy UI</button>
+            <button id="saveBattleEnemy" class="primary">Save Battle UI</button>
           </div>
         </div>
 
-        <div class="box">
-          <h2>Scene Sprite Maker</h2>
-          <label>Slot
-            <select id="sceneSpriteSlot">
-              <option value="enemy">Enemy</option>
-              <option value="player">Player</option>
-              <option value="projectile">Projectile</option>
-              <option value="effect">Effect</option>
-            </select>
-          </label>
-          <label>Name
-            <input id="sceneSpriteName" value="RADSCORP_SPRITE">
-          </label>
-          <div class="field-row">
-            <label>Width
-              <input id="sceneSpriteWidth" type="number" min="4" max="96" value="64">
-            </label>
-            <label>Height
-              <input id="sceneSpriteHeight" type="number" min="4" max="96" value="48">
-            </label>
-          </div>
-          <div class="field-row">
-            <label>BPP
-              <select id="sceneSpriteBpp">
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="4" selected>4</option>
-              </select>
-            </label>
-            <label>Brush
-              <select id="sceneSpriteBrush"></select>
-            </label>
-          </div>
-          <label>Image To Slot Sprite
-            <input id="sceneSpriteImageImport" type="file" accept="image/*">
-          </label>
-          <div class="actions">
-            <button id="sceneNewSprite">New Slot Sprite</button>
-            <button id="sceneLoadSprite">Load Slot Sprite</button>
-            <button id="sceneConvertImage">Convert Image</button>
-            <button id="sceneSaveSprite" class="primary">Save Slot Sprite</button>
-          </div>
-        </div>
       </section>
 
       <section class="stage hidden" id="battleSceneStage" data-view-panel="battleScene">
         <div class="stage-head">
-          <strong>Sprite Battle Preview</strong>
-          <span id="duelPreviewReadout">320 x 236</span>
+          <strong>Current Big Iron Battle UI Preview</strong>
+          <span>480 x 320 runtime layout</span>
         </div>
-        <canvas id="battleSceneCanvas" width="640" height="472"></canvas>
-        <div class="stage-head">
-          <strong id="sceneSpriteTitle">RADSCORP_SPRITE</strong>
-          <span id="sceneSpriteReadout">64 x 48</span>
-        </div>
-        <div class="scene-sprite-grid" id="sceneSpriteGrid"></div>
-        <textarea id="duelJson" spellcheck="false"></textarea>
+        <canvas id="battleRuntimeCanvas" width="480" height="320"></canvas>
       </section>
 
       <section class="panel left hidden" id="itemsPanel" data-view-panel="items">
@@ -590,9 +720,19 @@
         <textarea id="itemJson" spellcheck="false"></textarea>
       </section>
 
-      <section class="panel wide hidden" id="packagePanel" data-view-panel="package">
-        <h2>Current Big Iron Upload Checklist</h2>
-        <p class="hint">This list follows the working build: compact APP, BIN start/menu screens, IMG player sprites, and minified runtime modules.</p>
+      <section class="panel wide hidden" id="packagePanel" data-view-panel="media">
+        <h2>Media & Build</h2>
+        <p class="hint">Use this as the Big Iron build dock: upload paths, conversion targets, and media size checks in one place.</p>
+        <div class="geck-board">
+          <div class="geck-card">
+            <strong>Media Inventory</strong>
+            <div id="mediaReadout" class="media-list">Loading media...</div>
+          </div>
+          <div class="geck-card">
+            <strong>Conversion Targets</strong>
+            <pre id="converterNotes"></pre>
+          </div>
+        </div>
         <pre id="packageNotes"></pre>
       </section>
     </main>

@@ -1,58 +1,23 @@
-Big Iron RPG 
+# BIG IRON 0.41 Lean Runtime
 
-INSTALL
-Install through the holotape registry like the other games.
+This folder is a clean device-ready build for `/HOLO/BIGIRON/`.
 
-For a manual SD-card copy, place these files under:
-HOLO/BIGIRON/
+Active code files use short names to reduce module-path and callback overhead:
 
-Required:
-  APP.JS
-  battle.json
-  CODE/
-  DATA/
-  ST.IMG
-  PS.IMG
-  VIDEO/
+- `CODE/W.JS` — World 1 and permanent Chuck follower
+- `CODE/B.JS` — battles
+- `CODE/S.JS` — shop
+- `CODE/P.JS` — pause/AID inventory
+- `CODE/R.JS` — Solomon interior
 
-Optional:
-  AUDIO/
+Do not keep older `WORLD.JS`, `BATTLE.JS`, `SHOP.JS`, `PAUSE.JS`, `INTERIOR.JS`, `H.JS`, `1*.JS`, or `.MIN.JS` files beside this build.
 
-VIDEO LAYOUT
-Rename the current video set folder to:
-HOLO/BIGIRON/VIDEO/Granny/
+World controls:
+- Left wheel rotation: up/down
+- Right wheel rotation: left/right
+- Left-wheel click: interact
+- Double left-wheel click: pause
 
-Every enemy folder uses the same filenames:
-  BATTLE_IDLE.avi
-  BATTLE_START.avi
-  P_MOVE_1.avi
-  P_MOVE_2.avi
-  P_MOVE_3.avi
-  P_MOVE_4.avi
-  E_MOVE_1.avi
-  E_MOVE_2.avi
-  E_MOVE_3.avi
-  E_MOVE_4.avi
-  ENEMY_FAINT.avi
-  PLAYER_FAINT.avi
-  VICTORY.avi
-  DEFEAT.avi
-
-
-ADDING AN ENEMY
-1. Duplicate the Granny folder and rename it.
-2. Replace the AVI files but keep the same filenames.
-3. Add an enemy entry to battle.json with a matching folder value.
-
-ENCOUNTER SELECTION
-  "enemy":"GRANNY"             exact enemy
-  "enemy":"RANDOM"             any installed/configured enemy
-  "enemy":["GRANNY","RADROACH"] random from that installed pool
-
-An enemy is considered installed when its BATTLE_IDLE.avi exists. Missing enemy folders are skipped. A requested missing enemy falls back to another installed enemy.
-
-PAUSE / EXIT
-Double-press the main wheel. EXIT GAME saves silently, stops game video and timers, releases world/enemy caches, restores standard Pip timers and hardware watches, then uses the firmware menu-change path to reload the normal Pip-Boy page. It returns to the mode that was active before the holotape instead of forcing ITEMS.
-
-START SCREEN
-The holotape opens on a Big Iron title screen. Press the left wheel to start or continue from the saved map state.
+Shop/battle/pause:
+- Right wheel: select
+- Left-wheel click: confirm/use
