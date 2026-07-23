@@ -1,7 +1,6 @@
 (function () {
   'use strict';
 
-  var fs = require('fs');
   var ROOT = 'HOLO/LEDCOLOR';
   var STATE_FILE = ROOT + '/LED.JSON';
   var W = 480;
@@ -656,4 +655,4 @@
     fullscreen: true,
     remove: remove,
   };
-})();
+});
