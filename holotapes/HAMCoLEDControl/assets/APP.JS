@@ -333,7 +333,7 @@
     font(16)
       .setFontAlign(-1, -1)
       .drawString('COLOR: ' + COLORS[service.state.color].note, 22, H - 52);
-    drawFooter('RIGHT KNOB MOVE  |  LEFT PRESS SELECT');
+    drawFooter('EITHER KNOB MOVE  |  LEFT PRESS SELECT');
     h.flip();
   }
 
@@ -412,7 +412,7 @@
     font(16)
       .setFontAlign(-1, -1)
       .drawString('DOWNLIGHT IS SINGLE-COLOR HARDWARE', 22, H - 52);
-    drawFooter('RIGHT KNOB MOVE  |  LEFT PRESS TEST');
+    drawFooter('EITHER KNOB MOVE  |  LEFT PRESS TEST');
     h.flip();
   }
 
@@ -587,8 +587,7 @@
     }
   }
 
-  function onKnob2(dir) {
-    if (!dir || removed) return;
+  function moveSelection(dir) {
     var len = screen === 'main' ? mainItems().length : TESTS.length;
     selected = (selected + (dir > 0 ? 1 : -1) + len) % len;
     sound('NEXT');
@@ -596,8 +595,17 @@
     else drawTests();
   }
 
+  function onKnob2(dir) {
+    if (!dir || removed) return;
+    moveSelection(dir);
+  }
+
   function onKnob1(dir) {
-    if (removed || dir !== 0) return;
+    if (removed) return;
+    if (dir !== 0) {
+      moveSelection(dir);
+      return;
+    }
     if (screen === 'main') selectMain();
     else selectTest();
   }

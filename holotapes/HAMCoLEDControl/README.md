@@ -12,7 +12,7 @@ Radiation RGB color control and safe LED hardware tester for the Pip-Boy 3000.
 
 ### CONTROLS
 
-Right knob: move up/down Left wheel press: select Any normal mode button: leave
+Either knob: move up/down Left wheel press: select Any normal mode button: leave
 the app and return to Pip-OS
 
 ### WHAT IT CONTROLS
