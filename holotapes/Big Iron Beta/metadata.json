@@ -1,0 +1,426 @@
+{
+    "id": "bigiron",
+    "name": "Big Iron RPG",
+    "author": "@joemto20-tech",
+    "version": "0.47.2-dogtown-return-router",
+    "description": "Fixes WORLD_03 return routing so the motorcycle run, Dogtown battles, shops, interiors, and Pause return to Q.JS instead of loading Sunscar with Dogtown coordinates.",
+    "icon": "BIGIRON.IMG",
+    "previews": [],
+    "type": "game",
+    "readme": "README.md",
+    "storage": [
+        {
+            "name": "HOLO/BIGIRON/APP.JS",
+            "url": "APP.JS"
+        },
+        {
+            "name": "HOLO/BIGIRON/B.JS",
+            "url": "B.JS"
+        },
+        {
+            "name": "HOLO/BIGIRON/BD.BIN",
+            "url": "BD.BIN"
+        },
+        {
+            "name": "HOLO/BIGIRON/BICT.wav",
+            "url": "BICT.wav"
+        },
+        {
+            "name": "HOLO/BIGIRON/BIGIRON.IMG",
+            "url": "BIGIRON.IMG"
+        },
+        {
+            "name": "HOLO/BIGIRON/BL.BIN",
+            "url": "BL.BIN"
+        },
+        {
+            "name": "HOLO/BIGIRON/BR.BIN",
+            "url": "BR.BIN"
+        },
+        {
+            "name": "HOLO/BIGIRON/BU.BIN",
+            "url": "BU.BIN"
+        },
+        {
+            "name": "HOLO/BIGIRON/C.BIN",
+            "url": "C.BIN"
+        },
+        {
+            "name": "HOLO/BIGIRON/C.JS",
+            "url": "C.JS"
+        },
+        {
+            "name": "HOLO/BIGIRON/C2.BIN",
+            "url": "C2.BIN"
+        },
+        {
+            "name": "HOLO/BIGIRON/C3.BIN",
+            "url": "C3.BIN"
+        },
+        {
+            "name": "HOLO/BIGIRON/CA.BIN",
+            "url": "CA.BIN"
+        },
+        {
+            "name": "HOLO/BIGIRON/D.IMG",
+            "url": "D.IMG"
+        },
+        {
+            "name": "HOLO/BIGIRON/D.JS",
+            "url": "D.JS"
+        },
+        {
+            "name": "HOLO/BIGIRON/DD.IMG",
+            "url": "DD.IMG"
+        },
+        {
+            "name": "HOLO/BIGIRON/DL.IMG",
+            "url": "DL.IMG"
+        },
+        {
+            "name": "HOLO/BIGIRON/DR.IMG",
+            "url": "DR.IMG"
+        },
+        {
+            "name": "HOLO/BIGIRON/DU.IMG",
+            "url": "DU.IMG"
+        },
+        {
+            "name": "HOLO/BIGIRON/G.IMG",
+            "url": "G.IMG"
+        },
+        {
+            "name": "HOLO/BIGIRON/GA.BIN",
+            "url": "GA.BIN"
+        },
+        {
+            "name": "HOLO/BIGIRON/H.JS",
+            "url": "H.JS"
+        },
+        {
+            "name": "HOLO/BIGIRON/I.BIN",
+            "url": "I.BIN"
+        },
+        {
+            "name": "HOLO/BIGIRON/IMAGE.BIN",
+            "url": "IMAGE.BIN"
+        },
+        {
+            "name": "HOLO/BIGIRON/M.IMG",
+            "url": "M.IMG"
+        },
+        {
+            "name": "HOLO/BIGIRON/M.JS",
+            "url": "M.JS"
+        },
+        {
+            "name": "HOLO/BIGIRON/MENU.BIN",
+            "url": "MENU.BIN"
+        },
+        {
+            "name": "HOLO/BIGIRON/MT.BIN",
+            "url": "MT.BIN"
+        },
+        {
+            "name": "HOLO/BIGIRON/NVTH.wav",
+            "url": "NVTH.wav"
+        },
+        {
+            "name": "HOLO/BIGIRON/P.JS",
+            "url": "P.JS"
+        },
+        {
+            "name": "HOLO/BIGIRON/PD.BIN",
+            "url": "PD.BIN"
+        },
+        {
+            "name": "HOLO/BIGIRON/PD.IMG",
+            "url": "PD.IMG"
+        },
+        {
+            "name": "HOLO/BIGIRON/PL.BIN",
+            "url": "PL.BIN"
+        },
+        {
+            "name": "HOLO/BIGIRON/PL.IMG",
+            "url": "PL.IMG"
+        },
+        {
+            "name": "HOLO/BIGIRON/PR.BIN",
+            "url": "PR.BIN"
+        },
+        {
+            "name": "HOLO/BIGIRON/PR.IMG",
+            "url": "PR.IMG"
+        },
+        {
+            "name": "HOLO/BIGIRON/PU.BIN",
+            "url": "PU.BIN"
+        },
+        {
+            "name": "HOLO/BIGIRON/PU.IMG",
+            "url": "PU.IMG"
+        },
+        {
+            "name": "HOLO/BIGIRON/Q.JS",
+            "url": "Q.JS"
+        },
+        {
+            "name": "HOLO/BIGIRON/R.IMG",
+            "url": "R.IMG"
+        },
+        {
+            "name": "HOLO/BIGIRON/R.JS",
+            "url": "R.JS"
+        },
+        {
+            "name": "HOLO/BIGIRON/README.md",
+            "url": "README.md"
+        },
+        {
+            "name": "HOLO/BIGIRON/RESIDENTD.IMG",
+            "url": "RESIDENTD.IMG"
+        },
+        {
+            "name": "HOLO/BIGIRON/RJ.BIN",
+            "url": "RJ.BIN"
+        },
+        {
+            "name": "HOLO/BIGIRON/RSC.BIN",
+            "url": "RSC.BIN"
+        },
+        {
+            "name": "HOLO/BIGIRON/RT.BIN",
+            "url": "RT.BIN"
+        },
+        {
+            "name": "HOLO/BIGIRON/S.IMG",
+            "url": "S.IMG"
+        },
+        {
+            "name": "HOLO/BIGIRON/S.JS",
+            "url": "S.JS"
+        },
+        {
+            "name": "HOLO/BIGIRON/SC.BIN",
+            "url": "SC.BIN"
+        },
+        {
+            "name": "HOLO/BIGIRON/SH.BIN",
+            "url": "SH.BIN"
+        },
+        {
+            "name": "HOLO/BIGIRON/SM.BIN",
+            "url": "SM.BIN"
+        },
+        {
+            "name": "HOLO/BIGIRON/SR.IMG",
+            "url": "SR.IMG"
+        },
+        {
+            "name": "HOLO/BIGIRON/Startg1.BIN",
+            "url": "Startg1.BIN"
+        },
+        {
+            "name": "HOLO/BIGIRON/T.IMG",
+            "url": "T.IMG"
+        },
+        {
+            "name": "HOLO/BIGIRON/TH.BIN",
+            "url": "TH.BIN"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/Granny/BATTLE_IDLE.avi",
+            "url": "VIDEO/Granny/BATTLE_IDLE.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/Granny/BATTLE_START.avi",
+            "url": "VIDEO/Granny/BATTLE_START.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/Granny/DEFEAT.avi",
+            "url": "VIDEO/Granny/DEFEAT.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/Granny/ENEMY_FAINT.avi",
+            "url": "VIDEO/Granny/ENEMY_FAINT.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/Granny/E_MOVE_1.avi",
+            "url": "VIDEO/Granny/E_MOVE_1.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/Granny/E_MOVE_2.avi",
+            "url": "VIDEO/Granny/E_MOVE_2.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/Granny/E_MOVE_3.avi",
+            "url": "VIDEO/Granny/E_MOVE_3.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/Granny/E_MOVE_4.avi",
+            "url": "VIDEO/Granny/E_MOVE_4.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/Granny/PLAYER_FAINT.avi",
+            "url": "VIDEO/Granny/PLAYER_FAINT.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/Granny/P_MOVE_1.avi",
+            "url": "VIDEO/Granny/P_MOVE_1.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/Granny/P_MOVE_2.avi",
+            "url": "VIDEO/Granny/P_MOVE_2.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/Granny/VICTORY.avi",
+            "url": "VIDEO/Granny/VICTORY.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/RADSCORPION/BATTLE_IDLE.avi",
+            "url": "VIDEO/RADSCORPION/BATTLE_IDLE.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/RADSCORPION/BATTLE_START.avi",
+            "url": "VIDEO/RADSCORPION/BATTLE_START.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/RADSCORPION/DEFEAT.avi",
+            "url": "VIDEO/RADSCORPION/DEFEAT.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/RADSCORPION/ENEMY_FAINT.avi",
+            "url": "VIDEO/RADSCORPION/ENEMY_FAINT.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/RADSCORPION/E_MOVE_1.avi",
+            "url": "VIDEO/RADSCORPION/E_MOVE_1.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/RADSCORPION/E_MOVE_2.avi",
+            "url": "VIDEO/RADSCORPION/E_MOVE_2.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/RADSCORPION/E_MOVE_3.avi",
+            "url": "VIDEO/RADSCORPION/E_MOVE_3.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/RADSCORPION/E_MOVE_4.avi",
+            "url": "VIDEO/RADSCORPION/E_MOVE_4.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/RADSCORPION/PLAYER_FAINT.avi",
+            "url": "VIDEO/RADSCORPION/PLAYER_FAINT.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/RADSCORPION/P_MOVE_1.avi",
+            "url": "VIDEO/RADSCORPION/P_MOVE_1.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/RADSCORPION/P_MOVE_2.avi",
+            "url": "VIDEO/RADSCORPION/P_MOVE_2.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/RADSCORPION/VICTORY.avi",
+            "url": "VIDEO/RADSCORPION/VICTORY.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/RAIDER/BATTLE_IDLE.avi",
+            "url": "VIDEO/RAIDER/BATTLE_IDLE.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/RAIDER/BATTLE_START.avi",
+            "url": "VIDEO/RAIDER/BATTLE_START.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/RAIDER/DEFEAT.avi",
+            "url": "VIDEO/RAIDER/DEFEAT.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/RAIDER/ENEMY_FAINT.avi",
+            "url": "VIDEO/RAIDER/ENEMY_FAINT.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/RAIDER/E_MOVE_1.avi",
+            "url": "VIDEO/RAIDER/E_MOVE_1.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/RAIDER/E_MOVE_2.avi",
+            "url": "VIDEO/RAIDER/E_MOVE_2.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/RAIDER/E_MOVE_3.avi",
+            "url": "VIDEO/RAIDER/E_MOVE_3.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/RAIDER/E_MOVE_4.avi",
+            "url": "VIDEO/RAIDER/E_MOVE_4.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/RAIDER/PLAYER_FAINT.avi",
+            "url": "VIDEO/RAIDER/PLAYER_FAINT.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/RAIDER/P_MOVE_1.avi",
+            "url": "VIDEO/RAIDER/P_MOVE_1.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/RAIDER/P_MOVE_2.avi",
+            "url": "VIDEO/RAIDER/P_MOVE_2.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/RAIDER/VICTORY.avi",
+            "url": "VIDEO/RAIDER/VICTORY.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/SOLOMON_RAY/BATTLE_IDLE.avi",
+            "url": "VIDEO/SOLOMON_RAY/BATTLE_IDLE.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/SOLOMON_RAY/BATTLE_START.avi",
+            "url": "VIDEO/SOLOMON_RAY/BATTLE_START.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/SOLOMON_RAY/E_MOVE_1.avi",
+            "url": "VIDEO/SOLOMON_RAY/E_MOVE_1.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/SOLOMON_RAY/E_MOVE_2.avi",
+            "url": "VIDEO/SOLOMON_RAY/E_MOVE_2.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/SOLOMON_RAY/E_MOVE_3.avi",
+            "url": "VIDEO/SOLOMON_RAY/E_MOVE_3.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/VIDEO/SOLOMON_RAY/E_MOVE_4.avi",
+            "url": "VIDEO/SOLOMON_RAY/E_MOVE_4.avi"
+        },
+        {
+            "name": "HOLO/BIGIRON/W.BIN",
+            "url": "W.BIN"
+        },
+        {
+            "name": "HOLO/BIGIRON/W.JS",
+            "url": "W.JS"
+        },
+        {
+            "name": "HOLO/BIGIRON/W2.BIN",
+            "url": "W2.BIN"
+        },
+        {
+            "name": "HOLO/BIGIRON/W3.BIN",
+            "url": "W3.BIN"
+        },
+        {
+            "name": "HOLO/BIGIRON/X.IMG",
+            "url": "X.IMG"
+        },
+        {
+            "name": "HOLO/BIGIRON/X.JS",
+            "url": "X.JS"
+        }
+    ],
+    "storageOptional": []
+}
