@@ -1,0 +1,516 @@
+{
+  "id": "bigiron",
+  "name": "Big Iron RPG",
+  "author": "@joemto20-tech",
+  "version": "0.58.1",
+  "description": "A wasteland RPG in three towns. Walk Sunscar, Rot's Crossing and Dogtown Heights, fight video-driven battles, race Rotjaw for his motorcycle, craft Scorched Rounds at the hotel workbench and put six of them through the Iron Warden.",
+  "icon": "previews/bigiron.png",
+  "previews": [
+    "previews/splash.bmp",
+    "previews/title.bmp",
+    "previews/sunscar.bmp",
+    "previews/crossing.bmp",
+    "previews/hotel.bmp"
+  ],
+  "type": "game",
+  "readme": "README.md",
+  "storage": [
+    {
+      "name": "HOLO/BIGIRON/AID.JS",
+      "url": "scripts/AID.JS"
+    },
+    {
+      "name": "HOLO/BIGIRON/APP.JS",
+      "url": "scripts/APP.JS"
+    },
+    {
+      "name": "HOLO/BIGIRON/BATTLE.JS",
+      "url": "scripts/BATTLE.JS"
+    },
+    {
+      "name": "HOLO/BIGIRON/CROSSING.JS",
+      "url": "scripts/CROSSING.JS"
+    },
+    {
+      "name": "HOLO/BIGIRON/DEMO.JS",
+      "url": "scripts/DEMO.JS"
+    },
+    {
+      "name": "HOLO/BIGIRON/DOGTOWN.JS",
+      "url": "scripts/DOGTOWN.JS"
+    },
+    {
+      "name": "HOLO/BIGIRON/HOTEL.JS",
+      "url": "scripts/HOTEL.JS"
+    },
+    {
+      "name": "HOLO/BIGIRON/INTERIOR.JS",
+      "url": "scripts/INTERIOR.JS"
+    },
+    {
+      "name": "HOLO/BIGIRON/INTRO.JS",
+      "url": "scripts/INTRO.JS"
+    },
+    {
+      "name": "HOLO/BIGIRON/PAUSE.JS",
+      "url": "scripts/PAUSE.JS"
+    },
+    {
+      "name": "HOLO/BIGIRON/RACE.JS",
+      "url": "scripts/RACE.JS"
+    },
+    {
+      "name": "HOLO/BIGIRON/SHOP.JS",
+      "url": "scripts/SHOP.JS"
+    },
+    {
+      "name": "HOLO/BIGIRON/SUNSCAR.JS",
+      "url": "scripts/SUNSCAR.JS"
+    },
+    {
+      "name": "HOLO/BIGIRON/WORKBENCH.JS",
+      "url": "scripts/WORKBENCH.JS"
+    },
+    {
+      "name": "HOLO/BIGIRON/BICT.wav",
+      "url": "assets/BICT.wav"
+    },
+    {
+      "name": "HOLO/BIGIRON/BIGIRON.IMG",
+      "url": "assets/BIGIRON.IMG"
+    },
+    {
+      "name": "HOLO/BIGIRON/C.BIN",
+      "url": "assets/C.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/C2.BIN",
+      "url": "assets/C2.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/C3.BIN",
+      "url": "assets/C3.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/CROSSMAP.BIN",
+      "url": "assets/CROSSMAP.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/D.IMG",
+      "url": "assets/D.IMG"
+    },
+    {
+      "name": "HOLO/BIGIRON/DD.BIN",
+      "url": "assets/DD.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/DD.IMG",
+      "url": "assets/DD.IMG"
+    },
+    {
+      "name": "HOLO/BIGIRON/DL.BIN",
+      "url": "assets/DL.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/DL.IMG",
+      "url": "assets/DL.IMG"
+    },
+    {
+      "name": "HOLO/BIGIRON/DR.BIN",
+      "url": "assets/DR.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/DR.IMG",
+      "url": "assets/DR.IMG"
+    },
+    {
+      "name": "HOLO/BIGIRON/DU.BIN",
+      "url": "assets/DU.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/DU.IMG",
+      "url": "assets/DU.IMG"
+    },
+    {
+      "name": "HOLO/BIGIRON/G.IMG",
+      "url": "assets/G.IMG"
+    },
+    {
+      "name": "HOLO/BIGIRON/G1.IMG",
+      "url": "assets/G1.IMG"
+    },
+    {
+      "name": "HOLO/BIGIRON/G2.IMG",
+      "url": "assets/G2.IMG"
+    },
+    {
+      "name": "HOLO/BIGIRON/G3.IMG",
+      "url": "assets/G3.IMG"
+    },
+    {
+      "name": "HOLO/BIGIRON/GA.BIN",
+      "url": "assets/GA.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/HR0.BIN",
+      "url": "assets/HR0.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/HR1.BIN",
+      "url": "assets/HR1.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/HR2.BIN",
+      "url": "assets/HR2.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/HR3.BIN",
+      "url": "assets/HR3.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/HR4.BIN",
+      "url": "assets/HR4.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/HR5.BIN",
+      "url": "assets/HR5.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/I.BIN",
+      "url": "assets/I.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/IMAGE.BIN",
+      "url": "assets/IMAGE.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/IPD.BIN",
+      "url": "assets/IPD.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/IPL.BIN",
+      "url": "assets/IPL.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/IPR.BIN",
+      "url": "assets/IPR.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/IPU.BIN",
+      "url": "assets/IPU.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/M.IMG",
+      "url": "assets/M.IMG"
+    },
+    {
+      "name": "HOLO/BIGIRON/MBD.BIN",
+      "url": "assets/MBD.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/MBL.BIN",
+      "url": "assets/MBL.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/MBR.BIN",
+      "url": "assets/MBR.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/MBU.BIN",
+      "url": "assets/MBU.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/MENU.BIN",
+      "url": "assets/MENU.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/MT.BIN",
+      "url": "assets/MT.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/PD.BIN",
+      "url": "assets/PD.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/PD.IMG",
+      "url": "assets/PD.IMG"
+    },
+    {
+      "name": "HOLO/BIGIRON/PL.BIN",
+      "url": "assets/PL.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/PL.IMG",
+      "url": "assets/PL.IMG"
+    },
+    {
+      "name": "HOLO/BIGIRON/PR.BIN",
+      "url": "assets/PR.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/PR.IMG",
+      "url": "assets/PR.IMG"
+    },
+    {
+      "name": "HOLO/BIGIRON/PU.BIN",
+      "url": "assets/PU.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/PU.IMG",
+      "url": "assets/PU.IMG"
+    },
+    {
+      "name": "HOLO/BIGIRON/Q.BIN",
+      "url": "assets/Q.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/R.IMG",
+      "url": "assets/R.IMG"
+    },
+    {
+      "name": "HOLO/BIGIRON/RACEP.BIN",
+      "url": "assets/RACEP.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/RACER.BIN",
+      "url": "assets/RACER.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/RBD.BIN",
+      "url": "assets/RBD.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/RBL.BIN",
+      "url": "assets/RBL.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/RBR.BIN",
+      "url": "assets/RBR.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/RBU.BIN",
+      "url": "assets/RBU.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/RESIDENTD.BIN",
+      "url": "assets/RESIDENTD.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/RESIDENTD.IMG",
+      "url": "assets/RESIDENTD.IMG"
+    },
+    {
+      "name": "HOLO/BIGIRON/RJ.BIN",
+      "url": "assets/RJ.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/RSC.BIN",
+      "url": "assets/RSC.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/RT.BIN",
+      "url": "assets/RT.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/S.IMG",
+      "url": "assets/S.IMG"
+    },
+    {
+      "name": "HOLO/BIGIRON/SC.BIN",
+      "url": "assets/SC.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/SHERIFFD.BIN",
+      "url": "assets/SHERIFFD.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/SHERIFFD.IMG",
+      "url": "assets/SHERIFFD.IMG"
+    },
+    {
+      "name": "HOLO/BIGIRON/SHERIFFL.BIN",
+      "url": "assets/SHERIFFL.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/SHERIFFL.IMG",
+      "url": "assets/SHERIFFL.IMG"
+    },
+    {
+      "name": "HOLO/BIGIRON/SHERIFFR.BIN",
+      "url": "assets/SHERIFFR.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/SHERIFFR.IMG",
+      "url": "assets/SHERIFFR.IMG"
+    },
+    {
+      "name": "HOLO/BIGIRON/SHERIFFU.BIN",
+      "url": "assets/SHERIFFU.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/SHERIFFU.IMG",
+      "url": "assets/SHERIFFU.IMG"
+    },
+    {
+      "name": "HOLO/BIGIRON/SM.BIN",
+      "url": "assets/SM.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/SR.BIN",
+      "url": "assets/SR.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/Startg1.BIN",
+      "url": "assets/Startg1.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/T.BIN",
+      "url": "assets/T.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/T.IMG",
+      "url": "assets/T.IMG"
+    },
+    {
+      "name": "HOLO/BIGIRON/TH.BIN",
+      "url": "assets/TH.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/W.BIN",
+      "url": "assets/W.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/W2.BIN",
+      "url": "assets/W2.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/W3.BIN",
+      "url": "assets/W3.BIN"
+    },
+    {
+      "name": "HOLO/BIGIRON/X.IMG",
+      "url": "assets/X.IMG"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/RADSCORPION/BATTLE_IDLE.avi",
+      "url": "video/RADSCORPION/BATTLE_IDLE.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/RADSCORPION/BATTLE_START.avi",
+      "url": "video/RADSCORPION/BATTLE_START.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/RADSCORPION/DEFEAT.avi",
+      "url": "video/RADSCORPION/DEFEAT.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/RADSCORPION/ENEMY_FAINT.avi",
+      "url": "video/RADSCORPION/ENEMY_FAINT.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/RADSCORPION/E_MOVE_1.avi",
+      "url": "video/RADSCORPION/E_MOVE_1.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/RADSCORPION/E_MOVE_2.avi",
+      "url": "video/RADSCORPION/E_MOVE_2.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/RADSCORPION/E_MOVE_3.avi",
+      "url": "video/RADSCORPION/E_MOVE_3.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/RADSCORPION/E_MOVE_4.avi",
+      "url": "video/RADSCORPION/E_MOVE_4.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/RADSCORPION/PLAYER_FAINT.avi",
+      "url": "video/RADSCORPION/PLAYER_FAINT.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/RADSCORPION/P_MOVE_1.avi",
+      "url": "video/RADSCORPION/P_MOVE_1.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/RADSCORPION/P_MOVE_2.avi",
+      "url": "video/RADSCORPION/P_MOVE_2.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/RADSCORPION/VICTORY.avi",
+      "url": "video/RADSCORPION/VICTORY.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/RAIDER/BATTLE_IDLE.avi",
+      "url": "video/RAIDER/BATTLE_IDLE.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/RAIDER/BATTLE_START.avi",
+      "url": "video/RAIDER/BATTLE_START.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/RAIDER/DEFEAT.avi",
+      "url": "video/RAIDER/DEFEAT.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/RAIDER/ENEMY_FAINT.avi",
+      "url": "video/RAIDER/ENEMY_FAINT.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/RAIDER/E_MOVE_1.avi",
+      "url": "video/RAIDER/E_MOVE_1.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/RAIDER/E_MOVE_2.avi",
+      "url": "video/RAIDER/E_MOVE_2.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/RAIDER/E_MOVE_3.avi",
+      "url": "video/RAIDER/E_MOVE_3.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/RAIDER/E_MOVE_4.avi",
+      "url": "video/RAIDER/E_MOVE_4.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/RAIDER/PLAYER_FAINT.avi",
+      "url": "video/RAIDER/PLAYER_FAINT.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/RAIDER/P_MOVE_1.avi",
+      "url": "video/RAIDER/P_MOVE_1.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/RAIDER/P_MOVE_2.avi",
+      "url": "video/RAIDER/P_MOVE_2.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/RAIDER/VICTORY.avi",
+      "url": "video/RAIDER/VICTORY.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/SOLOMON_RAY/BATTLE_IDLE.avi",
+      "url": "video/SOLOMON_RAY/BATTLE_IDLE.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/SOLOMON_RAY/BATTLE_START.avi",
+      "url": "video/SOLOMON_RAY/BATTLE_START.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/SOLOMON_RAY/E_MOVE_1.avi",
+      "url": "video/SOLOMON_RAY/E_MOVE_1.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/SOLOMON_RAY/E_MOVE_2.avi",
+      "url": "video/SOLOMON_RAY/E_MOVE_2.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/SOLOMON_RAY/E_MOVE_3.avi",
+      "url": "video/SOLOMON_RAY/E_MOVE_3.avi"
+    },
+    {
+      "name": "HOLO/BIGIRON/VIDEO/SOLOMON_RAY/E_MOVE_4.avi",
+      "url": "video/SOLOMON_RAY/E_MOVE_4.avi"
+    }
+  ],
+  "storageOptional": []
+}

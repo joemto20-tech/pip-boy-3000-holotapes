@@ -1,0 +1,49 @@
+0.58.1
+- agents.md audit: R12 fixed - all 10 Math.random() call sites now use Math.randInt(n),
+  preserving the original distributions. R12 greps clean.
+- var eliminated (agents.md 6): 122 declarations became const, 170 became let, none remain.
+  Converted with a scope-aware tool that first proved no redeclarations and no reads before
+  a declarator in the same scope.
+- Removed a redundant Pip.audioStop() before Pip.audioStart(), which stops audio itself.
+- Added COMPLIANCE.md recording every R01-R15 result and the reason for each Pip.* write.
+- Motorcycle sprites were mirrored: MBL/MBR and RBL/RBR each drew the opposite direction.
+  Swapped. Walking sprites were already correct.
+- Every identifier inside the modules renamed to readable words; source moved to src/.
+- Shipped scripts/ are generated from src/ by tools/build.mjs (terser, mangle and strip only;
+  no compression passes, because Espruino does not block-scope let/const).
+- Each readable and each shipped module is proved to be an alpha-rename of its input:
+  identical AST, identical literals, identifiers in bijection with their bindings.
+- On-device JavaScript dropped from 122,934 to 108,095 bytes.
+
+0.58.0
+- Rot's Crossing rebuilt in the Sunscar art style; the stretched right-edge artifact is gone.
+- The race track is now graded dirt with a packed berm, worn racing ruts and a start/finish
+  stripe, instead of a two-pixel outline drawn on the grass.
+- Collision for Rot's Crossing regenerated from the new artwork and verified reachable to
+  every interaction point and spawn.
+- Battle videos repaired: player-side clips were routed at a VIDEO/Granny folder that no
+  longer ships, so attacks, faints, victory and defeat silently never played.
+- Pause STAT tab reads the live Pip-Boy record instead of a profile argument no caller passed.
+- Manifest regenerated from the folder: 12 phantom video entries removed, 37 real assets
+  added, including every hotel room background and all motorcycle sprites.
+- Modules renamed from single letters to descriptive names; dead C.JS and R.JS removed.
+- Rotjaw now uses the bike sprite added in 0.57.0 but never read.
+- A finished playthrough's SAV.JSON was shipping inside the tape and is removed.
+
+0.57.0
+- Big Iron Hotel main lobby became a hub: Kitchen, Laundry, Boiler Room, Ammo Workshop.
+- Penthouse opens after six Scorch Rounds. Motorcycle sprites with the dog in the sidecar.
+
+0.56.0
+- Stable non-condensed build. Dogtown collision rebuild, hotel collision pass,
+  Sunscar resident low-memory fixes, original full-frame world flow restored.
+
+0.55.0
+- Native Pip-Boy Stimpaks, bought from traders and shared with the AID inventory.
+
+0.54.0
+- Dedicated low-memory workbench module. Craftable damage buff renamed to Psycho.
+
+0.50.0
+- First three-town build: Sunscar, Rot's Crossing and Dogtown Heights, title-screen loadout,
+  enemy scaling, the Big Iron Hotel and the six-plate Iron Warden fight.

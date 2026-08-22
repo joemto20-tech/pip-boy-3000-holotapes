@@ -1,0 +1,1659 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Big Iron Construction Kit</title>
+    <style>
+      :root {
+        --bg: #04120a;
+        --panel: #071d10;
+        --edge: #0d5c33;
+        --dim: #0f8a4d;
+        --fg: #3dfb95;
+        --hot: #9dffc6;
+        --warn: #ffd166;
+        --bad: #ff7a6b;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font:
+          13px/1.5 'DejaVu Sans Mono',
+          ui-monospace,
+          Menlo,
+          Consolas,
+          monospace;
+      }
+      header {
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--edge);
+        display: flex;
+        gap: 16px;
+        align-items: baseline;
+        flex-wrap: wrap;
+      }
+      h1 {
+        font-size: 16px;
+        margin: 0;
+        letter-spacing: 0.22em;
+        color: var(--hot);
+      }
+      header .sub {
+        color: var(--dim);
+        font-size: 11px;
+        letter-spacing: 0.1em;
+      }
+      nav {
+        display: flex;
+        gap: 2px;
+        padding: 0 14px;
+        border-bottom: 1px solid var(--edge);
+        flex-wrap: wrap;
+      }
+      nav button {
+        background: none;
+        border: 1px solid transparent;
+        border-bottom: none;
+        color: var(--dim);
+        padding: 9px 16px;
+        cursor: pointer;
+        font: inherit;
+        letter-spacing: 0.12em;
+      }
+      nav button.on {
+        color: var(--hot);
+        border-color: var(--edge);
+        background: var(--panel);
+      }
+      main {
+        padding: 16px;
+      }
+      section {
+        display: none;
+      }
+      section.on {
+        display: block;
+      }
+      .row {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        align-items: flex-start;
+      }
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--edge);
+        padding: 14px;
+        border-radius: 3px;
+      }
+      .card h2 {
+        font-size: 11px;
+        letter-spacing: 0.2em;
+        margin: 0 0 10px;
+        color: var(--hot);
+        font-weight: 400;
+      }
+      .grow {
+        flex: 1 1 420px;
+        min-width: 340px;
+      }
+      label {
+        display: block;
+        margin: 9px 0 3px;
+        color: var(--dim);
+        font-size: 11px;
+        letter-spacing: 0.08em;
+      }
+      select,
+      input[type='text'],
+      input[type='number'] {
+        width: 100%;
+        background: #02160c;
+        color: var(--fg);
+        border: 1px solid var(--edge);
+        padding: 6px 8px;
+        font: inherit;
+        border-radius: 2px;
+      }
+      input[type='range'] {
+        width: 100%;
+        accent-color: var(--dim);
+      }
+      button.act {
+        background: #0a2d19;
+        color: var(--hot);
+        border: 1px solid var(--dim);
+        padding: 8px 14px;
+        cursor: pointer;
+        font: inherit;
+        letter-spacing: 0.1em;
+        border-radius: 2px;
+      }
+      button.act:hover {
+        background: #0f4526;
+      }
+      button.act:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+      }
+      .drop {
+        border: 1px dashed var(--dim);
+        border-radius: 3px;
+        padding: 22px;
+        text-align: center;
+        color: var(--dim);
+        cursor: pointer;
+        transition: 0.15s;
+      }
+      .drop.hot {
+        border-color: var(--hot);
+        color: var(--hot);
+        background: #0a2d19;
+      }
+      canvas {
+        image-rendering: pixelated;
+        background: #000;
+        border: 1px solid var(--edge);
+        max-width: 100%;
+      }
+      .scroll {
+        overflow: auto;
+        max-height: 70vh;
+        border: 1px solid var(--edge);
+        background: #000;
+      }
+      .scroll canvas {
+        border: none;
+        max-width: none;
+        display: block;
+      }
+      .kv {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 2px 14px;
+        font-size: 11px;
+      }
+      .kv b {
+        color: var(--dim);
+        font-weight: 400;
+      }
+      .log {
+        font-size: 11px;
+        white-space: pre-wrap;
+        max-height: 190px;
+        overflow: auto;
+        color: var(--dim);
+      }
+      .log .ok {
+        color: var(--fg);
+      }
+      .log .warn {
+        color: var(--warn);
+      }
+      .log .bad {
+        color: var(--bad);
+      }
+      .tools {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin: 8px 0;
+      }
+      .tools button {
+        background: #02160c;
+        border: 1px solid var(--edge);
+        color: var(--dim);
+        padding: 5px 11px;
+        cursor: pointer;
+        font: inherit;
+        font-size: 11px;
+      }
+      .tools button.on {
+        border-color: var(--hot);
+        color: var(--hot);
+      }
+      .hint {
+        color: var(--dim);
+        font-size: 11px;
+        margin-top: 8px;
+      }
+      .swatch {
+        display: inline-block;
+        width: 11px;
+        height: 11px;
+        border: 1px solid var(--edge);
+        vertical-align: -1px;
+        margin-right: 5px;
+      }
+      table {
+        border-collapse: collapse;
+        font-size: 11px;
+        width: 100%;
+      }
+      td,
+      th {
+        border: 1px solid var(--edge);
+        padding: 4px 7px;
+        text-align: left;
+      }
+      th {
+        color: var(--hot);
+        font-weight: 400;
+        letter-spacing: 0.08em;
+      }
+      code {
+        color: var(--hot);
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>BIG IRON CONSTRUCTION KIT</h1>
+      <span class="sub"
+        >PIP-BOY 3000A &middot; 2BPP ASSET FORGE &middot; WORLDS / SPRITES /
+        COLLISION</span
+      >
+    </header>
+
+    <nav>
+      <button data-tab="world" class="on">WORLDS</button>
+      <button data-tab="sprite">SPRITES</button>
+      <button data-tab="collide">COLLISION</button>
+      <button data-tab="ref">FORMATS</button>
+    </nav>
+
+    <main>
+      <!-- ============================================ WORLDS ============================================ -->
+      <section id="world" class="on">
+        <div class="row">
+          <div class="card" style="flex: 0 0 320px">
+            <h2>SOURCE</h2>
+            <div class="drop" id="wdrop">
+              Drop a <b>.BIN</b> world to inspect,<br />or a <b>PNG / JPG</b> to
+              convert.<br /><span style="font-size: 11px"
+                >(click to browse)</span
+              >
+            </div>
+            <input type="file" id="wfile" accept=".BIN,.bin,image/*" hidden />
+
+            <label>WORLD LAYOUT</label>
+            <select id="wlayout">
+              <option value="sunscar">
+                SUNSCAR &mdash; 1440x1080, 5x5 pages, 888000 B
+              </option>
+              <option value="crossing" selected>
+                CROSSING / DOGTOWN &mdash; 1672x941, 6x5 pages, 1065600 B
+              </option>
+            </select>
+
+            <label>DITHER</label>
+            <select id="wdither">
+              <option value="fs">Floyd-Steinberg (matches Sunscar)</option>
+              <option value="bayer">Bayer 4x4 ordered</option>
+              <option value="none">Threshold, no dither</option>
+            </select>
+
+            <label>BRIGHTNESS <span id="wbv">0</span></label
+            ><input type="range" id="wb" min="-100" max="100" value="0" />
+            <label>CONTRAST <span id="wcv">1.00</span></label
+            ><input type="range" id="wc" min="20" max="260" value="100" />
+            <label>GAMMA <span id="wgv">1.00</span></label
+            ><input type="range" id="wg" min="30" max="260" value="100" />
+            <label
+              ><input type="checkbox" id="winv" style="width: auto" /> INVERT
+              (dark ground &rarr; bright ground)</label
+            >
+            <label>FIT</label>
+            <select id="wfit">
+              <option value="cover">Cover (crop to fill)</option>
+              <option value="contain">Contain (letterbox)</option>
+              <option value="stretch">Stretch</option>
+            </select>
+
+            <div
+              style="margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap"
+            >
+              <button class="act" id="wexport" disabled>EXPORT .BIN</button>
+              <button class="act" id="wpng" disabled>EXPORT PNG</button>
+              <button class="act" id="wcol" disabled>MAKE COLLISION</button>
+            </div>
+            <div class="hint">
+              MAKE COLLISION hands the current map to the COLLISION tab and
+              auto-traces solids from it.
+            </div>
+          </div>
+
+          <div class="card grow">
+            <h2>PREVIEW <span id="wname" style="color: var(--dim)"></span></h2>
+            <div class="scroll" id="wwrap"><canvas id="wcv2"></canvas></div>
+            <div class="kv" style="margin-top: 10px">
+              <b>SIZE</b><span id="wsize">&mdash;</span> <b>PAGES</b
+              ><span id="wpages">&mdash;</span> <b>PACKED</b
+              ><span id="wbytes">&mdash;</span> <b>MIX</b
+              ><span id="wmix">&mdash;</span>
+            </div>
+            <div class="log" id="wlog"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================ SPRITES ============================================ -->
+      <section id="sprite">
+        <div class="row">
+          <div class="card" style="flex: 0 0 320px">
+            <h2>SOURCE</h2>
+            <div class="drop" id="sdrop">
+              Drop a <b>.BIN / .IMG</b> to inspect,<br />or a <b>PNG</b> to
+              convert.
+            </div>
+            <input
+              type="file"
+              id="sfile"
+              accept=".BIN,.bin,.IMG,.img,image/*"
+              hidden
+            />
+
+            <label>ASSET PRESET</label>
+            <select id="spreset"></select>
+
+            <label>WIDTH</label
+            ><input type="number" id="sw" value="42" min="1" max="512" />
+            <label>HEIGHT</label
+            ><input type="number" id="sh" value="42" min="1" max="512" />
+            <label>FRAMES (walk cycles use 3)</label
+            ><input type="number" id="sf" value="3" min="1" max="16" />
+
+            <label>OUTPUT</label>
+            <select id="sfmt">
+              <option value="bin">Raw .BIN (no header)</option>
+              <option value="img">
+                .IMG (Espruino header + transparent index 0)
+              </option>
+            </select>
+
+            <label>DITHER</label>
+            <select id="sdither">
+              <option value="fs">Floyd-Steinberg</option>
+              <option value="bayer">Bayer 4x4</option>
+              <option value="none">Threshold</option>
+            </select>
+            <label>BRIGHTNESS <span id="sbv">0</span></label
+            ><input type="range" id="sb" min="-100" max="100" value="0" />
+            <label>CONTRAST <span id="scv">1.00</span></label
+            ><input type="range" id="sc" min="20" max="260" value="100" />
+            <label
+              ><input type="checkbox" id="sinv" style="width: auto" />
+              INVERT</label
+            >
+            <label
+              ><input type="checkbox" id="skey" style="width: auto" checked />
+              TREAT DARKEST LEVEL AS TRANSPARENT</label
+            >
+
+            <div
+              style="margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap"
+            >
+              <button class="act" id="sexport" disabled>EXPORT</button>
+              <button class="act" id="spng" disabled>EXPORT PNG</button>
+            </div>
+          </div>
+
+          <div class="card grow">
+            <h2>PREVIEW <span id="sname" style="color: var(--dim)"></span></h2>
+            <div><canvas id="scv2"></canvas></div>
+            <label>ZOOM <span id="szv">6x</span></label
+            ><input type="range" id="sz" min="1" max="14" value="6" />
+            <div class="kv" style="margin-top: 10px">
+              <b>GEOMETRY</b><span id="sgeom">&mdash;</span> <b>EXPECTED</b
+              ><span id="sexp">&mdash;</span> <b>ACTUAL</b
+              ><span id="sact">&mdash;</span>
+            </div>
+            <div class="log" id="slog"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================ COLLISION ============================================ -->
+      <section id="collide">
+        <div class="row">
+          <div class="card" style="flex: 0 0 320px">
+            <h2>DATA</h2>
+            <div class="drop" id="cdropw">
+              Drop the world <b>.BIN</b> (backdrop)
+            </div>
+            <input type="file" id="cfilew" accept=".BIN,.bin" hidden />
+            <div class="drop" id="cdropc" style="margin-top: 10px">
+              Drop the collision <b>.BIN</b><br />(C.BIN / C2.BIN / C3.BIN)
+            </div>
+            <input type="file" id="cfilec" accept=".BIN,.bin" hidden />
+
+            <label>GRID</label>
+            <select id="cgrid">
+              <option value="sunscar">
+                SUNSCAR &mdash; 120x90 cells, 1350 B
+              </option>
+              <option value="crossing" selected>
+                CROSSING / DOGTOWN &mdash; 140x79 cells, 1383 B
+              </option>
+            </select>
+
+            <div class="tools">
+              <button data-tool="paint" class="on">PAINT SOLID</button>
+              <button data-tool="erase">ERASE</button>
+              <button data-tool="probe">PROBE</button>
+            </div>
+            <label>BRUSH <span id="cbv">2</span> cells</label
+            ><input type="range" id="cb" min="1" max="10" value="2" />
+
+            <h2 style="margin-top: 16px">AUTO-TRACE</h2>
+            <label>SOLID BELOW LEVEL <span id="ctv">2</span></label
+            ><input type="range" id="ct" min="1" max="3" value="2" />
+            <label>CELL COVERAGE <span id="ccv">30</span>%</label
+            ><input type="range" id="cc" min="5" max="90" value="30" />
+            <button class="act" id="cauto" disabled>TRACE FROM MAP</button>
+
+            <h2 style="margin-top: 16px">REACHABILITY</h2>
+            <div class="hint">
+              PROBE tool sets the walk-test start. Runs the game's own
+              four-corner foot check at 6px steps.
+            </div>
+            <button class="act" id="creach" disabled style="margin-top: 8px">
+              WALK TEST
+            </button>
+
+            <div
+              style="margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap"
+            >
+              <button class="act" id="cexport" disabled>EXPORT .BIN</button>
+              <button class="act" id="cclear" disabled>CLEAR ALL</button>
+            </div>
+          </div>
+
+          <div class="card grow">
+            <h2>EDITOR</h2>
+            <div class="hint" style="margin: 0 0 8px">
+              <span class="swatch" style="background: #ff7a6b"></span>solid
+              <span
+                class="swatch"
+                style="background: #3dfb95; margin-left: 12px"
+              ></span
+              >reachable
+              <span
+                class="swatch"
+                style="background: #ffd166; margin-left: 12px"
+              ></span
+              >walkable but cut off
+            </div>
+            <div class="scroll" id="cwrap"><canvas id="ccv2"></canvas></div>
+            <div class="kv" style="margin-top: 10px">
+              <b>CELL</b><span id="ccell">&mdash;</span> <b>WORLD PX</b
+              ><span id="cpx">&mdash;</span> <b>SOLID CELLS</b
+              ><span id="csolid">&mdash;</span>
+            </div>
+            <div class="log" id="clog"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================ FORMATS ============================================ -->
+      <section id="ref">
+        <div class="card">
+          <h2>WHAT THE PIP-BOY ACTUALLY READS</h2>
+          <p>
+            Every graphic is <b>2 bits per pixel</b>, packed
+            <b>four pixels to a byte, most significant pair first</b>, row-major
+            with no header and no padding. Level 0 is black, level 3 is the
+            brightest phosphor. A <code>.IMG</code> file is the same pixel data
+            behind a three or four byte Espruino header (width, height, bpp |
+            transparent flag, [transparent index]).
+          </p>
+          <table>
+            <tr>
+              <th>Asset</th>
+              <th>Geometry</th>
+              <th>Bytes</th>
+              <th>Notes</th>
+            </tr>
+            <tr>
+              <td>W.BIN</td>
+              <td>25 pages of 480x296</td>
+              <td>888000</td>
+              <td>Sunscar. Camera snaps to 5x5 pre-rendered pages.</td>
+            </tr>
+            <tr>
+              <td>W2.BIN / W3.BIN</td>
+              <td>30 pages of 480x296</td>
+              <td>1065600</td>
+              <td>
+                Rot's Crossing / Dogtown. 6x5 pages, last row and column
+                overlap.
+              </td>
+            </tr>
+            <tr>
+              <td>C.BIN</td>
+              <td>120x90 bits</td>
+              <td>1350</td>
+              <td>1 bit per 12px cell, 1 = solid.</td>
+            </tr>
+            <tr>
+              <td>C2.BIN / C3.BIN</td>
+              <td>140x79 bits</td>
+              <td>1383</td>
+              <td>Same 12px cell size on the larger worlds.</td>
+            </tr>
+            <tr>
+              <td>HR0-HR5.BIN</td>
+              <td>480x296</td>
+              <td>35520</td>
+              <td>
+                Hotel room backgrounds, streamed straight into the display
+                buffer.
+              </td>
+            </tr>
+            <tr>
+              <td>MENU / IMAGE / Startg1.BIN</td>
+              <td>480x320</td>
+              <td>38400</td>
+              <td>Full screen including the footer strip.</td>
+            </tr>
+            <tr>
+              <td>RT / MT / TH / GA / SM.BIN</td>
+              <td>480x456</td>
+              <td>54720</td>
+              <td>
+                Tall interiors; the camera scrolls vertically in 80px steps.
+              </td>
+            </tr>
+            <tr>
+              <td>PD/PL/PR/PU.BIN</td>
+              <td>42x42, 3 frames</td>
+              <td>1323</td>
+              <td>Overworld player walk cycle.</td>
+            </tr>
+            <tr>
+              <td>IPD/IPL/IPR/IPU.BIN</td>
+              <td>46x46, 3 frames</td>
+              <td>1587</td>
+              <td>Interior player, drawn slightly larger.</td>
+            </tr>
+            <tr>
+              <td>MBD/MBL/MBR/MBU.BIN</td>
+              <td>56x56</td>
+              <td>784</td>
+              <td>Motorcycle with the dog in the sidecar.</td>
+            </tr>
+            <tr>
+              <td>RBD/RBL/RBR/RBU.BIN</td>
+              <td>56x56</td>
+              <td>784</td>
+              <td>Rotjaw's matching bike.</td>
+            </tr>
+            <tr>
+              <td>SR / RJ / RSC / SHERIFF*.BIN</td>
+              <td>34x34</td>
+              <td>289</td>
+              <td>NPC sprites.</td>
+            </tr>
+            <tr>
+              <td>DD/DL/DR/DU.BIN</td>
+              <td>42x42</td>
+              <td>441</td>
+              <td>Dog, single frame.</td>
+            </tr>
+            <tr>
+              <td>RACEP / RACER.BIN</td>
+              <td>72x52</td>
+              <td>936</td>
+              <td>Race bikes on the track screen.</td>
+            </tr>
+            <tr>
+              <td>CROSSMAP.BIN</td>
+              <td>252x144</td>
+              <td>9072</td>
+              <td>Rot's Crossing thumbnail on the pause MAP tab.</td>
+            </tr>
+          </table>
+          <h2 style="margin-top: 22px">PAGE LAYOUT</h2>
+          <p>
+            A world file is not one big image &mdash; it is a stack of
+            pre-rendered screens. Page index is
+            <code>row * columns + column</code>. Sunscar uses camera origins X
+            <code>0,240,480,720,960</code> and Y <code>0,196,392,588,784</code>.
+            Rot's Crossing and Dogtown use X
+            <code>0,240,480,720,960,1192</code> and Y
+            <code>0,196,392,588,645</code> &mdash; the final row and column
+            deliberately overlap their neighbours so the camera never runs off
+            the edge. This kit stitches and re-slices that for you; just work on
+            the flat map.
+          </p>
+          <h2 style="margin-top: 22px">WORKFLOW</h2>
+          <p>
+            1. Paint or photograph a map at the world's exact pixel size.<br />
+            2. WORLDS tab &rarr; drop the image &rarr; tune brightness/contrast
+            until the ground sits on level 3 and structures fall to level 0-1
+            &rarr; EXPORT .BIN.<br />
+            3. MAKE COLLISION &rarr; trace &rarr; tidy by hand &rarr; WALK TEST
+            from the spawn point &rarr; EXPORT .BIN.<br />
+            4. Copy both into <code>HOLO/BIGIRON/</code> and add them to
+            <code>metadata.json</code>.
+          </p>
+        </div>
+      </section>
+    </main>
+    <script>
+      'use strict';
+      /* ---------------------------------------------------------------- shared 2bpp core */
+      const PALETTE = [
+        [0, 0, 0],
+        [0, 64, 32],
+        [0, 154, 77],
+        [64, 255, 148],
+      ];
+      const LAYOUTS = {
+        sunscar: {
+          w: 1440,
+          h: 1080,
+          cols: [0, 240, 480, 720, 960],
+          rows: [0, 196, 392, 588, 784],
+          pw: 480,
+          ph: 296,
+        },
+        crossing: {
+          w: 1672,
+          h: 941,
+          cols: [0, 240, 480, 720, 960, 1192],
+          rows: [0, 196, 392, 588, 645],
+          pw: 480,
+          ph: 296,
+        },
+      };
+      const GRIDS = {
+        sunscar: { cw: 120, ch: 90, cell: 12, bytes: 1350 },
+        crossing: { cw: 140, ch: 79, cell: 12, bytes: 1383 },
+      };
+      const pageBytes = (L) => (L.pw * L.ph) / 4;
+
+      function unpack2bpp(bytes, count) {
+        const out = new Uint8Array(count);
+        for (let i = 0, p = 0; i < bytes.length && p < count; i++) {
+          const b = bytes[i];
+          out[p++] = (b >> 6) & 3;
+          if (p < count) out[p++] = (b >> 4) & 3;
+          if (p < count) out[p++] = (b >> 2) & 3;
+          if (p < count) out[p++] = b & 3;
+        }
+        return out;
+      }
+      function pack2bpp(levels) {
+        const out = new Uint8Array(Math.ceil(levels.length / 4));
+        for (let i = 0, o = 0; i < levels.length; i += 4, o++) {
+          out[o] =
+            ((levels[i] & 3) << 6) |
+            (((levels[i + 1] || 0) & 3) << 4) |
+            (((levels[i + 2] || 0) & 3) << 2) |
+            ((levels[i + 3] || 0) & 3);
+        }
+        return out;
+      }
+      /* stitch page-sliced world file -> flat level map */
+      function worldToMap(bytes, L) {
+        const map = new Uint8Array(L.w * L.h),
+          pb = pageBytes(L);
+        for (let ry = 0; ry < L.rows.length; ry++)
+          for (let cx = 0; cx < L.cols.length; cx++) {
+            const idx = ry * L.cols.length + cx,
+              off = idx * pb;
+            if (off + pb > bytes.length) continue;
+            const px = unpack2bpp(bytes.subarray(off, off + pb), L.pw * L.ph);
+            const ox = L.cols[cx],
+              oy = L.rows[ry];
+            const hh = Math.min(L.ph, L.h - oy),
+              ww = Math.min(L.pw, L.w - ox);
+            for (let y = 0; y < hh; y++) {
+              map.set(
+                px.subarray(y * L.pw, y * L.pw + ww),
+                (oy + y) * L.w + ox,
+              );
+            }
+          }
+        return map;
+      }
+      /* flat level map -> page-sliced world file (edge pixels repeat into any overhang) */
+      function mapToWorld(map, L) {
+        const pb = pageBytes(L),
+          out = new Uint8Array(pb * L.rows.length * L.cols.length);
+        const page = new Uint8Array(L.pw * L.ph);
+        for (let ry = 0; ry < L.rows.length; ry++)
+          for (let cx = 0; cx < L.cols.length; cx++) {
+            const ox = L.cols[cx],
+              oy = L.rows[ry];
+            for (let y = 0; y < L.ph; y++) {
+              const sy = Math.min(L.h - 1, oy + y);
+              for (let x = 0; x < L.pw; x++) {
+                const sx = Math.min(L.w - 1, ox + x);
+                page[y * L.pw + x] = map[sy * L.w + sx];
+              }
+            }
+            out.set(pack2bpp(page), (ry * L.cols.length + cx) * pb);
+          }
+        return out;
+      }
+      function drawLevels(canvas, levels, w, h, scale) {
+        scale = scale || 1;
+        canvas.width = w * scale;
+        canvas.height = h * scale;
+        const img = new ImageData(w, h);
+        for (let i = 0; i < w * h; i++) {
+          const c = PALETTE[levels[i] & 3];
+          img.data[i * 4] = c[0];
+          img.data[i * 4 + 1] = c[1];
+          img.data[i * 4 + 2] = c[2];
+          img.data[i * 4 + 3] = 255;
+        }
+        const tmp = document.createElement('canvas');
+        tmp.width = w;
+        tmp.height = h;
+        tmp.getContext('2d').putImageData(img, 0, 0);
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(tmp, 0, 0, w * scale, h * scale);
+      }
+      /* ---------------------------------------------------------------- image -> levels */
+      const BAYER = [
+        [0, 8, 2, 10],
+        [12, 4, 14, 6],
+        [3, 11, 1, 9],
+        [15, 7, 13, 5],
+      ];
+      function imageToLevels(imgEl, w, h, opt) {
+        const c = document.createElement('canvas');
+        c.width = w;
+        c.height = h;
+        const ctx = c.getContext('2d');
+        ctx.imageSmoothingEnabled = true;
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, w, h);
+        const iw = imgEl.naturalWidth || imgEl.width,
+          ih = imgEl.naturalHeight || imgEl.height;
+        if (opt.fit === 'stretch') ctx.drawImage(imgEl, 0, 0, w, h);
+        else {
+          const s =
+            opt.fit === 'contain'
+              ? Math.min(w / iw, h / ih)
+              : Math.max(w / iw, h / ih);
+          const dw = iw * s,
+            dh = ih * s;
+          ctx.drawImage(imgEl, (w - dw) / 2, (h - dh) / 2, dw, dh);
+        }
+        const d = ctx.getImageData(0, 0, w, h).data;
+        const lum = new Float32Array(w * h);
+        for (let i = 0; i < w * h; i++) {
+          let v =
+            (0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2]) /
+            255;
+          if (opt.invert) v = 1 - v;
+          v = Math.pow(Math.max(0, Math.min(1, v)), opt.gamma || 1);
+          v = (v - 0.5) * (opt.contrast || 1) + 0.5 + (opt.brightness || 0);
+          lum[i] = Math.max(0, Math.min(1, v));
+        }
+        const out = new Uint8Array(w * h);
+        if (opt.dither === 'fs') {
+          const buf = Float32Array.from(lum);
+          for (let y = 0; y < h; y++)
+            for (let x = 0; x < w; x++) {
+              const i = y * w + x,
+                old = buf[i],
+                q = Math.max(0, Math.min(3, Math.round(old * 3))),
+                err = old - q / 3;
+              out[i] = q;
+              if (x + 1 < w) buf[i + 1] += (err * 7) / 16;
+              if (y + 1 < h) {
+                if (x > 0) buf[i + w - 1] += (err * 3) / 16;
+                buf[i + w] += (err * 5) / 16;
+                if (x + 1 < w) buf[i + w + 1] += (err * 1) / 16;
+              }
+            }
+        } else if (opt.dither === 'bayer') {
+          for (let y = 0; y < h; y++)
+            for (let x = 0; x < w; x++) {
+              const t = (BAYER[y & 3][x & 3] / 16 - 0.5) * 0.9;
+              out[y * w + x] = Math.max(
+                0,
+                Math.min(3, Math.round(lum[y * w + x] * 3 + t)),
+              );
+            }
+        } else {
+          for (let i = 0; i < w * h; i++)
+            out[i] = Math.max(0, Math.min(3, Math.round(lum[i] * 3)));
+        }
+        return out;
+      }
+      function mixText(levels) {
+        const n = [0, 0, 0, 0];
+        for (let i = 0; i < levels.length; i++) n[levels[i] & 3]++;
+        return n
+          .map(
+            (v, i) =>
+              'L' + i + ' ' + ((100 * v) / levels.length).toFixed(1) + '%',
+          )
+          .join('   ');
+      }
+      function download(bytes, name) {
+        const blob = new Blob([bytes], { type: 'application/octet-stream' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = name;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+      }
+      function logTo(el, msg, cls) {
+        const s = document.createElement('div');
+        if (cls) s.className = cls;
+        s.textContent = msg;
+        el.appendChild(s);
+        el.scrollTop = el.scrollHeight;
+      }
+      function wireDrop(dropEl, inputEl, handler) {
+        dropEl.addEventListener('click', () => inputEl.click());
+        inputEl.addEventListener('change', (e) => {
+          if (e.target.files[0]) handler(e.target.files[0]);
+          inputEl.value = '';
+        });
+        ['dragenter', 'dragover'].forEach((t) =>
+          dropEl.addEventListener(t, (e) => {
+            e.preventDefault();
+            dropEl.classList.add('hot');
+          }),
+        );
+        ['dragleave', 'drop'].forEach((t) =>
+          dropEl.addEventListener(t, (e) => {
+            e.preventDefault();
+            dropEl.classList.remove('hot');
+          }),
+        );
+        dropEl.addEventListener('drop', (e) => {
+          const f = e.dataTransfer.files[0];
+          if (f) handler(f);
+        });
+      }
+      const readBytes = (f) => f.arrayBuffer().then((b) => new Uint8Array(b));
+      const readImage = (f) =>
+        new Promise((res, rej) => {
+          const u = URL.createObjectURL(f),
+            i = new Image();
+          i.onload = () => {
+            res(i);
+            URL.revokeObjectURL(u);
+          };
+          i.onerror = rej;
+          i.src = u;
+        });
+
+      /* tabs */
+      document.querySelectorAll('nav button').forEach((b) =>
+        b.addEventListener('click', () => {
+          document
+            .querySelectorAll('nav button')
+            .forEach((x) => x.classList.toggle('on', x === b));
+          document
+            .querySelectorAll('section')
+            .forEach((s) => s.classList.toggle('on', s.id === b.dataset.tab));
+        }),
+      );
+
+      /* ================================================================ WORLDS tab */
+      const W = { map: null, layout: null, name: '', srcImage: null };
+      const $ = (id) => document.getElementById(id);
+      function wLayout() {
+        return LAYOUTS[$('wlayout').value];
+      }
+      function wOpts() {
+        return {
+          dither: $('wdither').value,
+          brightness: +$('wb').value / 100,
+          contrast: +$('wc').value / 100,
+          gamma: +$('wg').value / 100,
+          invert: $('winv').checked,
+          fit: $('wfit').value,
+        };
+      }
+      function wRender() {
+        if (!W.map) return;
+        const L = W.layout;
+        drawLevels($('wcv2'), W.map, L.w, L.h, 1);
+        $('wsize').textContent = L.w + ' x ' + L.h;
+        $('wpages').textContent =
+          L.cols.length +
+          ' x ' +
+          L.rows.length +
+          ' = ' +
+          L.cols.length * L.rows.length;
+        $('wbytes').textContent =
+          (pageBytes(L) * L.cols.length * L.rows.length).toLocaleString() +
+          ' bytes';
+        $('wmix').textContent = mixText(W.map);
+        ['wexport', 'wpng', 'wcol'].forEach((i) => ($(i).disabled = false));
+      }
+      function wRebuildFromImage() {
+        if (!W.srcImage) return;
+        const L = wLayout();
+        W.layout = L;
+        W.map = imageToLevels(W.srcImage, L.w, L.h, wOpts());
+        wRender();
+      }
+      wireDrop($('wdrop'), $('wfile'), async (f) => {
+        $('wlog').innerHTML = '';
+        W.name = f.name;
+        $('wname').textContent = '— ' + f.name;
+        if (/\.(bin)$/i.test(f.name)) {
+          const b = await readBytes(f);
+          let key = null;
+          for (const k in LAYOUTS) {
+            const L = LAYOUTS[k];
+            if (b.length === pageBytes(L) * L.cols.length * L.rows.length)
+              key = k;
+          }
+          if (!key) {
+            logTo(
+              $('wlog'),
+              'Unrecognised size ' +
+                b.length +
+                ' B — using the selected layout and padding.',
+              'warn',
+            );
+            key = $('wlayout').value;
+          } else {
+            $('wlayout').value = key;
+            logTo(
+              $('wlog'),
+              'Recognised ' +
+                key.toUpperCase() +
+                ' world, ' +
+                b.length.toLocaleString() +
+                ' bytes.',
+              'ok',
+            );
+          }
+          W.layout = LAYOUTS[key];
+          W.srcImage = null;
+          W.map = worldToMap(b, W.layout);
+          /* verify the file round-trips, so an export can be trusted */
+          const back = mapToWorld(W.map, W.layout);
+          let same = back.length === b.length;
+          if (same)
+            for (let i = 0; i < b.length; i++) {
+              if (back[i] !== b[i]) {
+                same = false;
+                break;
+              }
+            }
+          logTo(
+            $('wlog'),
+            same
+              ? 'Round-trip check: byte identical. Safe to re-export.'
+              : 'Round-trip check: differs (overlapping pages disagreed in the source file).',
+            same ? 'ok' : 'warn',
+          );
+          wRender();
+        } else {
+          W.srcImage = await readImage(f);
+          logTo(
+            $('wlog'),
+            'Loaded ' +
+              W.srcImage.naturalWidth +
+              'x' +
+              W.srcImage.naturalHeight +
+              ' source image.',
+            'ok',
+          );
+          wRebuildFromImage();
+        }
+      });
+      ['wlayout', 'wdither', 'wfit'].forEach((i) =>
+        $(i).addEventListener('change', wRebuildFromImage),
+      );
+      [
+        ['wb', 'wbv', (v) => v],
+        ['wc', 'wcv', (v) => (v / 100).toFixed(2)],
+        ['wg', 'wgv', (v) => (v / 100).toFixed(2)],
+      ].forEach(([id, out, fmt]) =>
+        $(id).addEventListener('input', (e) => {
+          $(out).textContent = fmt(+e.target.value);
+          wRebuildFromImage();
+        }),
+      );
+      $('winv').addEventListener('change', wRebuildFromImage);
+      $('wexport').addEventListener('click', () => {
+        const bytes = mapToWorld(W.map, W.layout);
+        const guess = $('wlayout').value === 'sunscar' ? 'W.BIN' : 'W2.BIN';
+        download(bytes, guess);
+        logTo(
+          $('wlog'),
+          'Exported ' +
+            guess +
+            ' — ' +
+            bytes.length.toLocaleString() +
+            ' bytes.',
+          'ok',
+        );
+      });
+      $('wpng').addEventListener('click', () =>
+        $('wcv2').toBlob((b) => {
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(b);
+          a.download = (W.name || 'world').replace(/\.[^.]+$/, '') + '.png';
+          a.click();
+        }),
+      );
+      $('wcol').addEventListener('click', () => {
+        C.map = W.map;
+        C.layout = W.layout;
+        $('cgrid').value =
+          W.layout === LAYOUTS.sunscar ? 'sunscar' : 'crossing';
+        cEnsureGrid();
+        cAuto();
+        cRender();
+        document.querySelector('nav button[data-tab="collide"]').click();
+      });
+
+      /* ================================================================ SPRITES tab */
+      const PRESETS = [
+        ['Overworld player  PD/PL/PR/PU.BIN', 42, 42, 3, 'bin'],
+        ['Interior player  IPD/IPL/IPR/IPU.BIN', 46, 46, 3, 'bin'],
+        ['Dog  DD/DL/DR/DU.BIN', 42, 42, 1, 'bin'],
+        ['Motorcycle  MBD/MBL/MBR/MBU.BIN', 56, 56, 1, 'bin'],
+        ["Rotjaw's bike  RBD/RBL/RBR/RBU.BIN", 56, 56, 1, 'bin'],
+        ['NPC  SR / RJ / RSC / SHERIFF*.BIN', 34, 34, 1, 'bin'],
+        ['Race bike  RACEP / RACER.BIN', 72, 52, 1, 'bin'],
+        ['Hotel room  HR0-HR5.BIN', 480, 296, 1, 'bin'],
+        ['Full screen  MENU / IMAGE / Startg1.BIN', 480, 320, 1, 'bin'],
+        ['Interior  RT / MT / TH / GA / SM.BIN', 480, 456, 1, 'bin'],
+        ['Pause thumbnail  CROSSMAP.BIN', 252, 144, 1, 'bin'],
+        ['Sunscar thumbnail  M.IMG', 126, 72, 1, 'img'],
+        ['Item icon  S.IMG / R.IMG / X.IMG / D.IMG', 48, 48, 1, 'img'],
+        ['Weapon icon  G1/G2/G3.IMG', 48, 48, 1, 'img'],
+        ['Custom…', 42, 42, 1, 'bin'],
+      ];
+      PRESETS.forEach((p, i) => {
+        const o = document.createElement('option');
+        o.value = i;
+        o.textContent = p[0];
+        $('spreset').appendChild(o);
+      });
+      const S = { levels: null, name: '', srcImage: null };
+      function sGeom() {
+        return {
+          w: +$('sw').value | 0,
+          h: +$('sh').value | 0,
+          f: +$('sf').value | 0,
+        };
+      }
+      function sOpts() {
+        return {
+          dither: $('sdither').value,
+          brightness: +$('sb').value / 100,
+          contrast: +$('sc').value / 100,
+          gamma: 1,
+          invert: $('sinv').checked,
+          fit: 'contain',
+        };
+      }
+      $('spreset').addEventListener('change', (e) => {
+        const p = PRESETS[+e.target.value];
+        $('sw').value = p[1];
+        $('sh').value = p[2];
+        $('sf').value = p[3];
+        $('sfmt').value = p[4];
+        sRebuild();
+      });
+      function sExpected() {
+        const g = sGeom();
+        return Math.ceil((g.w * g.h) / 4) * g.f;
+      }
+      function sRender() {
+        if (!S.levels) return;
+        const g = sGeom(),
+          z = +$('sz').value;
+        drawLevels($('scv2'), S.levels, g.w, g.h * g.f, z);
+        $('sgeom').textContent =
+          g.w + ' x ' + g.h + (g.f > 1 ? '  x ' + g.f + ' frames' : '');
+        $('sexp').textContent = sExpected().toLocaleString() + ' bytes';
+        $('sact').textContent =
+          Math.ceil(S.levels.length / 4).toLocaleString() + ' bytes';
+        $('sexport').disabled = $('spng').disabled = false;
+      }
+      function sRebuild() {
+        if (!S.srcImage) {
+          sRender();
+          return;
+        }
+        const g = sGeom();
+        const one = imageToLevels(S.srcImage, g.w, g.h, sOpts());
+        const all = new Uint8Array(g.w * g.h * g.f);
+        for (let i = 0; i < g.f; i++)
+          all.set(
+            one,
+            i * g.w * g.h,
+          ); /* same art in every frame until you draw a sheet */
+        S.levels = all;
+        sRender();
+      }
+      wireDrop($('sdrop'), $('sfile'), async (f) => {
+        $('slog').innerHTML = '';
+        S.name = f.name;
+        $('sname').textContent = '— ' + f.name;
+        if (/\.(bin|img)$/i.test(f.name)) {
+          let b = await readBytes(f);
+          S.srcImage = null;
+          if (/\.img$/i.test(f.name)) {
+            const w = b[0],
+              h = b[1],
+              flags = b[2],
+              hdr = flags & 0x80 ? 4 : 3;
+            $('sw').value = w;
+            $('sh').value = h;
+            $('sf').value = 1;
+            $('sfmt').value = 'img';
+            logTo(
+              $('slog'),
+              '.IMG header: ' +
+                w +
+                'x' +
+                h +
+                ', ' +
+                (flags & 7) +
+                'bpp' +
+                (flags & 0x80 ? ', transparent index ' + b[3] : '') +
+                '.',
+              'ok',
+            );
+            b = b.subarray(hdr);
+          } else {
+            const g = sGeom();
+            const frames = Math.max(
+              1,
+              Math.round(b.length / Math.ceil((g.w * g.h) / 4)),
+            );
+            if (frames * Math.ceil((g.w * g.h) / 4) === b.length) {
+              $('sf').value = frames;
+              logTo(
+                $('slog'),
+                'Matches the selected preset: ' + frames + ' frame(s).',
+                'ok',
+              );
+            } else
+              logTo(
+                $('slog'),
+                'Size ' +
+                  b.length +
+                  ' B does not divide by the selected geometry — set width/height to match.',
+                'warn',
+              );
+          }
+          const g = sGeom();
+          S.levels = unpack2bpp(b, g.w * g.h * (+$('sf').value || 1));
+          sRender();
+        } else {
+          S.srcImage = await readImage(f);
+          logTo(
+            $('slog'),
+            'Loaded ' +
+              S.srcImage.naturalWidth +
+              'x' +
+              S.srcImage.naturalHeight +
+              ' source image.',
+            'ok',
+          );
+          sRebuild();
+        }
+      });
+      ['sw', 'sh', 'sf', 'sdither', 'sinv'].forEach((i) =>
+        $(i).addEventListener('input', sRebuild),
+      );
+      $('sb').addEventListener('input', (e) => {
+        $('sbv').textContent = e.target.value;
+        sRebuild();
+      });
+      $('sc').addEventListener('input', (e) => {
+        $('scv').textContent = (+e.target.value / 100).toFixed(2);
+        sRebuild();
+      });
+      $('sz').addEventListener('input', (e) => {
+        $('szv').textContent = e.target.value + 'x';
+        sRender();
+      });
+      $('sexport').addEventListener('click', () => {
+        const g = sGeom(),
+          body = pack2bpp(S.levels);
+        let out = body,
+          ext = '.BIN';
+        if ($('sfmt').value === 'img') {
+          const transparent = $('skey').checked;
+          const hdr = transparent ? 4 : 3;
+          out = new Uint8Array(hdr + body.length);
+          out[0] = g.w;
+          out[1] = g.h;
+          out[2] = 2 | (transparent ? 0x80 : 0);
+          if (transparent) out[3] = 0;
+          out.set(body, hdr);
+          ext = '.IMG';
+        }
+        const base = (S.name || 'SPRITE').replace(/\.[^.]+$/, '').toUpperCase();
+        download(out, base + ext);
+        logTo(
+          $('slog'),
+          'Exported ' +
+            base +
+            ext +
+            ' — ' +
+            out.length.toLocaleString() +
+            ' bytes.',
+          'ok',
+        );
+      });
+      $('spng').addEventListener('click', () =>
+        $('scv2').toBlob((b) => {
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(b);
+          a.download = (S.name || 'sprite').replace(/\.[^.]+$/, '') + '.png';
+          a.click();
+        }),
+      );
+
+      /* ================================================================ COLLISION tab */
+      const C = {
+        map: null,
+        layout: null,
+        grid: null,
+        gk: 'crossing',
+        reach: null,
+        start: [1120, 126],
+        tool: 'paint',
+        scale: 1,
+      };
+      function cSpec() {
+        return GRIDS[$('cgrid').value];
+      }
+      function cEnsureGrid() {
+        const g = cSpec();
+        if (!C.grid || C.grid.length !== g.cw * g.ch) {
+          C.grid = new Uint8Array(g.cw * g.ch);
+        }
+        C.gk = $('cgrid').value;
+        C.reach = null;
+        $('cexport').disabled = $('cclear').disabled = false;
+        $('cauto').disabled = !C.map;
+        $('creach').disabled = false;
+      }
+      function cBit(x, y) {
+        const g = cSpec();
+        if (x < 0 || y < 0 || x >= g.cw || y >= g.ch) return 1;
+        return C.grid[y * g.cw + x];
+      }
+      /* the module's own four-corner foot probe */
+      function cHit(nx, ny) {
+        const g = cSpec(),
+          c = g.cell,
+          x1 = nx + 9,
+          x2 = nx + 25,
+          y1 = ny + 25,
+          y2 = ny + 33;
+        return (
+          cBit((x1 / c) | 0, (y1 / c) | 0) ||
+          cBit((x2 / c) | 0, (y1 / c) | 0) ||
+          cBit((x1 / c) | 0, (y2 / c) | 0) ||
+          cBit((x2 / c) | 0, (y2 / c) | 0)
+        );
+      }
+      function cAuto() {
+        if (!C.map) return;
+        const g = cSpec(),
+          L = C.layout || LAYOUTS[$('cgrid').value];
+        const thr = +$('ct').value,
+          need = +$('cc').value / 100;
+        C.grid = new Uint8Array(g.cw * g.ch);
+        for (let cy = 0; cy < g.ch; cy++)
+          for (let cx = 0; cx < g.cw; cx++) {
+            const x0 = cx * g.cell,
+              y0 = cy * g.cell;
+            if (x0 >= L.w || y0 >= L.h) {
+              C.grid[cy * g.cw + cx] = 1;
+              continue;
+            }
+            let dark = 0,
+              tot = 0;
+            for (let y = y0; y < Math.min(L.h, y0 + g.cell); y++)
+              for (let x = x0; x < Math.min(L.w, x0 + g.cell); x++) {
+                tot++;
+                if (C.map[y * L.w + x] < thr) dark++;
+              }
+            C.grid[cy * g.cw + cx] = tot && dark / tot >= need ? 1 : 0;
+          }
+        C.reach = null;
+        logTo(
+          $('clog'),
+          'Traced ' +
+            C.grid.reduce((a, b) => a + b, 0) +
+            ' solid cells (level < ' +
+            thr +
+            ', coverage >= ' +
+            ((need * 100) | 0) +
+            '%).',
+          'ok',
+        );
+      }
+      function cWalk() {
+        const L = C.layout || LAYOUTS[C.gk],
+          STEP = 6;
+        const [sx, sy] = C.start;
+        if (cHit(sx, sy)) {
+          logTo(
+            $('clog'),
+            'Start point ' +
+              sx +
+              ',' +
+              sy +
+              ' is inside a solid cell — move the probe.',
+            'bad',
+          );
+          C.reach = null;
+          return;
+        }
+        const seen = new Set(),
+          q = [[sx, sy]];
+        seen.add(sx + ',' + sy);
+        while (q.length) {
+          const [x, y] = q.pop();
+          for (const [dx, dy] of [
+            [STEP, 0],
+            [-STEP, 0],
+            [0, STEP],
+            [0, -STEP],
+          ]) {
+            const nx = x + dx,
+              ny = y + dy,
+              k = nx + ',' + ny;
+            if (
+              seen.has(k) ||
+              nx < 0 ||
+              ny < 0 ||
+              nx > L.w - 40 ||
+              ny > L.h - 40 ||
+              cHit(nx, ny)
+            )
+              continue;
+            seen.add(k);
+            q.push([nx, ny]);
+          }
+        }
+        const g = cSpec();
+        const reach = new Uint8Array(g.cw * g.ch);
+        seen.forEach((k) => {
+          const [x, y] = k.split(',').map(Number);
+          const cx = ((x + 17) / g.cell) | 0,
+            cy = ((y + 30) / g.cell) | 0;
+          if (cx >= 0 && cy >= 0 && cx < g.cw && cy < g.ch)
+            reach[cy * g.cw + cx] = 1;
+        });
+        C.reach = reach;
+        let open = 0,
+          got = 0;
+        for (let i = 0; i < C.grid.length; i++) {
+          if (!C.grid[i]) {
+            open++;
+            if (reach[i]) got++;
+          }
+        }
+        const pct = open ? (100 * got) / open : 0;
+        logTo(
+          $('clog'),
+          'Walk test from ' +
+            sx +
+            ',' +
+            sy +
+            ': ' +
+            seen.size.toLocaleString() +
+            ' standing positions, ' +
+            got +
+            '/' +
+            open +
+            ' open cells reachable (' +
+            pct.toFixed(1) +
+            '%).',
+          pct > 60 ? 'ok' : 'warn',
+        );
+        if (pct < 100)
+          logTo(
+            $('clog'),
+            'Amber cells are walkable but sealed off from the start point.',
+            'warn',
+          );
+      }
+      function cRender() {
+        const g = cSpec(),
+          L = C.layout || LAYOUTS[C.gk];
+        const cv = $('ccv2');
+        cv.width = L.w;
+        cv.height = L.h;
+        const ctx = cv.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+        if (C.map) {
+          const img = new ImageData(L.w, L.h);
+          for (let i = 0; i < L.w * L.h; i++) {
+            const c = PALETTE[C.map[i] & 3];
+            img.data[i * 4] = c[0];
+            img.data[i * 4 + 1] = c[1];
+            img.data[i * 4 + 2] = c[2];
+            img.data[i * 4 + 3] = 255;
+          }
+          ctx.putImageData(img, 0, 0);
+        } else {
+          ctx.fillStyle = '#000';
+          ctx.fillRect(0, 0, L.w, L.h);
+        }
+        for (let cy = 0; cy < g.ch; cy++)
+          for (let cx = 0; cx < g.cw; cx++) {
+            const solid = C.grid[cy * g.cw + cx];
+            if (solid) ctx.fillStyle = 'rgba(255,122,107,0.42)';
+            else if (C.reach)
+              ctx.fillStyle = C.reach[cy * g.cw + cx]
+                ? 'rgba(61,251,149,0.13)'
+                : 'rgba(255,209,102,0.34)';
+            else continue;
+            ctx.fillRect(cx * g.cell, cy * g.cell, g.cell, g.cell);
+          }
+        ctx.strokeStyle = 'rgba(13,92,51,0.55)';
+        ctx.lineWidth = 1;
+        for (let x = 0; x <= g.cw; x++) {
+          ctx.beginPath();
+          ctx.moveTo(x * g.cell + 0.5, 0);
+          ctx.lineTo(x * g.cell + 0.5, g.ch * g.cell);
+          ctx.stroke();
+        }
+        for (let y = 0; y <= g.ch; y++) {
+          ctx.beginPath();
+          ctx.moveTo(0, y * g.cell + 0.5);
+          ctx.lineTo(g.cw * g.cell, y * g.cell + 0.5);
+          ctx.stroke();
+        }
+        const [sx, sy] = C.start;
+        ctx.strokeStyle = '#9dffc6';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(sx + 17, sy + 30, 11, 0, 7);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(sx + 17, sy + 16);
+        ctx.lineTo(sx + 17, sy + 44);
+        ctx.moveTo(sx + 3, sy + 30);
+        ctx.lineTo(sx + 31, sy + 30);
+        ctx.stroke();
+        $('csolid').textContent =
+          C.grid.reduce((a, b) => a + b, 0) + ' / ' + C.grid.length;
+      }
+      wireDrop($('cdropw'), $('cfilew'), async (f) => {
+        const b = await readBytes(f);
+        let key = null;
+        for (const k in LAYOUTS) {
+          const L = LAYOUTS[k];
+          if (b.length === pageBytes(L) * L.cols.length * L.rows.length)
+            key = k;
+        }
+        if (!key) {
+          logTo(
+            $('clog'),
+            'Not a recognised world size (' + b.length + ' B).',
+            'bad',
+          );
+          return;
+        }
+        C.layout = LAYOUTS[key];
+        C.map = worldToMap(b, C.layout);
+        $('cgrid').value = key;
+        cEnsureGrid();
+        logTo(
+          $('clog'),
+          'Backdrop: ' + f.name + ' (' + key.toUpperCase() + ').',
+          'ok',
+        );
+        cRender();
+      });
+      wireDrop($('cdropc'), $('cfilec'), async (f) => {
+        const b = await readBytes(f);
+        let key = null;
+        for (const k in GRIDS) if (b.length === GRIDS[k].bytes) key = k;
+        if (key) $('cgrid').value = key;
+        else
+          logTo(
+            $('clog'),
+            'Unexpected collision size ' +
+              b.length +
+              ' B — using the selected grid.',
+            'warn',
+          );
+        const g = cSpec();
+        C.grid = new Uint8Array(g.cw * g.ch);
+        for (let i = 0; i < g.cw * g.ch; i++)
+          C.grid[i] = (b[i >> 3] >> (7 - (i & 7))) & 1;
+        C.reach = null;
+        cEnsureGrid();
+        logTo(
+          $('clog'),
+          'Loaded ' +
+            f.name +
+            ' — ' +
+            C.grid.reduce((a, b) => a + b, 0) +
+            ' solid cells.',
+          'ok',
+        );
+        cRender();
+      });
+      $('cgrid').addEventListener('change', () => {
+        C.grid = null;
+        cEnsureGrid();
+        cRender();
+      });
+      $('cb').addEventListener(
+        'input',
+        (e) => ($('cbv').textContent = e.target.value),
+      );
+      $('ct').addEventListener(
+        'input',
+        (e) => ($('ctv').textContent = e.target.value),
+      );
+      $('cc').addEventListener(
+        'input',
+        (e) => ($('ccv').textContent = e.target.value),
+      );
+      document.querySelectorAll('#collide .tools button').forEach((b) =>
+        b.addEventListener('click', () => {
+          document
+            .querySelectorAll('#collide .tools button')
+            .forEach((x) => x.classList.toggle('on', x === b));
+          C.tool = b.dataset.tool;
+        }),
+      );
+      $('cauto').addEventListener('click', () => {
+        cAuto();
+        cRender();
+      });
+      $('creach').addEventListener('click', () => {
+        cWalk();
+        cRender();
+      });
+      $('cclear').addEventListener('click', () => {
+        const g = cSpec();
+        C.grid = new Uint8Array(g.cw * g.ch);
+        C.reach = null;
+        cRender();
+      });
+      $('cexport').addEventListener('click', () => {
+        const g = cSpec(),
+          out = new Uint8Array(g.bytes);
+        for (let i = 0; i < g.cw * g.ch; i++)
+          if (C.grid[i]) out[i >> 3] |= 1 << (7 - (i & 7));
+        const name = $('cgrid').value === 'sunscar' ? 'C.BIN' : 'C2.BIN';
+        download(out, name);
+        logTo(
+          $('clog'),
+          'Exported ' + name + ' — ' + out.length + ' bytes.',
+          'ok',
+        );
+      });
+      let painting = false;
+      function cAt(ev) {
+        const cv = $('ccv2'),
+          r = cv.getBoundingClientRect();
+        return [
+          Math.floor(((ev.clientX - r.left) * cv.width) / r.width),
+          Math.floor(((ev.clientY - r.top) * cv.height) / r.height),
+        ];
+      }
+      function cApply(ev) {
+        const g = cSpec(),
+          [px, py] = cAt(ev);
+        if (C.tool === 'probe') {
+          C.start = [px - 17, py - 30];
+          C.reach = null;
+          cRender();
+          return;
+        }
+        const cx = (px / g.cell) | 0,
+          cy = (py / g.cell) | 0,
+          r = +$('cb').value - 1,
+          v = C.tool === 'paint' ? 1 : 0;
+        for (let y = cy - r; y <= cy + r; y++)
+          for (let x = cx - r; x <= cx + r; x++)
+            if (x >= 0 && y >= 0 && x < g.cw && y < g.ch)
+              C.grid[y * g.cw + x] = v;
+        C.reach = null;
+        cRender();
+      }
+      $('ccv2').addEventListener('mousedown', (e) => {
+        if (!C.grid) cEnsureGrid();
+        painting = true;
+        cApply(e);
+        e.preventDefault();
+      });
+      window.addEventListener('mouseup', () => (painting = false));
+      $('ccv2').addEventListener('mousemove', (e) => {
+        const g = cSpec(),
+          [px, py] = cAt(e);
+        $('ccell').textContent =
+          ((px / g.cell) | 0) + ', ' + ((py / g.cell) | 0);
+        $('cpx').textContent = px + ', ' + py;
+        if (painting && C.tool !== 'probe') cApply(e);
+      });
+      cEnsureGrid();
+      cRender();
+    </script>
+  </body>
+</html>
