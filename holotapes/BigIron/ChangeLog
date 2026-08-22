@@ -1,21 +1,80 @@
-0.58.1
-- agents.md audit: R12 fixed - all 10 Math.random() call sites now use Math.randInt(n),
-  preserving the original distributions. R12 greps clean.
-- var eliminated (agents.md 6): 122 declarations became const, 170 became let, none remain.
-  Converted with a scope-aware tool that first proved no redeclarations and no reads before
-  a declarator in the same scope.
-- Removed a redundant Pip.audioStop() before Pip.audioStart(), which stops audio itself.
-- Added COMPLIANCE.md recording every R01-R15 result and the reason for each Pip.* write.
-- Motorcycle sprites were mirrored: MBL/MBR and RBL/RBR each drew the opposite direction.
-  Swapped. Walking sprites were already correct.
+0.58.5 (2026-08-16)
+- Moved the new Dogtown people out of the overworld and into interiors opened
+  from the supply, doc and garage delivery spots after each delivery is found.
+- Replaced placeholder people sprites with compact 34x34 2bpp sprites converted
+  from the supplied character sheets for Kit, Mara, Vera, Ada and Bram.
+- DATA is now a browsable People Index with locked entries and sprite portraits;
+  quest status moved under the map on the MAP tab.
+- Swapped pause-menu wheel rotation only: left wheel moves rows, right wheel
+  changes tabs, and left click still selects.
+- Split the Solomon Ray final fight into its own small module.
+- Rotjaw's track and tavern dialogue now ties the motorcycle to Ray's road
+  blockade and Dogtown's missing deliveries.
+- DATA now labels the list as People of Interest and uses plainer NPC notes.
+- Temporary DEBUG BOSS title-menu entry launches SOLOMON.JS directly; the real
+  hotel office boss also uses that smaller sprite-only fight module.
+- Solomon's final battle now uses Pokemon-style command flow: FIRE, SCORCH,
+  CHUCK and ITEMS. ITEMS opens STIM/PSYCHO/BACK, and Chuck is a real tactical
+  attack that can draw Ray's next shot off target.
+- Converted the supplied office background and animated player, Chuck and
+  Solomon battle sheets into compact 2bpp battle assets. The final fight now
+  draws the office background plus lazy-loaded action poses.
+- On-device JavaScript is 129,667 bytes after the final-battle art wiring.
+
+0.58.4 (2026-08-16)
+- Added three talkable Dogtown locals to unused house spots on the Dogtown map.
+- Added two talkable patrons inside Rot's Tavern.
+- Pause DATA now includes a People Met index: known names unlock after talking,
+  while unmet Dogtown/Tavern people stay listed as LOCKED.
+- On-device JavaScript is 119,024 bytes after the Dogtown people index.
+
+0.58.3 (2026-08-16)
+- Converted the new player, Chuck and Solomon Ray sprite sheets into compact
+  transparent 2bpp final-battle sprites.
+- Solomon's office fight now draws the sheet sprites for idle, attack and down
+  poses, while keeping the old line-drawn figures as missing-asset fallbacks.
+- On-device JavaScript is 116,136 bytes after the final-battle sprite wiring.
+
+0.58.2 (2026-08-16)
+- Merged the updated HAMCo/Solomon Ray story from BIGIRON_FULL_LOW_MEMORY_FIXED.zip.
+  The Big Iron is now a HAMCo service revolver, Scorched rounds are test loads,
+  and Solomon Ray is the office boss whose terminal completes the reveal.
+- Converted BIGIRONLOB.png into the lobby's 480x296 2bpp HR0.BIN background.
+- Rebuilt main-lobby collision and interaction points for the new art: bottom
+  entrance, front desk, stairs, elevator, chairs, tables and side machinery.
+- On-device JavaScript is 115,470 bytes after the story and lobby rebuild.
+
+0.58.1 (2026-08-15)
 - Every identifier inside the modules renamed to readable words; source moved to src/.
 - Shipped scripts/ are generated from src/ by tools/build.mjs (terser, mangle and strip only;
   no compression passes, because Espruino does not block-scope let/const).
 - Each readable and each shipped module is proved to be an alpha-rename of its input:
   identical AST, identical literals, identifiers in bijection with their bindings.
-- On-device JavaScript dropped from 122,934 to 108,095 bytes.
+- On-device JavaScript is 112,939 bytes after the collision-cache, sprite-placement and
+  Crater Motel music updates.
+- Exit now follows the OS guide path: request the mode/menu transition, then let
+  Pip.changeMenu() call Big Iron's remove() cleanup. Direct Pip.CURRENT.fullscreen
+  writes were removed; fullscreen is declared only in the returned app object.
+- Big Iron no longer calls Pip.startTimers() or Pip.setWatches(); the OS owns those
+  timers. This prevents stacked flip/selector intervals after exiting the holotape.
+- Exit no longer saves the active module. World state is saved during play and LOAD GAME
+  checks SAV.JSON on disk instead of trusting leftover in-memory state.
+- World motorcycle left/right sprite lookup is swapped for riding only, fixing reversed
+  bike art without changing walking sprites.
+- Shop video lookup restored through existing battle clips. Raider and Solomon
+  fights stay video-driven; Solomon's office fight now uses a faster sprite battle
+  scene with Chuck fighting beside the player.
+- Motorcycle sprites and Chuck's heart popup now clear their full draw area while moving.
+- Crater Motel now plays the LSTAR chiptune.
+- Entering Rot's Crossing from Sunscar now lands on the right-side road.
+- Race bikes are mirrored to face the track direction, and the track surface now reads as
+  packed Big Iron road instead of a clean highway.
+- Rotjaw's race bike and trackside motorcycle sprites were redrawn so he reads as Rotjaw
+  on a bike instead of overlapping scenery.
+- Motorcycle road exits now pass through automatically while riding, preserving the bike
+  across Sunscar, Rot's Crossing and Dogtown road transitions.
 
-0.58.0
+0.58.0 (2026-08-15)
 - Rot's Crossing rebuilt in the Sunscar art style; the stretched right-edge artifact is gone.
 - The race track is now graded dirt with a packed berm, worn racing ruts and a start/finish
   stripe, instead of a two-pixel outline drawn on the grass.
@@ -30,20 +89,20 @@
 - Rotjaw now uses the bike sprite added in 0.57.0 but never read.
 - A finished playthrough's SAV.JSON was shipping inside the tape and is removed.
 
-0.57.0
+0.57.0 (2026-08-15)
 - Big Iron Hotel main lobby became a hub: Kitchen, Laundry, Boiler Room, Ammo Workshop.
 - Penthouse opens after six Scorch Rounds. Motorcycle sprites with the dog in the sidecar.
 
-0.56.0
+0.56.0 (2026-08-15)
 - Stable non-condensed build. Dogtown collision rebuild, hotel collision pass,
   Sunscar resident low-memory fixes, original full-frame world flow restored.
 
-0.55.0
+0.55.0 (2026-08-15)
 - Native Pip-Boy Stimpaks, bought from traders and shared with the AID inventory.
 
-0.54.0
+0.54.0 (2026-08-15)
 - Dedicated low-memory workbench module. Craftable damage buff renamed to Psycho.
 
-0.50.0
+0.50.0 (2026-08-15)
 - First three-town build: Sunscar, Rot's Crossing and Dogtown Heights, title-screen loadout,
-  enemy scaling, the Big Iron Hotel and the six-plate Iron Warden fight.
+  enemy scaling, the Big Iron Hotel and the six-plate Solomon Ray fight.
