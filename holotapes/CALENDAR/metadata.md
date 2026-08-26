@@ -4,7 +4,7 @@
   "author": "@your-github-username",
   "version": "1.0.0",
   "description": "A native-feeling calendar with date jumping and note-taking.",
-  "icon": "assets/icon.png",
+  "icon": "assets/hamcal.img",
   "previews": [],
   "type": "app",
   "readme": "README.md",
