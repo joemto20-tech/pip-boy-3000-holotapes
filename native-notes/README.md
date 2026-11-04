@@ -1,93 +1,57 @@
 # Native Notes editor
 
-Adds custom text notes directly to the Pip-Boy's existing **DATA → NOTES**
-screen. The original screen still handles the stock text, image and audio
-entries. No game `.DAT` or `.IMG` file is rewritten.
+Add, read, edit and delete your own notes in **DATA → NOTES** on the Pip-Boy.
+Notes save to the SD card.
 
-## On the Pip-Boy
+## Install from source over USB
 
-1. Open **DATA → NOTES** and press the knob on **+ ADD NOTE**.
-2. Select **TITLE**, type with the firmware keyboard and choose **Enter**.
-3. Select **EDIT BODY**. Select a line to type it; use **+ ADD LINE** for
-   additional lines. Choose **BACK** when finished.
-4. Choose **SAVE NOTE**. Your note appears at the top of the same Notes list.
-   Scroll to it to read it in the native preview pane.
+You need a Pip-Boy 3000 with the built-in on-screen keyboard, a Windows PC, a
+USB data cable, and Node.js 22.18 or later.
 
-Hold the knob on one of your custom notes to edit or delete it. Deletion has a
-confirmation screen. **CANCEL** or leaving the Notes screen discards an unsaved
-draft. The original game notes remain read-only.
+1. Download the **notes-addition** branch of this repository and extract it.
+2. Open PowerShell in the extracted repository folder containing `package.json`.
+3. Install the dependencies and build the two device files:
 
-The native keyboard uses the right wheel to select a column, the left wheel to
-select a row, and a left-wheel press to type. Select **Enter** to finish each
-field. Its visible input width limits a line, so the body editor works one line
-at a time.
+   ```powershell
+   npm install
+   node native-notes/build.mjs
+   ```
 
-## Storage and recovery
+4. Connect your Pip-Boy over USB. Close other programs using its serial port.
+5. Find its COM port in Windows Device Manager under **Ports (COM & LPT)**.
+6. Run the installer, replacing `COM3` with your Pip-Boy's port:
 
-- Fallout 3: `DATA/F3/MYNOTES.JSON` on the SD card.
-- New Vegas: `DATA/NV/MYNOTES.JSON` on the SD card.
-- Format: `{"version":1,"notes":[{"title":"Title","body":"Line 1\nLine 2"}]}`.
-- Limits per game: 20 custom notes and an 8 KB serialized document; per note: 80
-  title characters, 1,600 body characters and 24 body lines. Actual keyboard
-  line length depends on the visible pixel width.
-- A save is first written to `.NEW` and read back. The existing file is then
-  renamed to `.BAK` before the new file replaces it. The last saved version is
-  preserved. If power is lost between renames, a missing main file is read from
-  `.BAK` on the next visit. An unreadable main file is never silently
-  overwritten.
+   ```powershell
+   ./native-notes/device.ps1 -Port COM3 -Install
+   ```
 
-Firmware/game-data updates may replace `JS/NOTES.JS`. Reinstall the extension
-after an update, using the matching updated stock Notes screen as its backup.
-Keep an external SD-card backup as usual.
+7. Reopen **DATA → NOTES**, or restart the Pip-Boy.
 
-## Source and installation
+The installer saves the original Notes screen as `JS/NOTES.STOCK` on your
+Pip-Boy and copies the two new files into its `JS` folder.
 
-For an end-user download, publish the compiled `NOTES.JS` and `NOTES_EDIT.JS`
-under a `JS/` folder, together with [INSTALL.md](INSTALL.md). Attach that ZIP to
-a GitHub Release. Publish source files in this repository; exclude the local
-`backups/` directory and all `MYNOTES.JSON`, `.BAK`, `.NEW` and screenshot
-files.
+For manual installation of the compiled files, follow [INSTALL.md](INSTALL.md).
 
-This is a native-screen extension, not a new holotape. It needs no holotape
-metadata, icon or registry entry. Source files are TypeScript. Generated device
-files are written under `dist/native-notes/` and must not be committed.
+## Use
 
-From the repository directory, after installing its development dependencies:
+1. Open **DATA → NOTES** and select **+ ADD NOTE**.
+2. Select **TITLE**, type your title, then choose **Enter** on the keyboard.
+3. Select **EDIT BODY** and choose a line to type. Select **Enter** to finish
+   each line. Use **+ ADD LINE** for additional lines.
+4. Choose **BACK → SAVE NOTE**.
 
-```powershell
-node node_modules/typescript/bin/tsc --noEmit --project native-notes/tsconfig.json
-node --test native-notes/test.mjs
-node native-notes/build.mjs
-./native-notes/device.ps1 -Port COM3 -Install
-```
+Your note appears in the Notes list. Scroll to it to read it. Hold the knob on a
+custom note to edit or delete it. Select **CANCEL** to discard a draft.
 
-The installer reads and backs up the current device files under local
-`native-notes/backups/`, preserves the original device Notes code in
-`JS/NOTES.STOCK`, uploads both new files to staging names, checks their exact
-readback and verifies they evaluate to factories before replacing the active
-entry point. It does not change custom-note data during installation.
+On the keyboard, turn the right wheel to select a column and the left wheel to
+select a row. Press the left wheel to type.
 
-Installed code:
+## Restore the original Notes screen
 
-| Build output                      | SD-card destination |
-| --------------------------------- | ------------------- |
-| `dist/native-notes/NOTES.JS`      | `JS/NOTES.JS`       |
-| `dist/native-notes/NOTES_EDIT.JS` | `JS/NOTES_EDIT.JS`  |
-
-Restore the original screen, keeping custom notes on the SD card:
+Connect your Pip-Boy and run this command with its COM port:
 
 ```powershell
 ./native-notes/device.ps1 -Port COM3 -Restore
 ```
 
-The adapter is based on the stock Notes code and APIs inspected directly on the
-connected Pip-Boy. The stock implementation is loaded unchanged with local API
-adapters; no firmware globals are replaced. Compatibility must be checked again
-if a firmware update changes the Notes screen's API usage.
-
-## Validation
-
-The test suite covers the native list overlay, unchanged stock note types,
-add/edit/delete, multiline entry, cancellation, screen cleanup, per-game
-storage, backup recovery, write/rename failures and storage limits. Device
-validation additionally checks the actual interpreter and native screen.
+Reopen Notes or restart the Pip-Boy.
