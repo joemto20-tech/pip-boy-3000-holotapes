@@ -1,0 +1,6 @@
+1.0.1 (2026-11-04)
+- Remove the MY label from custom-note title rows.
+
+1.0.0 (2026-11-04)
+- Add an on-device editor and SD-card storage for custom notes in DATA > NOTES.
+- Preserve the original Notes screen, game databases and previous custom-note save.
